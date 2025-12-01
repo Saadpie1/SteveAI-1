@@ -1,10 +1,40 @@
 // chat.js
+// --- Module Imports --- (at the top of chat.js)
+import config from './config.js'; 
+import { generateImage, IMAGE_MODELS } from './image.js'; 
+import { getDagiReply } from './Pre-DAGI.js'; // <--- NEW IMPORT
+
+// ... (rest of chat.js remains the same until getChatReply)
+
+// --- Chat Flow (OLD function to be simplified) ---
+async function getChatReply(msg) {
+  // We don't need the complex switch/case here anymore.
+  // We simply pass the request to the new orchestrator.
+  const mode = (modeSelect?.value || 'chat').toLowerCase();
+  
+  if (mode === 'fast' || mode === 'chat' || mode === 'reasoning') {
+      // Use the new multi-agent orchestrator for complexity detection
+      return getDagiReply(msg, mode);
+  } else {
+      // Fallback: Use the old simple mode logic for specialized modes (math, coding, etc.)
+      
+      let model;
+      // ... (Copy the old switch/case logic for other modes here, or update Pre-DAGI.js to handle all modes)
+      
+      const context = await buildContext();
+      // ... (build system prompt, fetchAI, and return)
+  }
+}
+
+// ... (rest of chat.js)
+
+
+// chat.js
 // IMPORTANT: This file relies on 'marked.js' being loaded in your HTML for markdown parsing.
 
 // --- Module Imports ---
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
-import { getDagiReply } from './Pre-DAGI.js'; // <--- NEW IMPORT for Dagi Orchestrator
 
 // --- Config Variables from Import ---
 const API_BASE = config.API_BASE;
@@ -176,12 +206,6 @@ function parseImageGenerationCommand(text) {
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
-  
-  // Custom sender for orchestration status messages
-  if (sender === 'system-status') {
-      container.className = 'message-container bot system-status';
-      sender = 'bot'; // Treat as bot for styling
-  }
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble ' + sender;
@@ -234,12 +258,12 @@ function addMessage(text, sender) {
 
   const finalFullHTML = thinkingHTML + markdownToHTML(answer);
 
+
   if (sender === 'bot') {
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
 
     let i = 0, buf = "";
-    // Only type the ANSWER part of the response if thinking is present
     const contentToType = thinking ? answer : text;
 
     (function type() {
@@ -556,18 +580,11 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow (UPDATED for Dagi Orchestration) ---
+// --- Chat Flow (UPDATED System Prompt AND Mode Logic) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   
-  // --- Check for Orchestrated Modes ---
-  if (mode === 'fast' || mode === 'chat' || mode === 'reasoning') {
-      // Use the new multi-agent orchestrator for complexity detection/delegation
-      return getDagiReply(msg, mode);
-  } 
-  
-  // --- Fallback: Simple Mode Logic for Specialized Tasks (Math, Coding, etc.) ---
   let model;
   let botName;
 
@@ -592,10 +609,18 @@ async function getChatReply(msg) {
       model = "provider-1/allam-7b-instruct-preview";
       botName = "SteveAI-Arabic";
       break;
+    case 'reasoning': 
+      model = "provider-1/deepseek-r1-0528";
+      botName = "SteveAI-reasoning";
+      break;
+    case 'fast': 
+      model = "provider-2/gemini-2.5-flash"; 
+      botName = "SteveAI-fast";
+      break;
+    case 'chat': 
     default:
-      // Should not happen if modeSelect is set correctly, but defaults to chat model
       model = "provider-5/gpt-5-nano";
-      botName = "SteveAI-chat-fallback";
+      botName = "SteveAI-chat";
       break;
   }
   
@@ -658,5 +683,5 @@ themeToggle.onclick = () => toggleTheme();
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
 
-// --- EXPORTS for Pre-DAGI.js ---
-export { buildContext, fetchAI, addMessage }; 
+// At the very bottom of chat.js, add:
+export { buildContext, fetchAI };
