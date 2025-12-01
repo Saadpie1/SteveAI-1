@@ -1,35 +1,4 @@
 // chat.js
-// --- Module Imports --- (at the top of chat.js)
-import config from './config.js'; 
-import { generateImage, IMAGE_MODELS } from './image.js'; 
-import { getDagiReply } from './Pre-DAGI.js'; // <--- NEW IMPORT
-
-// ... (rest of chat.js remains the same until getChatReply)
-
-// --- Chat Flow (OLD function to be simplified) ---
-async function getChatReply(msg) {
-  // We don't need the complex switch/case here anymore.
-  // We simply pass the request to the new orchestrator.
-  const mode = (modeSelect?.value || 'chat').toLowerCase();
-  
-  if (mode === 'fast' || mode === 'chat' || mode === 'reasoning') {
-      // Use the new multi-agent orchestrator for complexity detection
-      return getDagiReply(msg, mode);
-  } else {
-      // Fallback: Use the old simple mode logic for specialized modes (math, coding, etc.)
-      
-      let model;
-      // ... (Copy the old switch/case logic for other modes here, or update Pre-DAGI.js to handle all modes)
-      
-      const context = await buildContext();
-      // ... (build system prompt, fetchAI, and return)
-  }
-}
-
-// ... (rest of chat.js)
-
-
-// chat.js
 // IMPORTANT: This file relies on 'marked.js' being loaded in your HTML for markdown parsing.
 
 // --- Module Imports ---
@@ -682,6 +651,3 @@ themeToggle.onclick = () => toggleTheme();
 
 // --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
-
-// At the very bottom of chat.js, add:
-export { buildContext, fetchAI };
