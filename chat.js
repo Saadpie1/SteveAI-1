@@ -58,7 +58,7 @@ async function generateSummary() {
   const payload = {
     model: "provider-3/gpt-4o-mini",
     messages: [
-      { role: "system", content: "You are SteveAI, made by saadpie. Summarize the following chat context clearly." },
+      { role: "system", content: "You are SteveAI, made by saadpie and its vice ceo shawaiz. Summarize the following chat context clearly." },
       { role: "user", content: raw }
     ]
   };
@@ -346,7 +346,7 @@ async function fetchAI(payload) {
       console.warn("Proxy/network error", e);
     }
   }
-  addMessage('⚠️ API unreachable. Check keys or proxy.', 'bot');
+  addMessage('⚠️ SteveAI unreachable. Check keys or proxy.', 'bot');
   throw new Error(lastErrText || "API error");
 }
 
@@ -377,6 +377,7 @@ function showContact() {
   const info = `
 **📬 Contact SteveAI**
 - Creator: [@saadpie](https://github.com/saad-pie)
+- vice ceo: [@shawaiz](https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==)
 - Website: [steve-ai.netlify.app](https://steve-ai.netlify.app)
 - Feedback: Use /export to send logs.
   `;
@@ -390,7 +391,7 @@ async function playSummary() {
 function showAbout() {
   const text = `
 🤖 **About SteveAI**
-Built by *saadpie* — the bot from the future.
+Built by *saadpie and shawaiz* — the bot from the future.
 
 - Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
 - Modes: Chat | Reasoning | Fast | Math | Korean | General | Coding | Arabic
@@ -596,7 +597,7 @@ async function getChatReply(msg) {
   // Get image model names for the prompt
   const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
-  const systemPrompt = `You are ${botName}, made by saadpie. 
+  const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin 
   
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
