@@ -68,15 +68,11 @@
   </div>
 
   <div id="chat">
-    <div id="loading-indicator" class="message-container bot" style="display:none;">
-        <div class="bubble bot">
-            <div class="bubble-content"> 
-                <div class="bouncing-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
+    <div id="loading-indicator" class="bot-message" style="display:none;">
+        <div class="bouncing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
         </div>
     </div>
   </div>
@@ -190,25 +186,44 @@
       background: #333;
     }
     
-    /* 🟢 FIX 2: REVERSE SWAPPED ACTION BUTTONS */
-    /* This assumes message actions use a class like '.message-actions' and are positioned left/right. */
-    /* This rule forces User actions to the right and Bot actions to the left, which should fix the swap. */
-    
+    /* * --- START FIXES --- */
+
+    /* 🟢 FIX 2: ACTION BUTTON POSITION (Fixes them being stuck at the top) */
+    /* This rule assumes your action buttons container uses a class like '.message-actions' */
+    .message-container {
+        /* Ensure the message container is the positioning context for the actions */
+        position: relative; 
+    }
+    .message-container .message-actions {
+        /* Force to bottom, override any 'top: 0' setting */
+        position: absolute; 
+        bottom: 0px; 
+        top: auto !important; 
+        /* The buttons themselves often have small text, we need them visible */
+        z-index: 10; 
+        opacity: 0.8; /* Slight transparency so they don't block text */
+    }
+
+    /* 🟢 FIX 3: REVERSE SWAPPED ACTION BUTTONS (Kept) */
     .message-container.user .message-actions {
-        /* User actions should align right */
         left: auto !important;
         right: 0 !important; 
     }
     .message-container.bot .message-actions {
-        /* Bot actions should align left */
         left: 0 !important; 
         right: auto !important;
+    }
+    
+    /* 🟢 FIX 4: LOADER VISIBILITY (Ensures it takes up space) */
+    /* This makes sure the container has space for the bouncing dots */
+    #loading-indicator {
+        min-height: 25px; /* Minimum height so it's not collapsed */
+        padding: 8px 15px; /* Add padding to match a message bubble */
     }
 
     /* EXISTING LOADER CSS */
     .bot-message { 
-        /* Assuming bot-message is already styled for alignment/padding */
-        /* This selector is now likely unused since the wrapper is .message-container */
+        /* Kept but likely overridden by .message-container styles in chat.css */
     }
 
     .bouncing-dots {
@@ -239,6 +254,7 @@
         transform: scale(1);
       }
     }
+    /* * --- END FIXES --- */
   </style>
 
   <script>
@@ -262,7 +278,7 @@
     });
     
     // 
-    // --- 🟢 UPDATED SCRIPT LOGIC (Loader Control - POSITION IS CRITICAL) ---
+    // --- 🟢 UPDATED SCRIPT LOGIC (Loader Control - FIXING DISPLAY TYPE) ---
     // 
     const loadingIndicator = document.getElementById('loading-indicator');
     const chatWindow = document.getElementById('chat');
@@ -272,11 +288,10 @@
         if (!loadingIndicator || !chatWindow) return; // Safety check
 
         // 1. Move the existing element to the bottom of the chat container
-        // This makes it appear as the last message bubble.
         chatWindow.appendChild(loadingIndicator);
         
-        // 2. Make it visible (display: flex works well for aligning the dots)
-        loadingIndicator.style.display = 'flex'; 
+        // 2. Make it visible. Reverting to 'block' as it often works better with generic message containers.
+        loadingIndicator.style.display = 'block'; 
         
         // 3. Ensure the chat scrolls to the bottom
         chatWindow.scrollTop = chatWindow.scrollHeight;
