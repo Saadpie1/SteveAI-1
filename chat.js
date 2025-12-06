@@ -394,15 +394,14 @@ function showAbout() {
 Built by *saadpie and shawaiz* — the bot from the future.
 
 - Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, **Gemini-2.5-flash-lite**, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
-- Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | General | Coding | Arabic
-- Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
+- Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | **General** | Coding | Arabic
+- Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export, **Google Search (Lite Mode)**
 
 _Type /help to explore commands._
   `;
   addMessage(text, 'bot');
 }
 function changeMode(arg) {
-  // UPDATED: Added 'lite' mode
   const allowedModes = ['chat', 'reasoning', 'fast', 'lite', 'math', 'korean', 'general', 'coding', 'arabic'];
   if (!arg || !allowedModes.includes(arg.toLowerCase())) {
     addMessage(`⚙️ Usage: /mode ${allowedModes.join(' | ')}`, 'bot');
@@ -558,11 +557,24 @@ async function getChatReply(msg) {
   
   let model;
   let botName;
+  let config = {}; // Initialize config object for model-specific parameters
 
   switch (mode) {
-    case 'lite': // <-- NEW MODE ADDED: SteveAI-instant
-      model = "provider-2/gemini-2.5-flash-lite"; 
+    case 'lite': // SteveAI-instant (Gemini 2.5 Flash-Lite) with Google Search Tool
+      model = "gemini-2.5-flash-lite"; 
       botName = "SteveAI-lite";
+      // Add the tools/config based on the user's provided code snippet
+      config = {
+        thinkingConfig: {
+          // This is generally not used in the response, but passed in the API payload
+          thinkingBudget: 0, 
+        },
+        tools: [
+          {
+            googleSearch: {}, // Enable Google Search grounding
+          },
+        ],
+      };
       break;
     case 'math':
       model = "provider-1/qwen3-235b-a22b-instruct-2507";
@@ -604,6 +616,8 @@ async function getChatReply(msg) {
 
   const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
   
+  ${mode === 'lite' ? '3. **Real-Time Knowledge:** You have access to the Google Search tool to answer questions about current events or information not present in your training data.' : ''}
+
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
      Image Generated:model:model name,prompt:prompt text
@@ -613,9 +627,10 @@ async function getChatReply(msg) {
 
   const payload = {
     model,
+    // Add config only if it's not an empty object (i.e., only for 'lite' mode right now)
+    ...(Object.keys(config).length > 0 && { config }), 
     messages: [
       { role: "system", content: systemPrompt },
-      // The 'context' includes the summary and recent turns, ensuring the model remembers the conversation.
       { role: "user", content: `${context}\n\nUser: ${msg}` } 
     ]
   };
