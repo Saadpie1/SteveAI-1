@@ -8,9 +8,11 @@ const API_BASE = [
 const PROXY = "https://corsproxy.io/?url=";
 const proxiedURL = (base) => PROXY + encodeURIComponent(base);
 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+
 // Two API keys as fallback
 const API_KEYS = [
-  import.meta.env.VITE_GEMINI_API_KEY,
+  GEMINI_API_KEY,
   "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e",
   "ddc-a4f-d61cbe09b0f945ea93403a420dba8155"
 ];
