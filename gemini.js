@@ -21,8 +21,7 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
     
     // --- 1. Setup & Model Selection ---
     const isLite = mode === 'lite';
-    // 🟢 FIX: Use 'gemini-2.5-flash' for 'fast' mode, as it's optimized for speed and multimodal, 
-    // and 'gemini-2.5-flash-lite' for 'lite'. 'pro' is too slow for a 'fast' alias.
+    // Using 'gemini-2.5-flash' for 'fast' mode, as it's optimized for speed and multimodal.
     const model = isLite ? 'gemini-2.5-flash-lite' : 'gemini-2.5-flash';
     const botName = 'SteveAI-' + mode;
 
@@ -33,23 +32,21 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
     };
 
     // Tools setup (Google Search is the only tool for 'lite' mode)
-    // ⚠️ Tools removed from payload to fix 400 error, but still defining for context
     const tools = isLite ? [
         {
             "googleSearch": {}
         }
     ] : [];
 
-    // --- 2. System Prompt Construction and Formatting ---
-    const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
+    // --- 2. System Prompt Construction and Formatting (UPDATED) ---
+    // NOTE: Removed `imageModelNames` and constrained model output to Imagen 4 (Original).
     
     let coreInstructions = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
 
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
-  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
-     Image Generated:model:model name,prompt:prompt text
-     Available image models: ${imageModelNames}. Use the most relevant model name in your response.
-     recommend model that supports everything and is best is imagen4
+  2. **Image Generation:** You can be asked to generate images. If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
+     Image Generated:model:Imagen 4 (Original),prompt:prompt text
+     **IMPORTANT:** You must always use "Imagen 4 (Original)" as the model name in the output pattern, as this is the only model available for generation.
      `;
 
     // Add tool instruction context only for 'lite' mode 
@@ -77,7 +74,7 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
 
     // --- 4. Payload Construction (Multi-Modal Update) ---
     
-    // 🟢 NEW: Construct the parts array for the final user message
+    // Construct the parts array for the final user message
     const userParts = [];
     
     // 4a. Add Image Part if present
@@ -102,7 +99,7 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
 
     // 4c. Construct the final contents array
     const geminiContents = [
-        // System instructions are now placed first as a separate entry
+        // System instructions are placed first
         { role: "user", parts: [{ text: systemInstruction }] }, 
         
         // Final user message, including image and text
@@ -149,7 +146,7 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
         const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!reply) {
-             // ⚠️ Check for blocked reasons (e.g., safety)
+             // Check for blocked reasons (e.g., safety)
              const blockReason = data?.candidates?.[0]?.finishReason;
              if (blockReason) {
                  throw new Error(`Gemini API returned no content. Finish reason: ${blockReason}.`);
