@@ -572,130 +572,89 @@ async function getChatReply(msg) { // <-- EXPORTED
   
   let model;
   let botName;
+  let reply = ""; // Initialize reply variable
 
-  // 1. Determine Model and API Type
-  if (mode === 'lite' || mode === 'fast') {
-      // --- GEMINI FLOW ---
-      try {
-          // Direct call to the new gemini.js function
-          const reply = await getGeminiReply(msg, context, mode);
-          memory[++turn] = { user: msg, bot: reply };
-          return reply;
-      } catch (e) {
-          // CRITICAL FIX: Explicitly call addMessage to display the error text
-          addMessage(`⚠️ **Gemini Error:** ${e.message}`, 'bot');
-          // Re-throw to stop the chat flow process cleanly
-          throw e; 
-      }
+  // 🟢 NEW: 1. Show the loader immediately
+  if (window.showLoader) {
+      window.showLoader();
   }
   
-  // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
-  switch (mode) {
-    case 'chat': 
-    default:
-      model = "provider-5/gpt-5-nano"; 
-      botName = "SteveAI-chat";
-      break;
-    case 'math':
-      model = "provider-1/qwen3-235b-a22b-instruct-2507";
-      botName = "SteveAI-math";
-      break;
-    case 'korean':
-      model = "provider-1/ax-4.0";
-      botName = "SteveAI-Korean";
-      break;
-    case 'general': 
-      model = "provider-3/glm-4.5-free"; 
-      botName = "SteveAI-general";
-      break;
-    case 'coding':
-      model = "provider-1/deepseek-v3-0324";
-      botName = "SteveAI-coding";
-      break;
-    case 'arabic':
-      model = "provider-1/allam-7b-instruct-preview";
-      botName = "SteveAI-Arabic";
-      break;
-    case 'reasoning': 
-      model = "provider-1/deepseek-r1-0528";
-      botName = "SteveAI-reasoning";
-      break;
-  }
-  
-  const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
-
-  // 2. System Prompt Construction (for A4F/OpenAI models)
-  // FIXED: System prompt only contains rules, not the user's message.
-  const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
-
-  1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
-  2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
-     Image Generated:model:model name,prompt:prompt text
-     Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
-  
-  // 3. Payload Construction (A4F/OpenAI format)
-  const payload = {
-    model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      // The user content includes the full history/context and the new message.
-      { role: "user", content: `${context}\n\nUser: ${msg}` } 
-    ],
-  };
-
-  // 4. Fetch and Parse Response
-  const data = await fetchAI(payload, model);
-  
-  const reply = data?.choices?.[0]?.message?.content || "No response.";
-
-  memory[++turn] = { user: msg, bot: reply };
-  return reply;
-}
-
-// --- Form Submit (Unchanged) ---
-form.onsubmit = async e => {
-  e.preventDefault();
-  const msg = input.value.trim();
-  if (!msg) return;
-  if (msg.startsWith('/')) {
-    await handleCommand(msg);
-    input.value = '';
-    input.style.height = 'auto';
-    return;
-  }
-  addMessage(msg, 'user');
-  input.value = '';
-  input.style.height = 'auto';
   try {
-    const r = await getChatReply(msg);
-    addMessage(r, 'bot');
-  } catch {
-    // This catch block now correctly relies on addMessage already being called
-    // either by fetchAI (A4F path) or by the catch in getChatReply (Gemini path).
-    console.warn("Chat reply failed, error message already displayed or silent failure.");
-  }
-};
+      // 2. Determine Model and API Type
+      if (mode === 'lite' || mode === 'fast') {
+          // --- GEMINI FLOW ---
+          try {
+              // Direct call to the new gemini.js function
+              reply = await getGeminiReply(msg, context, mode);
+              
+          } catch (e) {
+              // CRITICAL FIX: Explicitly call addMessage to display the error text
+              addMessage(`⚠️ **Gemini Error:** ${e.message}`, 'bot');
+              // Re-throw to stop the chat flow process cleanly
+              throw e; 
+          }
+      } else {
+          // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
+          switch (mode) {
+            case 'chat': 
+            default:
+              model = "provider-5/gpt-5-nano"; 
+              botName = "SteveAI-chat";
+              break;
+            case 'math':
+              model = "provider-1/qwen3-235b-a22b-instruct-2507";
+              botName = "SteveAI-math";
+              break;
+            case 'korean':
+              model = "provider-1/ax-4.0";
+              botName = "SteveAI-Korean";
+              break;
+            case 'general': 
+              model = "provider-3/glm-4.5-free"; 
+              botName = "SteveAI-general";
+              break;
+            case 'coding':
+              model = "provider-1/deepseek-v3-0324";
+              botName = "SteveAI-coding";
+              break;
+            case 'arabic':
+              model = "provider-1/allam-7b-instruct-preview";
+              botName = "SteveAI-Arabic";
+              break;
+            case 'reasoning': 
+              model = "provider-1/deepseek-r1-0528";
+              botName = "SteveAI-reasoning";
+              break;
+          }
+          
+          const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
-// --- Input Auto Resize (Unchanged) ---
-input.oninput = () => {
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-};
+          // 3. System Prompt Construction (for A4F/OpenAI models)
+          const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
 
-// --- Theme Toggle (Unchanged) ---
-themeToggle.onclick = () => toggleTheme();
+          1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
+          2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
+             Image Generated:model:model name,prompt:prompt text
+             Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
+          
+          // 4. Payload Construction (A4F/OpenAI format)
+          const payload = {
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              // The user content includes the full history/context and the new message.
+              { role: "user", content: `${context}\n\nUser: ${msg}` } 
+            ],
+          };
 
-// --- Clear Chat (Unchanged) ---
-clearChatBtn.onclick = () => clearChat();
+          // 5. Fetch and Parse Response
+          const data = await fetchAI(payload, model);
+          
+          reply = data?.choices?.[0]?.message?.content || "No response.";
+      }
 
-// =========================================================================
-// --- EXPORTS for external access (e.g., from main.js) ---
-// =========================================================================
-export { 
-  memory, 
-  memorySummary, 
-  turn, 
-  getChatReply, 
-  addMessage, 
-  handleCommand 
-};
+      // 6. Common Success Logic
+      memory[++turn] = { user: msg, bot: reply };
+      return reply;
+  } catch (e) {
+      // If the error was not already displayed (i
