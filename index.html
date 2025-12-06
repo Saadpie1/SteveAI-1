@@ -76,6 +76,18 @@
       align-items: center;
       border-bottom: 2px solid #00ffcc; /* Accent line */
     }
+    .logo-link { /* New style for the clickable logo area */
+        text-decoration: none; 
+        color: inherit;
+        display: flex;
+        align-items: center;
+    }
+    .logo {
+        height: 30px; /* Adjust size as needed */
+        margin-right: 10px;
+        /* Ensures the logo has no border or odd styling */
+        border-radius: 4px; 
+    }
     header h1 {
       margin: 0;
       font-size: 1.8rem;
@@ -118,35 +130,34 @@
       margin-top: 0;
       font-size: 1.5rem;
     }
+    .emoji-heading {
+        font-size: 1.8rem;
+    }
 
-    /* Update Banner Specific Styles */
+    /* Update Banner Specific Styles (Energetic Styling) */
     .update-banner {
-      background: linear-gradient(135deg, #1b1b1b, #333); /* Gradient background */
-      border: 2px solid #00ffcc;
-      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+      background: linear-gradient(135deg, #2a0845, #6441a5); /* Purple/Neon Gradient */
+      border: 3px solid #ff00ff; /* Neon Pink Border */
+      text-shadow: 0 0 8px rgba(255, 0, 255, 0.8);
+      animation: pulse 1.5s infinite alternate; /* Added a subtle pulsing animation */
+    }
+    @keyframes pulse {
+        from { box-shadow: 0 0 10px rgba(255, 0, 255, 0.5); }
+        to { box-shadow: 0 0 20px rgba(255, 0, 255, 0.9); }
     }
     .update-banner strong {
       color: #fff;
       font-weight: 700;
     }
-    .update-banner ul {
-      list-style: none;
-      padding-left: 0;
-      margin-top: 1rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
+    .update-banner p {
+        font-size: 1.1rem;
     }
-    .update-banner ul li {
-      background: #2c2c2c;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      border-left: 3px solid #00ffcc;
-      transition: transform 0.2s;
-    }
-    .update-banner ul li:hover {
-      transform: translateY(-2px);
-      background: #3a3a3a;
+    .update-banner .visual-sticker {
+        float: right;
+        margin-left: 15px;
+        max-width: 100px;
+        height: auto;
+        border-radius: 8px;
     }
 
     /* Model List Styling */
@@ -218,8 +229,10 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
-        .update-banner ul {
-            grid-template-columns: 1fr;
+        .update-banner .visual-sticker {
+            display: block;
+            float: none;
+            margin: 10px auto;
         }
         footer {
             padding: 1rem 0.5rem;
@@ -231,7 +244,10 @@
 
 <body>
   <header>
-    <h1>SteveAI</h1>
+    <a href="/" class="logo-link">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" alt="SteveAI Logo" class="logo" loading="lazy"/> 
+        <h1>SteveAI <span style="font-size: 0.8em; color: #ff00ff;">(Ultimate AI Assistant)</span></h1>
+    </a>
     <nav>
       <a href="/" class="active">Home</a>
       <a href="/about.html">About</a>
@@ -244,61 +260,61 @@
   <main>
 
     <section class="update-banner">
-      <h2>✨ **Updates**</h2>
+      <h2 class="emoji-heading">✨ Co-Founder Update! 🚀</h2>
+      
       <p>
-        We're thrilled to announce a major addition to the SteveAI family! Our beloved friend, **Shawaiz**, has officially joined the team as Co-founder. With his passion and dedication, we look forward to achieving even greater heights in the world of ultimate AI assistance.
+        We're absolutely 🤩 <strong>THRILLED</strong> to announce a major power-up for the <strong>SteveAI</strong> family! Our beloved friend and visionary, <strong>Shawaiz</strong>, has officially joined the team as Co-founder! 🤝 With his incredible passion and dedication, we're locked and loaded to achieve even greater heights in the world of ultimate AI assistance. Get ready for an epic ride! 💫
       </p>
     </section>
 
     <section>
-      <h2>Welcome to SteveAI</h2>
+      <h2 class="emoji-heading">🌟 Welcome to the Future of AI!</h2>
       <p>
-        <strong>SteveAI</strong> is your all-in-one AI companion.  
-        Explore, chat, create, and learn using our next-level multi-modal orchestrator that makes AI interaction smarter, faster, and infinitely more creative.
+        <strong>SteveAI</strong> is your all-in-one, multi-modal <strong>AI companion</strong>! 🤖 Explore, chat, create, and learn using our next-level orchestrator that makes AI interaction smarter, faster, and infinitely more creative. We route your request through the most precise model for <strong>insane performance</strong>! 🚀
       </p>
     </section>
 
     <section class="model-list">
-        <h2>Conversational/Reasoning Models</h2>
+        <h2 class="emoji-heading">🗣️ Conversational/Reasoning Models (10+ Strong!)</h2>
         <p>
-            SteveAI is powered by a sophisticated orchestrator utilizing over **10+ specialized AI models** for conversational excellence and reasoning, including: 
-            [Model Name 1], [Model Name 2], [Model Name 3], [Model Name 4], [Model Name 5], [Model Name 6], [Model Name 7], [Model Name 8], [Model Name 9], [Model Name 10], and more.
+            SteveAI is powered by a sophisticated orchestrator utilizing over <strong>10+ specialized AI models</strong> for conversational excellence and superior reasoning. This arsenal ensures we deliver highly precise, logical, and nuanced interactions. Our models include: 
+            [Model Name 1], [Model Name 2], [Model Name 3], [Model Name 4], [Model Name 5], [Model Name 6], [Model Name 7], [Model Name 8], [Model Name 9], [Model Name 10], and many more! 🧠
         </p>
     </section>
 
     <section class="model-list">
-        <h2>Image Generation Models</h2>
+        <h2 class="emoji-heading">🎨 Image Generation Models (23+ Artists!)</h2>
         <p>
-            For cutting-edge visual creation, SteveAI leverages over **23+ distinct image generation models**, ensuring precision, efficiency, and scale, such as: 
-            [Image Model 1], [Image Model 2], [Image Model 3], [Image Model 4], [Image Model 5], [Image Model 6], [Image Model 7], [Image Model 8], [Image Model 9], [Image Model 10], [Image Model 11], [Image Model 12], [Image Model 13], [Image Model 14], [Image Model 15], [Image Model 16], [Image Model 17], [Image Model 18], [Image Model 19], [Image Model 20], [Image Model 21], [Image Model 22], [Image Model 23], and others.
+            For cutting-edge visual creation, SteveAI leverages over <strong>23+ distinct image generation models</strong>! 🖼️ This massive collection guarantees maximum creativity, resolution, and style variety, ensuring precision, efficiency, and scale for every visual request. Models include: 
+            [Image Model 1], [Image Model 2], [Image Model 3], [Image Model 4], [Image Model 5], [Image Model 6], [Image Model 7], [Image Model 8], [Image Model 9], [Image Model 10], [Image Model 11], [Image Model 12], [Image Model 13], [Image Model 14], [Image Model 15], [Image Model 16], [Image Model 17], [Image Model 18], [Image Model 19], [Image Model 20], [Image Model 21], [Image Model 22], [Image Model 23], and more top-tier engines! 🌟
         </p>
     </section>
 
     <section>
-      <h2>Core Capabilities</h2>
+      <h2 class="emoji-heading">💡 Core Capabilities: Your AI Superpowers</h2>
       <ul>
-        <li>💬 Advanced AI Chat with logical reasoning</li>
-        <li>🖼️ Image generation with unprecedented creativity</li>
-        <li>💻 Code generation, debugging, and intelligent suggestions</li>
-        <li>🧠 Deep context awareness and memory for smarter interactions</li>
-        <li>🌙 Theme customization (Dark/Light mode)</li>
-        <li>📚 Comprehensive documentation and command support</li>
+        <li>💬 <strong>Advanced AI Chat</strong> with lightning-fast logical reasoning ⚡</li>
+        <li>🖼️ <strong>Image Generation</strong> with unprecedented creativity and style 🎨</li>
+        <li>💻 <strong>Code Generation</strong>, debugging, and intelligent suggestions 💾</li>
+        <li>🧠 <strong>Deep Context Awareness</strong> and memory for smarter interactions 🧐</li>
+        <li>🌙 <strong>Theme Customization</strong> (Dark/Light mode) for comfortable viewing 👁️‍🗨️</li>
+        <li>📚 <strong>Comprehensive Documentation</strong> and command support for power users 📖</li>
       </ul>
     </section>
 
     <section>
-      <h2>Quick Links</h2>
+      <h2 class="emoji-heading">🔗 Quick Links: Jump Into Action!</h2>
       <ul>
-        <li>💬 <a href="/chat.html">Start Chatting</a></li>
-        <li>🧠 <a href="/docs.html">Read the Docs</a></li>
-        <li>🖼️ <a href="/image.html">Generate Images</a></li>
-        <li>ℹ️ <a href="/about.html">Learn More About SteveAI</a></li>
+        <li>💬 <a href="/chat.html">Start Chatting Now!</a></li>
+        <li>🧠 <a href="/docs.html">Dive into the Docs!</a></li>
+        <li>🖼️ <a href="/image.html">Unleash Image Generation!</a></li>
+        <li>ℹ️ <a href="/about.html">Meet the Team & Learn More About SteveAI!</a></li>
       </ul>
     </section>
   </main>
 
   <footer>
-    <p>© 2025 **SteveAI** • Made with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a></p>
+    <p>© 2025 <strong>SteveAI</strong> • Made with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a></p>
   </footer>
 </body>
   </html>
