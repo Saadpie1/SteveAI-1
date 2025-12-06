@@ -6,10 +6,10 @@ import config from './config.js';
 import { generateImage, IMAGE_MODELS } from './image.js'; 
 
 // --- Config Variables from Import ---
-const API_BASE = config.API_BASE;
+const API_BASE = config.API_BASE; // Array: [A4F, Gemini]
 const PROXY = config.PROXY;
 const proxiedURL = config.proxiedURL;
-const API_KEYS = config.API_KEYS; // Used in fetchAI
+const API_KEYS = config.API_KEYS; // Array of keys
 
 // --- DOM Elements ---
 const chat = document.getElementById('chat');
@@ -23,7 +23,6 @@ const modeSelect = document.getElementById('modeSelect');
 let memory = {};
 let turn = 0;
 let memorySummary = "";
-// const TYPE_DELAY = 2; // REMOVED
 const TOKEN_BUDGET = 2200;
 const approxTokens = s => Math.ceil((s || "").length / 4);
 
@@ -56,6 +55,8 @@ function getRandomTypingDelay() {
 async function generateSummary() {
   const raw = memoryString();
   const payload = {
+    // NOTE: Using a non-Gemini model here for summarization. 
+    // This payload uses the OpenAI format ('messages').
     model: "provider-3/gpt-4o-mini",
     messages: [
       { role: "system", content: "You are SteveAI, made by saadpie and its vice ceo shawaiz. Summarize the following chat context clearly." },
@@ -63,9 +64,11 @@ async function generateSummary() {
     ]
   };
   try {
-    const data = await fetchAI(payload);
+    // NOTE: Summary generation uses the A4F proxy path and OpenAI payload format
+    const data = await fetchAI(payload, payload.model, 'A4F');
     return data?.choices?.[0]?.message?.content?.trim() || "";
-  } catch {
+  } catch (e) {
+    console.warn("Summary generation failed:", e);
     return "Summary: " + lastTurns(2).replace(/\n/g, " ").slice(0, 800);
   }
 }
@@ -99,13 +102,9 @@ function parseThinkingResponse(text) {
     const match = thinkingRegex.exec(text);
 
     if (match) {
-        // Content inside <think> tags
         const thinking = match[1].trim(); 
-        
-        // Everything else is the answer (remove the matched tag block)
         let answer = text.replace(thinkingRegex, '').trim(); 
         
-        // Handle case where only the thinking block was returned or the answer is empty
         if (!answer && thinking) {
             answer = "The model produced a thinking step but no explicit final answer.";
         }
@@ -113,65 +112,49 @@ function parseThinkingResponse(text) {
         return { answer, thinking };
     }
     
-    // If no <think> tag found, return the whole text as the answer
     return { answer: text, thinking: null };
 }
 
 /**
- * Parses the answer for the specific image generation command pattern using the simplified format.
- * NEW: Uses split and substring operations based on the strict format: "Image Generated:model:name,prompt:text"
+ * Parses the answer for the specific image generation command pattern.
  * @param {string} text - The raw AI answer text.
  * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
     const commandStart = "Image Generated:";
     
-    // Aggressive Cleanup: Remove control chars, newlines, and formatting, then trim.
     let cleanText = text.trim()
         .replace(/\n/g, ' ') 
         .replace(/(\*\*|🧠|Reasoning\/Steps)/gi, '')
         .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") 
         .trim();
 
-    // 1. Check if the text starts with the exact command identifier (case-insensitive)
     if (!cleanText.toLowerCase().startsWith(commandStart.toLowerCase())) {
         return null;
     }
     
-    // 2. Extract the content after "Image Generated:"
     let content = cleanText.substring(commandStart.length).trim();
     
-    // 3. Look for the required format: "model:name,prompt:text"
-    // Find the separator
     const commaIndex = content.indexOf(',');
     if (commaIndex === -1) {
-        return null; // Format error: no comma separator found
+        return null;
     }
     
     const modelSegment = content.substring(0, commaIndex).trim();
     const promptSegment = content.substring(commaIndex + 1).trim();
 
-    // 4. Extract model name
-    if (!modelSegment.toLowerCase().startsWith('model:')) {
-        return null; // Format error: model key not found
-    }
+    if (!modelSegment.toLowerCase().startsWith('model:')) { return null; }
     const model = modelSegment.substring('model:'.length).trim();
 
-    // 5. Extract prompt text
-    if (!promptSegment.toLowerCase().startsWith('prompt:')) {
-        return null; // Format error: prompt key not found
-    }
+    if (!promptSegment.toLowerCase().startsWith('prompt:')) { return null; }
     const prompt = promptSegment.substring('prompt:'.length).trim();
 
-    if (!model || !prompt) {
-        return null; // Extraction failed or parts are empty
-    }
+    if (!model || !prompt) { return null; }
 
-    // Success!
     return { prompt, model };
 }
 
-// --- UI: Add Messages (FIXED to handle image generation command and random typing speed) ---
+// --- UI: Add Messages (Fixed for image generation command and typing speed) ---
 function addMessage(text, sender) {
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -184,37 +167,29 @@ function addMessage(text, sender) {
   content.className = 'bubble-content';
   bubble.appendChild(content);
 
-  // Parse the thinking step and the final answer
   const { answer, thinking } = parseThinkingResponse(text);
   const imageCommand = parseImageGenerationCommand(answer);
   
-  // If this is an image command, we need to bypass normal message display
   if (sender === 'bot' && imageCommand) {
-    // Record memory first, including the command text
     memory[++turn] = { user: input.value.trim(), bot: text };
 
-    // --- FIX: Pass clean data to handleCommand directly ---
     const cleanPrompt = imageCommand.prompt;
     const cleanModelName = imageCommand.model; 
 
-    // Find the model ID using the clean model name
     const modelObject = IMAGE_MODELS.find(m => m.name.toLowerCase() === cleanModelName.toLowerCase());
-    const modelId = modelObject ? modelObject.id : IMAGE_MODELS[5].id; // Fallback if not found
+    const modelId = modelObject ? modelObject.id : IMAGE_MODELS[5].id; 
 
-    // Call handleCommand with an object containing pre-parsed image data
     handleCommand({
       type: 'image_auto',
       prompt: cleanPrompt,
       modelId: modelId,
-      numImages: 1 // AI always generates 1 image
+      numImages: 1 
     }); 
-    // --- END FIX ---
     
-    return; // Exit as image generation handles its own output
+    return;
   }
 
   // --- STANDARD MESSAGE FLOW ---
-  // Default (Collapsed) HTML for the final output
   const thinkingHTML = thinking ? `
     <details class="thinking-details">
         <summary>🧠 **Reasoning/Steps**</summary>
@@ -241,7 +216,6 @@ function addMessage(text, sender) {
         
         let tempHtml;
         if (thinking) {
-             // While typing, keep the details section OPEN so the user sees the reasoning load.
              let openThinkingHTML = `
                 <details class="thinking-details" open>
                     <summary>🧠 **Reasoning/Steps**</summary>
@@ -258,16 +232,13 @@ function addMessage(text, sender) {
         
         content.innerHTML = tempHtml;
         chat.scrollTop = chat.scrollHeight;
-        // Use random delay for natural speed
         setTimeout(type, getRandomTypingDelay());
       } else {
-        // --- FINAL STEP: Use the standard, default-collapsed HTML ---
         content.innerHTML = finalFullHTML; 
         addBotActions(container, bubble, text);
       }
     })();
   } else {
-    // User messages are instant
     content.innerHTML = markdownToHTML(text); 
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
@@ -306,14 +277,12 @@ function addBotActions(container, bubble, text) {
   copy.className = 'action-btn';
   copy.textContent = '📋';
   copy.title = 'Copy';
-  // Pass the original, unparsed text for accurate copying
   copy.onclick = () => navigator.clipboard.writeText(text); 
 
   const speak = document.createElement('button');
   speak.className = 'action-btn';
   speak.textContent = '🔊';
   speak.title = 'Speak';
-  // Pass only the ANSWER content for speaking
   const { answer } = parseThinkingResponse(text);
   speak.onclick = () => {
     let u = new SpeechSynthesisUtterance(answer);
@@ -325,32 +294,105 @@ function addBotActions(container, bubble, text) {
   container.appendChild(actions);
 }
 
-// --- Fetch AI (Chat) ---
-async function fetchAI(payload) {
-  const url = proxiedURL(API_BASE);
-  let lastErrText = "";
-  for (const key of API_KEYS) {
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+// --- Fetch AI (Chat) - UPDATED FOR DUAL API SUPPORT ---
+/**
+ * Sends the request, iterating through keys and base URLs until success.
+ * @param {object} payload - The body of the request.
+ * @param {string} model - The model ID being used.
+ * @param {string} [forceApiType='AUTO'] - Forces a specific API type ('GEMINI' or 'A4F').
+ * @returns {Promise<object>} The successful response data.
+ */
+async function fetchAI(payload, model, forceApiType = 'AUTO') {
+    
+    // --- Determine API Routing ---
+    const isGeminiModel = model.startsWith("gemini-"); 
+    
+    const a4fBase = config.API_BASE[0]; 
+    const geminiBase = config.API_BASE[1];
 
-      if (res.ok) return await res.json();
-      lastErrText = await res.text();
-    } catch (e) {
-      console.warn("Proxy/network error", e);
+    let urlsToTry = [];
+    
+    // Logic for deciding which base URL to use first
+    if (forceApiType === 'GEMINI' || (forceApiType === 'AUTO' && isGeminiModel)) {
+        urlsToTry.push(geminiBase);
+    } else if (forceApiType === 'A4F' || (forceApiType === 'AUTO' && !isGeminiModel)) {
+        urlsToTry.push(a4fBase);
     }
-  }
-  addMessage('⚠️ SteveAI unreachable. Check keys or proxy.', 'bot');
-  throw new Error(lastErrText || "API error");
+
+    // Define the configuration for each URL to be tested
+    const urlConfigurations = urlsToTry.map(base => {
+        if (base === geminiBase) {
+            return { 
+                base: geminiBase, 
+                // Gemini URL structure: /v1beta/models/MODEL_ID:generateContent
+                urlBuilder: (b, m) => `${b}/models/${m}:generateContent`,
+                requiresBearer: false, // Key in URL query
+                name: 'Gemini Direct'
+            };
+        } else {
+            return { 
+                base: a4fBase, 
+                // A4F Proxy URL structure: PROXY + encode(A4F_BASE)
+                urlBuilder: (b, m) => config.proxiedURL(b), 
+                requiresBearer: true, // Key in Authorization header
+                name: 'A4F Proxy'
+            };
+        }
+    });
+
+    let lastErrText = "";
+    
+    for (const urlConfig of urlConfigurations) {
+        const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
+
+        for (const key of config.API_KEYS) {
+            try {
+                let finalUrl = baseUrl;
+                let headers = { 'Content-Type': 'application/json' };
+
+                if (urlConfig.requiresBearer) {
+                    // For A4F Proxy: Key in Authorization header
+                    headers['Authorization'] = `Bearer ${key}`;
+                } else {
+                    // For Gemini Direct API: Key in URL query parameter
+                    finalUrl = `${baseUrl}?key=${key}`; 
+                }
+
+                const res = await fetch(finalUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // CRITICAL: Check for Gemini/Proxy error object 
+                    if (data && data.error) {
+                        console.error(`${urlConfig.name} Error Object:`, data.error);
+                        lastErrText = data.error.message;
+                        continue; 
+                    }
+                    
+                    return data; // Success!
+                }
+                
+                lastErrText = await res.text();
+                console.error(`${urlConfig.name} Error Status: ${res.status}. Text: ${lastErrText}`);
+
+            } catch (e) {
+                console.error("Network/Fetch Error:", e);
+                lastErrText = e.message;
+            }
+        }
+    }
+    
+    addMessage(`⚠️ SteveAI unreachable. Check keys or proxy. Last Error: ${lastErrText.substring(0, 80)}...`, 'bot');
+    throw new Error("All API key attempts failed.");
 }
 
-// --- Commands ---
+// --- Commands (Unchanged for most) ---
+
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -393,7 +435,7 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie and shawaiz* — the bot from the future.
 
-- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, **Gemini-2.5-flash-lite**, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Models: GPT-5-Nano (Alias), DeepSeek-R1, **Gemini-2.5-pro**, Gemini-2.5-flash, **Gemini-2.5-flash-lite**, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
 - Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | **General** | Coding | Arabic
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export, **Google Search (Lite Mode)**
 
@@ -435,45 +477,39 @@ function showHelp() {
   addMessage(helpText, 'bot');
 }
 
-// --- Command Router (MODIFIED to accept direct image parameters) ---
+// --- Command Router (Unchanged) ---
 async function handleCommand(cmdOrParsedData) {
   let command, prompt, model, numImages;
   
   if (typeof cmdOrParsedData === 'string') {
-    // This is a user-typed command like "/image my prompt model 1"
     const parts = cmdOrParsedData.trim().split(' ');
     command = parts[0].toLowerCase();
     const args = parts.slice(1);
 
     if (command === '/image') {
       prompt = args.join(' ');
-      numImages = 1; // Default
-      model = IMAGE_MODELS[5].id; // Default to Imagen 4 ID
+      numImages = 1;
+      model = IMAGE_MODELS[5].id;
 
-      // Parse numImages from end if present
       const lastArg = args[args.length - 1];
       if (!isNaN(parseInt(lastArg, 10)) && parseInt(lastArg, 10) > 0) {
         numImages = Math.min(4, parseInt(lastArg, 10));
         prompt = args.slice(0, -1).join(' '); 
       }
       
-      // Parse model from prompt string if present (Fuzzy model detection for user input)
       const modelMatch = IMAGE_MODELS.find(m => prompt.toLowerCase().includes(m.name.toLowerCase()));
       if (modelMatch) {
           model = modelMatch.id;
-          // IMPORTANT: Remove only the model *name* from the prompt, not the ID path
           const nameRegex = new RegExp(modelMatch.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
           prompt = prompt.replace(nameRegex, '').trim();
       }
     }
   } else if (typeof cmdOrParsedData === 'object' && cmdOrParsedData.type === 'image_auto') {
-    // This is an AI-generated image command, data is pre-parsed
     command = '/image';
     prompt = cmdOrParsedData.prompt;
-    model = cmdOrParsedData.modelId; // This is the actual model ID (e.g., provider-4/sdxl-turbo)
+    model = cmdOrParsedData.modelId;
     numImages = cmdOrParsedData.numImages; 
   } else {
-    // Handle other commands (clear, help, etc.)
     const parts = cmdOrParsedData.trim().split(' ');
     command = parts[0].toLowerCase();
   }
@@ -488,7 +524,7 @@ async function handleCommand(cmdOrParsedData) {
     case '/contact': return showContact();
     case '/play': return playSummary();
     case '/about': return showAbout();
-    case '/mode': return changeMode(cmdOrParsedData.trim().split(' ')[1]); // Special case for mode
+    case '/mode': return changeMode(cmdOrParsedData.trim().split(' ')[1]); 
     case '/time': return showTime();
 
     case '/image': {
@@ -550,32 +586,42 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow (UPDATED System Prompt AND Mode Logic) ---
+// --- Chat Flow (UPDATED Model Routing and Payload) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   
   let model;
   let botName;
-  let config = {}; // Initialize config object for model-specific parameters
+  let config = {}; 
+  let useGeminiPayload = false; // Flag to switch payload/response format
 
   switch (mode) {
-    case 'lite': // SteveAI-instant (Gemini 2.5 Flash-Lite) with Google Search Tool
+    case 'lite': // Gemini 2.5 Flash-Lite + Google Search
       model = "gemini-2.5-flash-lite"; 
       botName = "SteveAI-lite";
-      // Add the tools/config based on the user's provided code snippet
+      useGeminiPayload = true;
       config = {
-        thinkingConfig: {
-          // This is generally not used in the response, but passed in the API payload
-          thinkingBudget: 0, 
-        },
-        tools: [
-          {
-            googleSearch: {}, // Enable Google Search grounding
-          },
-        ],
+        thinkingConfig: { thinkingBudget: 0 },
+        tools: [{ googleSearch: {} }], 
       };
       break;
+    case 'fast': // Gemini 2.5 Flash
+      model = "gemini-2.5-flash";
+      botName = "SteveAI-fast";
+      useGeminiPayload = true;
+      break;
+    
+    // --- CORRECTED: 'chat' mode uses A4F proxy model ---
+    case 'chat': 
+    default:
+      model = "provider-5/gpt-5-nano"; // RESTORED: Original A4F alias
+      botName = "SteveAI-chat";
+      useGeminiPayload = false; 
+      break;
+    // ---------------------------------------------------
+
+    // --- A4F Proxy Models (Retain Provider Prefix) ---
     case 'math':
       model = "provider-1/qwen3-235b-a22b-instruct-2507";
       botName = "SteveAI-math";
@@ -600,18 +646,8 @@ async function getChatReply(msg) {
       model = "provider-1/deepseek-r1-0528";
       botName = "SteveAI-reasoning";
       break;
-    case 'fast': 
-      model = "provider-2/gemini-2.5-flash"; 
-      botName = "SteveAI-fast";
-      break;
-    case 'chat': 
-    default:
-      model = "provider-5/gpt-5-nano";
-      botName = "SteveAI-chat";
-      break;
   }
   
-  // Get image model names for the prompt
   const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
   const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
@@ -625,17 +661,43 @@ async function getChatReply(msg) {
   
   The user has asked: ${msg}`;
 
-  const payload = {
-    model,
-    // Add config only if it's not an empty object (i.e., only for 'lite' mode right now)
-    ...(Object.keys(config).length > 0 && { config }), 
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: `${context}\n\nUser: ${msg}` } 
-    ]
-  };
-  const data = await fetchAI(payload);
-  const reply = data?.choices?.[0]?.message?.content || "No response.";
+  let payload;
+
+  if (useGeminiPayload) {
+      // --- GEMINI PAYLOAD FORMAT ---
+      payload = {
+        model,
+        contents: [
+            { role: "system", parts: [{ text: systemPrompt }] },
+            { role: "user", parts: [{ text: `${context}\n\nUser: ${msg}` }] }
+        ],
+        ...(Object.keys(config).length > 0 && { config }),
+      };
+  } else {
+      // --- A4F/OPENAI PAYLOAD FORMAT ---
+      payload = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `${context}\n\nUser: ${msg}` } 
+        ],
+      };
+  }
+
+  // Determine the API type for fetchAI routing
+  const apiType = useGeminiPayload ? 'GEMINI' : 'A4F';
+
+  const data = await fetchAI(payload, model, apiType);
+  
+  let reply;
+  if (useGeminiPayload) {
+      // --- GEMINI RESPONSE PARSING ---
+      reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+  } else {
+      // --- A4F/OPENAI RESPONSE PARSING ---
+      reply = data?.choices?.[0]?.message?.content || "No response.";
+  }
+
   memory[++turn] = { user: msg, bot: reply };
   return reply;
 }
