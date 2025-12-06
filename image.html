@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="AI Image Generator - SteveAI" />
-  <meta name="author" content="SteveAI by saadpie" />
+  <meta name="author" content="SteveAI by Saadpie" />
   <meta name="theme-color" content="#111" />
   <title>SteveAI – Image Generator</title>
   
@@ -20,6 +20,8 @@
       padding: 0;
       text-align: center;
       min-height: 100vh;
+      display: flex; /* Added for footer consistency */
+      flex-direction: column; /* Added for footer consistency */
     }
 
     /* 2. Header Styling (Consistent Accent) */
@@ -28,10 +30,29 @@
       padding: 1rem 2rem;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       display: flex;
-      justify-content: center;
-      gap: 1.5em;
+      justify-content: space-between; /* Changed to space-between for logo */
+      align-items: center; /* Added for logo alignment */
+      gap: 1.5em; /* Maintained gap for nav links */
       font-weight: 600;
       border-bottom: 2px solid #00ffcc; /* Matching accent line */
+    }
+    /* ADDED Logo Link and Logo styles from index.html */
+    .logo-link { 
+        text-decoration: none; 
+        color: inherit;
+        display: flex;
+        align-items: center;
+        margin-right: auto; /* Push nav to the side */
+    }
+    .logo {
+        height: 30px; 
+        margin-right: 10px;
+        border-radius: 4px; 
+    }
+    .logo-link h1 { /* Style for the title inside the header */
+        margin: 0;
+        font-size: 1.8rem;
+        color: #00ffcc; 
     }
     header a {
       color: #e0e0e0;
@@ -46,6 +67,7 @@
     }
 
     main {
+      flex-grow: 1; /* Added for footer consistency */
       max-width: 1200px;
       width: 90%;
       margin: 2rem auto;
@@ -144,8 +166,25 @@
         color: #00ffcc; /* Use the main accent color for links */
         font-weight: 500;
     }
+    
+    /* 5. Footer Styling (Consistent with other pages) */
+    footer {
+      background: #1a1a1a;
+      color: #777;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      border-top: 1px solid #2c2c2c;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: auto; /* Push footer to the bottom */
+    }
+    footer a {
+      color: #00ffcc;
+      font-weight: bold;
+    }
 
-    /* 5. Media Queries for Desktop Layout */
+    /* 6. Media Queries for Responsiveness */
     @media (min-width: 800px) {
         .controls {
             flex-direction: row;
@@ -164,15 +203,71 @@
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         }
     }
+
+    /* --- Responsive Design for Mobile and Smaller Screens (From index.html fix) --- */
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column; /* Stack logo/title on top of nav */
+            padding: 0.5rem 0.5rem; /* Reduced overall padding for compactness */
+            align-items: flex-start; /* Align everything to the left */
+            gap: 0;
+        }
+        .logo-link {
+            margin-bottom: 0.5rem; /* Space between logo/title and nav */
+            width: 100%; /* Ensure logo/title takes full width for alignment */
+            margin-right: 0;
+        }
+        .logo-link h1 {
+            font-size: 1.5rem; /* Smaller title font */
+        }
+        .logo {
+             height: 24px; /* Smaller logo */
+        }
+        nav {
+            display: flex;
+            flex-wrap: nowrap; /* FORCES horizontal layout - FIXES wrapping issue */
+            overflow-x: auto; /* Enables HORIZONTAL SCROLLING - FIXES hidden links */
+            width: 100%; /* Defines the scrollable area */
+            justify-content: flex-start; 
+            padding: 0 0.5rem; /* Small horizontal padding */
+            margin-top: 0;
+            padding-bottom: 0.5rem; /* Small bottom padding for scroll visibility */
+        }
+        nav a {
+            flex-shrink: 0; /* Ensures links don't shrink */
+            margin: 0 0.75rem 0 0; /* Tightened link spacing */
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
+        }
+        main {
+            width: 95%;
+            padding: 0 0.5rem;
+            margin: 1rem auto;
+        }
+        section {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        footer {
+            padding: 1rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    }
   </style>
 </head>
 <body>
   <header>
-    <a href="/">Home</a>
-    <a href="/about.html">About</a>
-    <a href="/docs.html">Docs</a>
-    <a href="/chat.html">Chat</a>
-    <a href="/image.html" class="active">Image</a>
+    <a href="/" class="logo-link">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" alt="SteveAI Logo" class="logo" loading="lazy"/> 
+        <h1>SteveAI <span style="font-size: 0.8em; color: #ff00ff;">(Ultimate AI Assistant)</span></h1>
+    </a>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/about.html">About</a>
+      <a href="/docs.html">Docs</a>
+      <a href="/chat.html">Chat</a>
+      <a href="/image.html" class="active">Image</a>
+    </nav>
   </header>
 
   <main>
@@ -193,6 +288,10 @@
     
     <div id="result"></div>
   </main>
+
+  <footer>
+    <p>© 2025 **SteveAI** • Created with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a> • Contact: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
+  </footer>
 
   <script type="module">
     // NOTE: This script assumes the presence of 'image.js' with the required exports.
