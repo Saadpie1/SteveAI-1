@@ -103,20 +103,21 @@ export async function getGeminiReply(msg, context, mode) {
             throw new Error("Invalid mode passed to getGeminiReply.");
     }
 
-    // The imageModelNames variable is no longer used in the prompt but kept for context if needed elsewhere.
-    // const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
-
     // 2. System Prompt Construction
-    const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
+    // CRITICAL FIX: Removed ALL Markdown (**) and excessive newlines/spacing for strict plain text compliance in systemInstruction.
+    const rawSystemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation.
     
-    ${mode === 'lite' ? '3. **Real-Time Knowledge:** You have access to the Google Search tool to answer questions about current events or information not present in your training data.' : ''}
+    ${mode === 'lite' ? '3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.' : ''}
 
-    1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
-    2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
+    1. Reasoning: You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
+    2. Image Generation: If the user asks you to *generate*, *create*, or *show* an image, you must reply with ONLY the following exact pattern. DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever. Your output must be the single, raw command string: 
         Image Generated:model:model name,prompt:prompt text
         
         The model name must be a single, logical choice (e.g., "DALL-E 2", "Animagine XL 2.0"). DO NOT list all available models.
-    `; // <-- FIXED: Prompt is now simplified and the model list removed.
+    `;
+    
+    // Clean up the template string to produce a single, space-separated instruction string
+    const systemPrompt = rawSystemPrompt.trim().replace(/\s\s+/g, ' ');
 
     // 3. Payload Construction (CRITICALLY CORRECT)
     const geminiContents = [
