@@ -104,13 +104,13 @@ export async function getGeminiReply(msg, context, mode) {
     }
 
     // 2. System Prompt Construction
-    // 💥 FINAL FIX: Removed ALL angle brackets (<, >) and complex formatting from the system instruction.
+    // 💥 FINAL FIX: Removed complex reasoning instruction to satisfy strict API validation when Google Search tool is active.
     const rawSystemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
     
     ${mode === 'lite' ? '3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.' : ''}
 
-    1. Reasoning: You must always output your reasoning steps inside a 'THINKING' block (e.g., [THINKING: steps here] followed by the final answer, UNLESS an image is being generated. 
-    2. Image Generation: If the user asks you to generate, create, or show an image, you must reply with ONLY the following exact pattern. DO NOT add any greetings, explanations, or follow-up text whatsoever. Your output must be the single, raw command string: Image Generated:model:model name,prompt:prompt text The model name must be a single, logical choice (e.g., "DALL-E 2", "Animagine XL 2.0").
+    1. Your primary goal is to provide a helpful response.
+    2. Image Generation: If the user asks you to generate, create, or show an image, you must reply with ONLY the following exact pattern. DO NOT add any greetings, explanations, or follow-up text whatsoever. The output must be the single, raw command string: Image Generated:model:model name,prompt:prompt text. Choose a logical model name (e.g., "DALL-E 2").
     `;
     
     // Clean up the template string to produce a single, space-separated instruction string
