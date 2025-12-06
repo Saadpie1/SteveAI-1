@@ -68,11 +68,15 @@
   </div>
 
   <div id="chat">
-    <div id="loading-indicator" class="bot-message" style="display:none;">
-        <div class="bouncing-dots">
-            <span></span>
-            <span></span>
-            <span></span>
+    <div id="loading-indicator" class="message-container bot" style="display:none;">
+        <div class="bubble bot">
+            <div class="bubble-content"> 
+                <div class="bouncing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
         </div>
     </div>
   </div>
@@ -186,10 +190,25 @@
       background: #333;
     }
     
-    /* 🟢 NEW CSS FOR LOADING INDICATOR */
+    /* 🟢 FIX 2: REVERSE SWAPPED ACTION BUTTONS */
+    /* This assumes message actions use a class like '.message-actions' and are positioned left/right. */
+    /* This rule forces User actions to the right and Bot actions to the left, which should fix the swap. */
+    
+    .message-container.user .message-actions {
+        /* User actions should align right */
+        left: auto !important;
+        right: 0 !important; 
+    }
+    .message-container.bot .message-actions {
+        /* Bot actions should align left */
+        left: 0 !important; 
+        right: auto !important;
+    }
+
+    /* EXISTING LOADER CSS */
     .bot-message { 
         /* Assuming bot-message is already styled for alignment/padding */
-        /* If not, you'll need styles for user/bot message alignment */
+        /* This selector is now likely unused since the wrapper is .message-container */
     }
 
     .bouncing-dots {
@@ -243,20 +262,20 @@
     });
     
     // 
-    // --- 🟢 NEW SCRIPT LOGIC (Loader Control - FIXING POSITION) ---
+    // --- 🟢 UPDATED SCRIPT LOGIC (Loader Control - POSITION IS CRITICAL) ---
     // 
     const loadingIndicator = document.getElementById('loading-indicator');
     const chatWindow = document.getElementById('chat');
 
     // Make these functions global so they can be called from chat.js
     window.showLoader = () => {
+        if (!loadingIndicator || !chatWindow) return; // Safety check
+
         // 1. Move the existing element to the bottom of the chat container
-        // This makes it appear after the user's last message.
-        if (chatWindow && loadingIndicator) {
-             chatWindow.appendChild(loadingIndicator);
-        }
+        // This makes it appear as the last message bubble.
+        chatWindow.appendChild(loadingIndicator);
         
-        // 2. Make it visible
+        // 2. Make it visible (display: flex works well for aligning the dots)
         loadingIndicator.style.display = 'flex'; 
         
         // 3. Ensure the chat scrolls to the bottom
@@ -264,11 +283,10 @@
     };
 
     window.hideLoader = () => {
+        if (!loadingIndicator) return; // Safety check
+        
         // 1. Hide it
         loadingIndicator.style.display = 'none';
-        
-        // NOTE: We don't remove it, we just hide it and let it wait at the bottom.
-        // The next showLoader() call will move it back down if new messages were added.
     };
 
     // Export these for use in chat.js (Since chat.js uses modules, exporting to window is a common workaround)
