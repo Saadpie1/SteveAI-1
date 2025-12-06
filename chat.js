@@ -393,8 +393,8 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie and shawaiz* — the bot from the future.
 
-- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
-- Modes: Chat | Reasoning | Fast | Math | Korean | General | Coding | Arabic
+- Models: GPT-5-Nano, DeepSeek-R1, Gemini-2.5-flash, **Gemini-2.5-flash-lite**, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | General | Coding | Arabic
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export
 
 _Type /help to explore commands._
@@ -402,7 +402,8 @@ _Type /help to explore commands._
   addMessage(text, 'bot');
 }
 function changeMode(arg) {
-  const allowedModes = ['chat', 'reasoning', 'fast', 'math', 'korean', 'general', 'coding', 'arabic'];
+  // UPDATED: Added 'lite' mode
+  const allowedModes = ['chat', 'reasoning', 'fast', 'lite', 'math', 'korean', 'general', 'coding', 'arabic'];
   if (!arg || !allowedModes.includes(arg.toLowerCase())) {
     addMessage(`⚙️ Usage: /mode ${allowedModes.join(' | ')}`, 'bot');
     return;
@@ -429,7 +430,7 @@ function showHelp() {
 - /contact — Show contact info
 - /play — Summarize / replay conversation
 - /about — About SteveAI
-- /mode <chat|reasoning|fast|math|korean|general|coding|arabic> — Change mode
+- /mode <chat|reasoning|fast|lite|math|korean|general|coding|arabic> — Change mode 
 - /time — Show local time
   `;
   addMessage(helpText, 'bot');
@@ -559,6 +560,10 @@ async function getChatReply(msg) {
   let botName;
 
   switch (mode) {
+    case 'lite': // <-- NEW MODE ADDED: SteveAI-instant
+      model = "provider-2/gemini-2.5-flash-lite"; 
+      botName = "SteveAI-lite";
+      break;
     case 'math':
       model = "provider-1/qwen3-235b-a22b-instruct-2507";
       botName = "SteveAI-math";
@@ -597,7 +602,7 @@ async function getChatReply(msg) {
   // Get image model names for the prompt
   const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
-  const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin 
+  const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
   
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
@@ -610,7 +615,8 @@ async function getChatReply(msg) {
     model,
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `${context}\n\nUser: ${msg}` }
+      // The 'context' includes the summary and recent turns, ensuring the model remembers the conversation.
+      { role: "user", content: `${context}\n\nUser: ${msg}` } 
     ]
   };
   const data = await fetchAI(payload);
