@@ -116,11 +116,11 @@ export async function getGeminiReply(msg, context, mode) {
         Image Generated:model:model name,prompt:prompt text
         Available image models: ${imageModelNames}. Use the most relevant model name in your response.
     
-    The user has asked: ${msg}`;
+    `; // <-- FIXED: Removed "The user has asked: ${msg}" from the static systemInstruction
 
     // 3. Payload Construction (CRITICALLY CORRECT)
     const geminiContents = [
-        // CRITICAL: Only 'user' and 'model' roles here.
+        // CRITICAL: Only 'user' and 'model' roles here. The chat history and current message are passed here.
         { 
             role: "user", 
             parts: [{ text: `${context}\n\nUser: ${msg}` }]
