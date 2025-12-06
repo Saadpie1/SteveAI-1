@@ -51,7 +51,7 @@ function shouldSummarize() {
 function getRandomTypingDelay() {
     // Range is [0ms, 4ms] for maximum speed and slight variation.
     const minDelay = 0;
-    const maxDelay = 0.4; 
+    const maxDelay = 0.05; 
     
     // Formula: Math.floor(Math.random() * (max - min + 1)) + min
     return Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
