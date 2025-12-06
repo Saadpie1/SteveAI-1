@@ -83,7 +83,15 @@
   </div>
 
   <div id="inputContainer">
+    <div id="imagePreviewContainer" style="display:none;">
+        <img id="imagePreview" src="" alt="Image Preview" />
+        <button id="clearImageBtn" title="Remove Image">✖</button>
+    </div>
     <form id="inputForm">
+      <input type="file" id="imageInputFile" accept="image/*" style="display:none;"> 
+      
+      <button type="button" id="imageUploadBtn" class="action-btn" title="Upload Image">🖼️</button>
+      
       <textarea id="messageInput" placeholder="Type your message..." rows="1" required></textarea>
       <button type="submit" id="sendBtn" title="Send">↑</button>
     </form>
@@ -93,6 +101,7 @@
   <script type="module" src="chat.js"></script> 
   
   <style>
+    /* EXISTING CSS */
     body {
       margin: 0;
       background: #0d0d0d;
@@ -104,6 +113,7 @@
       background: #fafafa;
       color: #111;
     }
+    /* ... (rest of existing CSS for header, chat, inputContainer, inputForm, textarea, sendBtn, commandHints) ... */
 
     #header {
       display: flex;
@@ -125,7 +135,9 @@
       border-top: 1px solid #333;
       background: #111;
       display: flex;
-      justify-content: center;
+      /* 🟢 NEW: Changed to block to allow preview area above form */
+      flex-direction: column; 
+      align-items: center; /* Center the form and preview */
     }
     #inputForm {
         display: flex;
@@ -186,25 +198,69 @@
       background: #333;
     }
     
-    /* * --- START FIXES --- */
+    /* 🟢 NEW: Styling for Image Button and Preview */
+    #imageUploadBtn {
+        width: 40px;
+        height: 40px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.5em;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    #imageUploadBtn:hover {
+        background: #555;
+    }
+    
+    #imagePreviewContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        margin-bottom: 10px;
+        max-width: 800px;
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #333;
+        border-radius: 10px;
+        background: #1a1a1a;
+    }
+    #imagePreview {
+        max-width: 100%;
+        max-height: 150px;
+        border-radius: 8px;
+        object-fit: contain;
+    }
+    #clearImageBtn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(255, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        line-height: 1;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+    }
 
-    /* 🟢 FIX 2: ACTION BUTTON POSITION (Fixes them being stuck at the top) */
-    /* This rule assumes your action buttons container uses a class like '.message-actions' */
+    /* FIXES FROM PREVIOUS STEPS (Kept) */
     .message-container {
-        /* Ensure the message container is the positioning context for the actions */
         position: relative; 
     }
     .message-container .message-actions {
-        /* Force to bottom, override any 'top: 0' setting */
         position: absolute; 
         bottom: 0px; 
         top: auto !important; 
-        /* The buttons themselves often have small text, we need them visible */
         z-index: 10; 
-        opacity: 0.8; /* Slight transparency so they don't block text */
+        opacity: 0.8; 
     }
-
-    /* 🟢 FIX 3: REVERSE SWAPPED ACTION BUTTONS (Kept) */
     .message-container.user .message-actions {
         left: auto !important;
         right: 0 !important; 
@@ -213,29 +269,21 @@
         left: 0 !important; 
         right: auto !important;
     }
-    
-    /* 🟢 FIX 4: LOADER VISIBILITY (Ensures it takes up space) */
-    /* This makes sure the container has space for the bouncing dots */
     #loading-indicator {
-        min-height: 25px; /* Minimum height so it's not collapsed */
-        padding: 8px 15px; /* Add padding to match a message bubble */
-    }
-
-    /* EXISTING LOADER CSS */
-    .bot-message { 
-        /* Kept but likely overridden by .message-container styles in chat.css */
+        min-height: 25px; 
+        padding: 8px 15px; 
     }
 
     .bouncing-dots {
       display: flex;
       align-items: center;
-      margin-left: 5px; /* Adjust as needed */
+      margin-left: 5px;
     }
     .bouncing-dots span {
-      width: 8px; /* Dot size */
+      width: 8px;
       height: 8px;
       margin: 0 2px;
-      background-color: #ffae00; /* Use your brand color */
+      background-color: #ffae00;
       border-radius: 50%;
       animation: bounce 1.2s infinite ease-in-out;
     }
@@ -245,7 +293,6 @@
     .bouncing-dots span:nth-child(3) {
       animation-delay: 0.4s;
     }
-
     @keyframes bounce {
       0%, 80%, 100% {
         transform: scale(0);
@@ -254,13 +301,16 @@
         transform: scale(1);
       }
     }
-    /* * --- END FIXES --- */
   </style>
 
   <script>
+    // 🟢 NEW: Global variable to hold the Base64 image data
+    let base64Image = null;
+
     // --- EXISTING SCRIPT LOGIC (Input/Hints) ---
     const inputEl = document.getElementById('messageInput');
     const hintsEl = document.getElementById('commandHints');
+    const inputForm = document.getElementById('inputForm');
 
     inputEl.addEventListener('input', () => {
       hintsEl.hidden = !inputEl.value.trim().startsWith('/');
@@ -270,42 +320,91 @@
       span.onclick = () => {
         inputEl.value = span.textContent + ' ';
         inputEl.focus();
-        // Trigger resize logic in chat.js manually after setting value
         const event = new Event('input');
         inputEl.dispatchEvent(event);
         hintsEl.hidden = true;
       };
     });
     
-    // 
-    // --- 🟢 UPDATED SCRIPT LOGIC (Loader Control - FIXING DISPLAY TYPE) ---
-    // 
+    // --- 🟢 NEW SCRIPT LOGIC (Image Handling) ---
+    const imageInputFile = document.getElementById('imageInputFile');
+    const imageUploadBtn = document.getElementById('imageUploadBtn');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const clearImageBtn = document.getElementById('clearImageBtn');
+
+    // 1. Image Upload Button Click
+    imageUploadBtn.addEventListener('click', () => {
+        imageInputFile.click();
+    });
+
+    // 2. File Selection Handler
+    imageInputFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            
+            reader.onload = (event) => {
+                // Set the global Base64 variable
+                base64Image = event.target.result; 
+                
+                // Show preview
+                imagePreview.src = base64Image;
+                imagePreviewContainer.style.display = 'flex';
+                
+                // Optional: Focus back on text area
+                inputEl.focus();
+            };
+            
+            // Convert file to Base64 string
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 3. Clear Image Handler
+    clearImageBtn.addEventListener('click', () => {
+        base64Image = null;
+        imagePreview.src = '';
+        imageInputFile.value = ''; // Clear the file input for re-uploading the same file
+        imagePreviewContainer.style.display = 'none';
+        inputEl.focus();
+    });
+
+    // 4. Update Form Submission (This is illustrative, your chat.js will handle the actual send)
+    // NOTE: Your actual submission logic in chat.js needs to check for the global 'base64Image' variable
+    // inputForm.addEventListener('submit', (e) => {
+    //     e.preventDefault();
+    //     // Send logic here: use inputEl.value AND the global base64Image
+    //     if (base64Image) {
+    //         console.log("Sending image data and message:", inputEl.value);
+    //         // After successful send, clear the image
+    //         clearImageBtn.click();
+    //     } else {
+    //         // console.log("Sending text message:", inputEl.value);
+    //     }
+    //     // inputEl.value = '';
+    // });
+    
+    
+    // --- EXISTING SCRIPT LOGIC (Loader Control) ---
     const loadingIndicator = document.getElementById('loading-indicator');
     const chatWindow = document.getElementById('chat');
 
-    // Make these functions global so they can be called from chat.js
     window.showLoader = () => {
-        if (!loadingIndicator || !chatWindow) return; // Safety check
+        if (!loadingIndicator || !chatWindow) return;
 
-        // 1. Move the existing element to the bottom of the chat container
         chatWindow.appendChild(loadingIndicator);
-        
-        // 2. Make it visible. Reverting to 'block' as it often works better with generic message containers.
         loadingIndicator.style.display = 'block'; 
-        
-        // 3. Ensure the chat scrolls to the bottom
         chatWindow.scrollTop = chatWindow.scrollHeight;
     };
 
     window.hideLoader = () => {
-        if (!loadingIndicator) return; // Safety check
-        
-        // 1. Hide it
+        if (!loadingIndicator) return;
         loadingIndicator.style.display = 'none';
     };
 
-    // Export these for use in chat.js (Since chat.js uses modules, exporting to window is a common workaround)
-    export { showLoader, hideLoader }; 
+    // Export the loader functions and the image data for chat.js
+    export { showLoader, hideLoader, base64Image }; 
   </script>
 </body>
 </html>
