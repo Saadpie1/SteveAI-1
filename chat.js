@@ -703,7 +703,11 @@ async function getChatReply(msg) {
       // --- GEMINI PAYLOAD FORMAT ---
       
       const geminiContents = [
-        // Contents array ONLY contains the user prompt and context (role: user/model ONLY)
+        // CRITICAL FIX: The system prompt is moved into the contents array with a "system" role 
+        // to bypass the 'Invalid value' error caused by the top-level systemInstruction in some environments.
+        { role: "system", parts: [{ text: systemPrompt }] },
+        
+        // The user's message follows
         { 
           role: "user", 
           parts: [{ text: `${context}\n\nUser: ${msg}` }]
@@ -724,10 +728,9 @@ async function getChatReply(msg) {
       
       payload = {
         model,
-        contents: geminiContents,
+        contents: geminiContents, // Includes the system prompt now
         
-        // CRITICAL FIX: The system prompt MUST be a top-level property.
-        systemInstruction: systemPrompt, 
+        // The top-level systemInstruction is OMITTED.
         
         // Use 'generationConfig' for settings like temperature
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
