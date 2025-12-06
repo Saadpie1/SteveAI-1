@@ -3,14 +3,7 @@
 import config from './config.js'; 
 import { IMAGE_MODELS } from './image.js'; // Needed for system prompt reference
 
-// --- API Fetch Function (Duplicated from chat.js but focused on fetching) ---
-/**
- * Sends the request, routing keys based on the target API type.
- * This is a stripped-down version of fetchAI from chat.js, optimized for Gemini.
- * @param {object} payload - The body of the request.
- * @param {string} model - The model ID being used.
- * @returns {Promise<object>} The successful response data.
- */
+// --- API Fetch Function (Dedicated to Gemini) ---
 async function fetchGemini(payload, model) {
     
     // --- Determine API Routing (Always GEMINI) ---
@@ -77,13 +70,6 @@ async function fetchGemini(payload, model) {
 
 
 // --- Main Logic Function ---
-/**
- * Handles all logic for fetching replies from the Gemini API.
- * @param {string} msg - The current user message.
- * @param {string} context - The chat history context.
- * @param {string} mode - The current chat mode ('lite' or 'fast').
- * @returns {Promise<string>} The AI's text reply.
- */
 export async function getGeminiReply(msg, context, mode) {
     let model;
     let botName;
@@ -122,8 +108,9 @@ export async function getGeminiReply(msg, context, mode) {
     
     The user has asked: ${msg}`;
 
-    // 3. Payload Construction (Spec Compliant)
+    // 3. Payload Construction (CRITICALLY CORRECT)
     const geminiContents = [
+        // CRITICAL: Only 'user' and 'model' roles here.
         { 
             role: "user", 
             parts: [{ text: `${context}\n\nUser: ${msg}` }]
@@ -142,12 +129,12 @@ export async function getGeminiReply(msg, context, mode) {
         model,
         contents: geminiContents,
         
-        // Use top-level systemInstruction (Official requirement, resolves the 'user, model' role error)
+        // CORRECT: System instruction is a top-level field.
         systemInstruction: systemPrompt, 
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
         
-        // Add tools at the top level
+        // CORRECT: Tools is a top-level field.
         ...(tools.length > 0 && { tools: tools }),
     };
 
