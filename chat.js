@@ -4,6 +4,7 @@
 // --- Module Imports ---
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
+import { getGeminiReply } from './gemini.js'; // <-- NEW: Import Gemini logic
 
 // --- Config Variables from Import ---
 const API_BASE = config.API_BASE; // Array: [A4F, Gemini]
@@ -65,7 +66,9 @@ async function generateSummary() {
   };
   try {
     // NOTE: Summary generation uses the A4F proxy path and OpenAI payload format
-    const data = await fetchAI(payload, payload.model, 'A4F');
+    // fetchAI is only handling A4F now, so the third arg 'A4F' is technically unnecessary 
+    // but kept for clarity on the payload format.
+    const data = await fetchAI(payload, payload.model);
     return data?.choices?.[0]?.message?.content?.trim() || "";
   } catch (e) {
     console.warn("Summary generation failed:", e);
@@ -295,132 +298,76 @@ function addBotActions(container, bubble, text) {
   container.appendChild(actions);
 }
 
-// --- Fetch AI (Chat) - UPDATED FOR DEDICATED KEY ROUTING ---
+// --- Fetch AI (Chat) - NOW ONLY FOR A4F/PROXY ---
 /**
- * Sends the request, routing keys based on the target API type.
- * @param {object} payload - The body of the request.
+ * Sends the request to the A4F Proxy endpoint.
+ * @param {object} payload - The body of the request (OpenAI format).
  * @param {string} model - The model ID being used.
- * @param {string} [forceApiType='AUTO'] - Forces a specific API type ('GEMINI' or 'A4F').
  * @returns {Promise<object>} The successful response data.
  */
-async function fetchAI(payload, model, forceApiType = 'AUTO') {
+async function fetchAI(payload, model) {
     
-    // --- Determine API Routing ---
-    const isGeminiModel = model.startsWith("gemini-"); 
-    
+    // --- Determine API Routing (Always A4F/Proxy) ---
     const a4fBase = config.API_BASE[0]; 
-    const geminiBase = config.API_BASE[1];
-    
-    // Determine which API type is being targeted
-    const targetApiType = (forceApiType === 'GEMINI' || (forceApiType === 'AUTO' && isGeminiModel)) 
-                          ? 'GEMINI' 
-                          : 'A4F';
 
-    let urlsToTry = [];
-    
-    // Logic for deciding which base URL to use first
-    if (targetApiType === 'GEMINI') {
-        urlsToTry.push(geminiBase);
-    } else {
-        urlsToTry.push(a4fBase);
-    }
-
-    // Define the configuration for each URL to be tested
-    const urlConfigurations = urlsToTry.map(base => {
-        if (base === geminiBase) {
-            return { 
-                base: geminiBase, 
-                // Gemini URL structure: /v1beta/models/MODEL_ID:generateContent
-                urlBuilder: (b, m) => `${b}/models/${m}:generateContent`,
-                requiresBearer: false, // Key in URL query
-                name: 'Gemini Direct',
-                keySource: 'GEMINI' // New identifier
-            };
-        } else {
-            return { 
-                base: a4fBase, 
-                // A4F Proxy URL structure: PROXY + encode(A4F_BASE)
-                urlBuilder: (b, m) => config.proxiedURL(b), 
-                requiresBearer: true, // Key in Authorization header
-                name: 'A4F Proxy',
-                keySource: 'A4F' // New identifier
-            };
-        }
-    });
+    const urlConfig = { 
+        base: a4fBase, 
+        urlBuilder: (b, m) => config.proxiedURL(b), 
+        requiresBearer: true, 
+        name: 'A4F Proxy',
+        keySource: 'A4F' 
+    };
 
     let lastErrText = "";
+    const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
+
+    // --- Select Keys ---
+    // Use keys from index 1 onwards for A4F Proxy
+    let keysToTry = config.API_KEYS.slice(1).filter(key => key);
+    if (keysToTry.length === 0) {
+        console.warn("A4F Proxy API keys (index 1+) are missing. Skipping attempt.");
+        lastErrText = "A4F keys missing from config.";
+        // Fall through to error handling if no keys are found
+    }
     
-    // --- Outer loop iterates through API URL Configurations (A4F or Gemini) ---
-    for (const urlConfig of urlConfigurations) {
-        const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
+    // --- Loop iterates through selected keys ---
+    for (const key of keysToTry) {
+        try {
+            let finalUrl = baseUrl;
+            let headers = { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}` // For A4F Proxy
+            };
 
-        // --- Select Keys based on Target API ---
-        let keysToTry;
-        if (urlConfig.keySource === 'GEMINI') {
-            // Use only the first key for Gemini
-            keysToTry = [config.API_KEYS[0]];
-            // Also check if key exists before proceeding
-            if (!keysToTry[0]) {
-                console.warn("Gemini API key (index 0) is undefined. Skipping attempt.");
-                lastErrText = "Gemini key missing from config.";
-                continue; 
-            }
-        } else {
-            // Use keys from index 1 onwards for A4F Proxy
-            // Ensure we only use valid keys
-            keysToTry = config.API_KEYS.slice(1).filter(key => key);
-            if (keysToTry.length === 0) {
-                console.warn("A4F Proxy API keys (index 1+) are missing. Skipping attempt.");
-                lastErrText = "A4F keys missing from config.";
-                continue; 
-            }
-        }
-        
-        // --- Inner loop iterates through selected keys (either [0] or [1...n]) ---
-        for (const key of keysToTry) {
-            try {
-                let finalUrl = baseUrl;
-                let headers = { 'Content-Type': 'application/json' };
+            const res = await fetch(finalUrl, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(payload)
+            });
 
-                if (urlConfig.requiresBearer) {
-                    // For A4F Proxy: Key in Authorization header
-                    headers['Authorization'] = `Bearer ${key}`;
-                } else {
-                    // For Gemini Direct API: Key in URL query parameter
-                    finalUrl = `${baseUrl}?key=${key}`; 
-                }
-
-                const res = await fetch(finalUrl, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    
-                    // CRITICAL: Check for Gemini/Proxy error object 
-                    if (data && data.error) {
-                        console.error(`${urlConfig.name} Error Object:`, data.error);
-                        lastErrText = data.error.message;
-                        continue; 
-                    }
-                    
-                    return data; // Success!
+            if (res.ok) {
+                const data = await res.json();
+                
+                if (data && data.error) {
+                    console.error("A4F Proxy Error Object:", data.error);
+                    lastErrText = data.error.message;
+                    continue; 
                 }
                 
-                lastErrText = await res.text();
-                console.error(`${urlConfig.name} Error Status: ${res.status}. Text: ${lastErrText}`);
-
-            } catch (e) {
-                console.error("Network/Fetch Error:", e);
-                lastErrText = e.message;
+                return data; // Success!
             }
+            
+            lastErrText = await res.text();
+            console.error(`A4F Proxy Error Status: ${res.status}. Text: ${lastErrText}`);
+
+        } catch (e) {
+            console.error("Network/Fetch Error:", e);
+            lastErrText = e.message;
         }
     }
     
     addMessage(`⚠️ SteveAI unreachable. Check keys or proxy. Last Error: ${lastErrText.substring(0, 80)}...`, 'bot');
-    throw new Error("All API key attempts failed.");
+    throw new Error("All A4F API key attempts failed.");
 }
 
 // --- Commands (Unchanged for most) ---
@@ -618,43 +565,35 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow (FINAL STABLE VERSION WITH PAYLOAD FIX) ---
+// --- Chat Flow (FINAL ROUTING VERSION) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   
   let model;
   let botName;
-  // This object will hold *only* generation parameters like temperature.
-  let generationParams = {}; 
-  // This array will hold tool configurations, if any.
-  let tools = [];
-  let useGeminiPayload = false; 
 
-  // 1. Model & Config Setup
+  // 1. Determine Model and API Type
+  if (mode === 'lite' || mode === 'fast') {
+      // --- GEMINI FLOW ---
+      try {
+          // Direct call to the new gemini.js function
+          const reply = await getGeminiReply(msg, context, mode);
+          memory[++turn] = { user: msg, bot: reply };
+          return reply;
+      } catch (e) {
+          // gemini.js will handle display messages via addMessage/fetchGemini
+          // so we just re-throw to stop the chat flow here.
+          throw e; 
+      }
+  }
+  
+  // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
   switch (mode) {
-    case 'lite': // Gemini 2.5 Flash-Lite + Google Search
-      model = "gemini-2.5-flash-lite"; 
-      botName = "SteveAI-lite";
-      useGeminiPayload = true;
-      // Tools are placed here
-      tools = [{ googleSearch: {} }]; 
-      // Generation parameters (like temperature) are placed here
-      generationParams = { temperature: 0.7 };
-      break;
-    case 'fast': // Gemini 2.5 Flash
-      model = "gemini-2.5-flash";
-      botName = "SteveAI-fast";
-      useGeminiPayload = true;
-      generationParams = {}; // Empty for 'fast'
-      break;
-    
-    // --- A4F/OpenAI Fallback Models ---
     case 'chat': 
     default:
       model = "provider-5/gpt-5-nano"; 
       botName = "SteveAI-chat";
-      useGeminiPayload = false; 
       break;
     case 'math':
       model = "provider-1/qwen3-235b-a22b-instruct-2507";
@@ -684,10 +623,8 @@ async function getChatReply(msg) {
   
   const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
-  // 2. System Prompt Construction
+  // 2. System Prompt Construction (for A4F/OpenAI models)
   const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
-  
-  ${mode === 'lite' ? '3. **Real-Time Knowledge:** You have access to the Google Search tool to answer questions about current events or information not present in your training data.' : ''}
 
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
@@ -696,74 +633,19 @@ async function getChatReply(msg) {
   
   The user has asked: ${msg}`;
 
-  let payload;
+  // 3. Payload Construction (A4F/OpenAI format)
+  const payload = {
+    model,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: `${context}\n\nUser: ${msg}` } 
+    ],
+  };
+
+  // 4. Fetch and Parse Response
+  const data = await fetchAI(payload, model);
   
-  // 3. Payload Construction (The FIXED, Stable Logic)
-  if (useGeminiPayload) {
-      // --- GEMINI PAYLOAD FORMAT ---
-      
-      const geminiContents = [
-        // CRITICAL FIX: The system prompt is moved into the contents array with a "system" role 
-        // to bypass the 'Invalid value' error caused by the top-level systemInstruction in some environments.
-        { role: "system", parts: [{ text: systemPrompt }] },
-        
-        // The user's message follows
-        { 
-          role: "user", 
-          parts: [{ text: `${context}\n\nUser: ${msg}` }]
-        }
-      ];
-
-      // 3b. Build generationConfig object
-      
-      const generationConfig = {};
-      // Keys that belong inside the generationConfig object
-      const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences']; 
-      
-      configKeys.forEach(key => {
-          if (generationParams[key] !== undefined) {
-              generationConfig[key] = generationParams[key];
-          }
-      });
-      
-      payload = {
-        model,
-        contents: geminiContents, // Includes the system prompt now
-        
-        // The top-level systemInstruction is OMITTED.
-        
-        // Use 'generationConfig' for settings like temperature
-        ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
-        
-        // Add tools at the top level (only for lite mode)
-        ...(tools.length > 0 && { tools: tools }),
-      };
-      
-  } else {
-      // --- A4F/OPENAI PAYLOAD FORMAT (System role in messages) ---
-      payload = {
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `${context}\n\nUser: ${msg}` } 
-        ],
-      };
-  }
-
-  // Determine the API type for fetchAI routing
-  const apiType = useGeminiPayload ? 'GEMINI' : 'A4F';
-
-  const data = await fetchAI(payload, model, apiType);
-  
-  // 4. Response Parsing
-  let reply;
-  if (useGeminiPayload) {
-      // --- GEMINI RESPONSE PARSING ---
-      reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
-  } else {
-      // --- A4F/OPENAI RESPONSE PARSING ---
-      reply = data?.choices?.[0]?.message?.content || "No response.";
-  }
+  const reply = data?.choices?.[0]?.message?.content || "No response.";
 
   memory[++turn] = { user: msg, bot: reply };
   return reply;
@@ -787,7 +669,8 @@ form.onsubmit = async e => {
     const r = await getChatReply(msg);
     addMessage(r, 'bot');
   } catch {
-    addMessage('⚠️ Request failed. Check console.', 'bot');
+    // Already handled error message display inside fetchAI or getGeminiReply
+    console.warn("Chat reply failed, error message already displayed or silent failure.");
   }
 };
 
