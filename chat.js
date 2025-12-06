@@ -418,7 +418,7 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie and shawaiz* — the bot from the future.
 
-- Models: GPT-5-Nano (Alias), DeepSeek-R1, **Gemini-2.5-pro**, Gemini-2.5-flash, **Gemini-2.5-flash-lite**, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Models: GPT-5-Nano (Alias), DeepSeek-R1, **Gemini-2.5-flash**, Gemini-2.5-flash-lite, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
 - Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | **General** | Coding | Arabic
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export, **Google Search (Lite Mode)**
 
@@ -572,13 +572,14 @@ ${imageHTML}
 // --- Chat Flow (FINAL ROUTING VERSION) ---
 async function getChatReply(msg) { // <-- EXPORTED
   const context = await buildContext();
+  // Get the mode from the dropdown (which might be overridden below)
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   
   let model;
   let botName;
   let reply = ""; 
 
-  // 1. Show the loader immediately (Access via window, as fixed)
+  // 1. Show the loader immediately
   if (window.showLoader) {
       window.showLoader();
   }
@@ -588,23 +589,28 @@ async function getChatReply(msg) { // <-- EXPORTED
       if (mode === 'lite' || mode === 'fast') {
           // --- GEMINI FLOW ---
           
-          // 🟢 FIX: Access base64Image globally from window
+          // Access base64Image globally from window
           const imageToSend = window.base64Image;
 
           if (imageToSend && mode !== 'fast') {
-              // Safety check: Only fast mode (Gemini Flash) supports images currently
-              addMessage("⚠️ Image processing is only enabled in **SteveAI-fast** mode.", 'bot');
-              throw new Error("Image processing mode mismatch.");
+              // This case should be caught by the mode override in form.onsubmit, 
+              // but we keep this check for robustness, although it should now always be 'fast' if imageToSend is true.
+              addMessage("⚠️ Image processing requires **SteveAI-fast** mode. Switching mode.", 'bot');
+              // This is a safety check and should technically never be hit if the override works:
+              throw new Error("Image processing mode mismatch."); 
           }
 
           try {
-              // 📸 INTEGRATION: Pass message, context, mode, AND the image data
+              // Pass message, context, mode, AND the image data
               reply = await getGeminiReply(msg, context, mode, imageToSend);
               
-              // 📸 CLEANUP: If the send was successful AND an image was sent, clear the image data and preview
-              // 🟢 FIX: Access clearImageBtn globally from window
+              // CLEANUP: If the send was successful AND an image was sent, clear the image data and preview
               if (imageToSend && window.clearImageBtn) {
                    window.clearImageBtn.click();
+                   // If the mode was overridden, optionally switch back to 'chat' for the next turn
+                   if (modeSelect.value === 'fast' && !window.base64Image) {
+                        modeSelect.value = 'chat';
+                   }
               }
               
           } catch (e) {
@@ -617,10 +623,8 @@ async function getChatReply(msg) { // <-- EXPORTED
           // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
           
           // ⚠️ IMPORTANT: Clear image data if user tries to send an image in a non-Gemini mode.
-          // 🟢 FIX: Access base64Image globally from window
           if (window.base64Image) {
                addMessage("⚠️ Cannot send image in this mode. Image data has been cleared.", 'bot');
-               // 🟢 FIX: Access clearImageBtn globally from window
                if (window.clearImageBtn) window.clearImageBtn.click();
           }
 
@@ -692,21 +696,32 @@ async function getChatReply(msg) { // <-- EXPORTED
       }
       throw e; // Re-throw the error
   } finally {
-      // 7. Hide the loader always (Access via window, as fixed)
+      // 7. Hide the loader always
       if (window.hideLoader) {
           window.hideLoader();
       }
   }
 }
 
-// --- Form Submit (Unchanged) ---
+// --- Form Submit (Updated for Mode Override) ---
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
   
   // 📸 Allow sending an image without text
-  // 🟢 FIX: Access base64Image globally from window
+  // 🟢 Access base64Image globally from window
   if (!msg && !window.base64Image) return; 
+  
+  // 🟢 NEW LOGIC: Override mode if an image is attached
+  if (window.base64Image) {
+    const currentMode = modeSelect.value.trim().toLowerCase();
+    
+    // Only override if the current mode isn't already 'fast'
+    if (currentMode !== 'fast') {
+        modeSelect.value = 'fast'; 
+        addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for multi-modal processing.`, 'bot');
+    }
+  }
   
   if (msg.startsWith('/')) {
     await handleCommand(msg);
