@@ -15,9 +15,10 @@ const proxiedURL = config.proxiedURL; // Function: PROXY + encodeURIComponent(ba
  * @param {string} context - The summarized and recent chat history.
  * @param {string} mode - The current operational mode ('lite' or 'fast').
  * @param {string | null} imageToSend - The Base64 image data string (e.g., "data:image/jpeg;base64,...") or null.
+ * @param {string | null} customSystemInstruction - An optional custom system prompt to override the default. // <-- NEW PARAMETER ADDED
  * @returns {Promise<string>} The raw text response from the model.
  */
-async function getGeminiReply(msg, context, mode, imageToSend = null) {
+async function getGeminiReply(msg, context, mode, imageToSend = null, customSystemInstruction = null) { // <-- NEW PARAMETER ACCEPTED
     
     // --- 1. Setup & Model Selection ---
     const isLite = mode === 'lite';
@@ -37,9 +38,15 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
         }
     ] : [];
 
-    // --- 2. System Prompt Construction and Formatting (UPDATED FOR SPECIFICITY) ---
-    
-    let coreInstructions = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
+    // --- 2. System Prompt Construction and Formatting ---
+    let systemInstruction;
+
+    if (customSystemInstruction) {
+        // 🟢 USE CUSTOM INSTRUCTION (for hidden analysis calls from chat.js)
+        systemInstruction = customSystemInstruction.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
+    } else {
+        // 🟡 USE DEFAULT INSTRUCTION (for standard chat calls)
+        let coreInstructions = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
 
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation/Editing:** You can be asked to generate or edit images. When constructing the command, you **MUST** ensure the 'prompt' field is **VERY SPECIFIC**, detailed, and descriptive, especially if an image is provided for editing. The prompt must describe the **desired outcome** clearly (e.g., "a photorealistic 1950s car driving on a rainy street"). If the user provided an image, your prompt must describe the new image, incorporating the original image content and the requested edits.
@@ -49,13 +56,14 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
      **IMPORTANT:** You must always use "Imagen 4 (Original)" as the model name in the output pattern, as this is the only model available for generation.
      `;
 
-    // Add tool instruction context only for 'lite' mode 
-    if (isLite) {
-        const toolContext = '\n3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.';
-        coreInstructions += toolContext;
-    }
+        // Add tool instruction context only for 'lite' mode 
+        if (isLite) {
+            const toolContext = '\n3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.';
+            coreInstructions += toolContext;
+        }
 
-    const systemInstruction = coreInstructions.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
+        systemInstruction = coreInstructions.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
+    }
 
     // --- 3. API Key & URL Setup with CORS Proxy ---
     
@@ -90,10 +98,14 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
             }
         });
     }
+    
+    // ⚠️ CRITICAL: If a custom instruction is used (analysis mode), we do NOT send the full context, 
+    // we only send the user's new message (`msg`) to prevent the context from polluting the analysis.
+    const textContext = customSystemInstruction ? `User: ${msg}` : `${context}\n\nUser: ${msg}`;
 
     // 4b. Add Text Part (Context and Message)
     userParts.push({ 
-        text: `${context}\n\nUser: ${msg}` 
+        text: textContext 
     });
 
 
