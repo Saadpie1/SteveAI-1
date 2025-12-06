@@ -30,6 +30,7 @@ async function getGeminiReply(msg, context, mode) {
     };
 
     // Tools setup (Google Search is the only tool for 'lite' mode)
+    // ⚠️ We keep the array creation, but will not include it in the final payload due to the 400 error.
     const tools = isLite ? [
         {
             "googleSearch": {}
@@ -46,7 +47,7 @@ async function getGeminiReply(msg, context, mode) {
      Image Generated:model:model name,prompt:prompt text
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
 
-    // Add tool instruction context only for 'lite' mode
+    // Add tool instruction context only for 'lite' mode (but the tool won't be used in the payload now)
     if (isLite) {
         const toolContext = '\n3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.';
         coreInstructions += toolContext;
@@ -63,7 +64,7 @@ async function getGeminiReply(msg, context, mode) {
     
     const geminiBase = API_BASE[1];
     
-    // 🟢 CORRECTED URL: Insert /models/ into the path 
+    // Correct path: Insert /models/ into the path
     const targetUrl = `${geminiBase}/models/${model}:generateContent?key=${geminiKey}`; 
 
     // Use the proxiedURL function to wrap the target URL.
@@ -71,12 +72,11 @@ async function getGeminiReply(msg, context, mode) {
 
     // --- 4. Payload Construction ---
     
-    // 🟢 FIX: Construct the contents array starting with the System Instruction
-    // The role "user" will then contain the history/context AND the new message.
+    // Construct the contents array starting with the System Instruction
     const geminiContents = [
         { 
             role: "user", 
-            parts: [{ text: systemPromptText }] // System instructions are passed in the first 'user' role message
+            parts: [{ text: systemPromptText }] // System instructions
         },
         {
             role: "user",
@@ -94,15 +94,12 @@ async function getGeminiReply(msg, context, mode) {
 
     const payload = {
         model,
-        // 🟢 FIX: contents now holds both the system instruction and user message
         contents: geminiContents,
-        
-        // ❌ REMOVED: finalPayloadInstructions (no longer needed)
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
         
-        // Include tools for lite mode
-        ...(tools.length > 0 && { tools: tools }),
+        // ❌ FIX: Remove the conditional inclusion of the 'tools' field to fix the 400 error.
+        // ...(tools.length > 0 && { tools: tools }),
     };
 
 
