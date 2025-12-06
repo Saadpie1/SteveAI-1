@@ -255,31 +255,33 @@
     /* --- Responsive Design for Mobile and Smaller Screens (FIXED) --- */
     @media (max-width: 768px) {
         header {
-            /* Keep on one line with overflow for navigation */
-            flex-direction: row; 
-            justify-content: space-between;
-            padding: 0.5rem 1rem; /* Reduced vertical padding */
-            overflow-x: hidden; /* Hide horizontal scrollbar for the header itself */
+            flex-direction: column; /* Stack logo/title on top of nav */
+            padding: 0.5rem 0.5rem; /* Reduced overall padding for compactness */
+            align-items: flex-start; /* Align everything to the left */
+        }
+        .logo-link {
+            margin-bottom: 0.5rem; /* Space between logo/title and nav */
+            width: 100%; /* Ensure logo/title takes full width for alignment */
         }
         header h1 {
-            font-size: 1.5rem; /* Slightly smaller title on mobile */
+            font-size: 1.5rem; /* Smaller title font */
         }
         .logo {
-             height: 24px; /* Slightly smaller logo on mobile */
+             height: 24px; /* Smaller logo */
         }
         nav {
-            /* Allow navigation links to scroll horizontally if needed */
             display: flex;
-            flex-wrap: nowrap; /* Prevent wrapping */
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* For smoother iOS scrolling */
-            justify-content: flex-end;
-            padding: 0 1rem 0 0.5rem; /* Padding for the scrollable area */
-            margin-top: 0; /* Remove top margin that might push things down */
+            flex-wrap: nowrap; /* FORCES horizontal layout - FIXES wrapping issue */
+            overflow-x: auto; /* Enables HORIZONTAL SCROLLING - FIXES hidden links */
+            width: 100%; /* Defines the scrollable area */
+            justify-content: flex-start; 
+            padding: 0 0.5rem; /* Small horizontal padding */
+            margin-top: 0;
+            padding-bottom: 0.5rem; /* Small bottom padding for scroll visibility */
         }
         nav a {
             flex-shrink: 0; /* Ensures links don't shrink */
-            margin: 0 0.5rem; /* Reduced margins */
+            margin: 0 0.75rem 0 0; /* Tightened link spacing */
             padding: 0.3rem 0.6rem;
             font-size: 0.85rem;
         }
