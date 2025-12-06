@@ -19,6 +19,7 @@ async function fetchGemini(payload, model) {
         keySource: 'GEMINI'
     };
 
+    // Initialize lastErrText to capture the most recent error
     let lastErrText = "";
     
     const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
@@ -28,11 +29,14 @@ async function fetchGemini(payload, model) {
     let keysToTry = [config.API_KEYS[0]];
     if (!keysToTry[0]) {
         console.error("Gemini API key (index 0) is undefined. Cannot proceed.");
-        throw new Error("Gemini key missing from config.");
+        lastErrText = "Gemini key missing from config.";
+        // We still need to proceed to the final throw outside the loop if keys are missing
     }
     
     // --- Inner loop iterates through selected keys ---
     for (const key of keysToTry) {
+        if (!key) continue; // Skip if the key is undefined/null
+        
         try {
             let finalUrl = `${baseUrl}?key=${key}`; 
             let headers = { 'Content-Type': 'application/json' };
@@ -49,23 +53,29 @@ async function fetchGemini(payload, model) {
                 if (data && data.error) {
                     console.error("Gemini Direct Error Object:", data.error);
                     lastErrText = data.error.message;
-                    continue; 
+                    continue; // Try next key
                 }
                 
                 return data; // Success!
             }
             
+            // Capture specific HTTP error details
             lastErrText = await res.text();
             console.error(`Gemini Direct Error Status: ${res.status}. Text: ${lastErrText}`);
 
         } catch (e) {
+            // Capture network/fetch error details
             console.error("Network/Fetch Error:", e);
             lastErrText = e.message;
         }
     }
     
+    // ✅ CRITICAL FIX APPLIED: Use the captured detailed error message in the throw statement.
+    // This message will be caught and displayed by the fix in chat.js.
+    const finalErrorMessage = lastErrText || "Gemini API failed with an unknown error or no key was available.";
+    
     // Re-throw the error with a message that chat.js can catch and display
-    throw new Error(`Gemini unreachable. Last Error: ${lastErrText.substring(0, 80)}...`);
+    throw new Error(`Gemini unreachable. Last Error: ${finalErrorMessage.substring(0, 80)}...`);
 }
 
 
@@ -141,7 +151,15 @@ export async function getGeminiReply(msg, context, mode) {
     // 4. Fetch and Parse Response
     const data = await fetchGemini(payload, model);
     
+    // Check if data candidates exist and return text
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
+
+    // IMPORTANT: If candidates is empty (e.g., due to safety block), 
+    // we should ideally return a helpful message. 
+    // If the reply is the default "No response from Gemini." check for rejection reasons.
+    if (reply === "No response from Gemini." && data?.promptFeedback?.blockReason) {
+         return `⚠️ Response blocked by Gemini safety filters. Reason: ${data.promptFeedback.blockReason}`;
+    }
     
     return reply;
 }
