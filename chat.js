@@ -657,4 +657,64 @@ async function getChatReply(msg) { // <-- EXPORTED
       memory[++turn] = { user: msg, bot: reply };
       return reply;
   } catch (e) {
-      // If the error was not already displayed (i
+      // If the error was not already displayed (i.e., not a Gemini error), display it here.
+      // fetchAI already handles adding the error message, so this primarily catches other issues.
+      if (e && !e.message.includes('Gemini Error:')) { 
+          addMessage(`⚠️ **Critical Error:** ${e.message}`, 'bot');
+      }
+      throw e; // Re-throw the error
+  } finally {
+      // 🟢 NEW: 7. Hide the loader always
+      if (window.hideLoader) {
+          window.hideLoader();
+      }
+  }
+}
+
+// --- Form Submit (Unchanged) ---
+form.onsubmit = async e => {
+  e.preventDefault();
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (msg.startsWith('/')) {
+    await handleCommand(msg);
+    input.value = '';
+    input.style.height = 'auto';
+    return;
+  }
+  addMessage(msg, 'user');
+  input.value = '';
+  input.style.height = 'auto';
+  try {
+    const r = await getChatReply(msg);
+    addMessage(r, 'bot');
+  } catch {
+    // This catch block now correctly relies on addMessage already being called
+    // either by fetchAI (A4F path) or by the catch in getChatReply (Gemini path).
+    console.warn("Chat reply failed, error message already displayed or silent failure.");
+  }
+};
+
+// --- Input Auto Resize (Unchanged) ---
+input.oninput = () => {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
+};
+
+// --- Theme Toggle (Unchanged) ---
+themeToggle.onclick = () => toggleTheme();
+
+// --- Clear Chat (Unchanged) ---
+clearChatBtn.onclick = () => clearChat();
+
+// =========================================================================
+// --- EXPORTS for external access (e.g., from main.js) ---
+// =========================================================================
+export { 
+  memory, 
+  memorySummary, 
+  turn, 
+  getChatReply, 
+  addMessage, 
+  handleCommand 
+};
