@@ -294,9 +294,9 @@ function addBotActions(container, bubble, text) {
   container.appendChild(actions);
 }
 
-// --- Fetch AI (Chat) - UPDATED FOR DUAL API SUPPORT ---
+// --- Fetch AI (Chat) - UPDATED FOR DEDICATED KEY ROUTING ---
 /**
- * Sends the request, iterating through URLs but only using the first key (index 0).
+ * Sends the request, routing keys based on the target API type.
  * @param {object} payload - The body of the request.
  * @param {string} model - The model ID being used.
  * @param {string} [forceApiType='AUTO'] - Forces a specific API type ('GEMINI' or 'A4F').
@@ -309,13 +309,18 @@ async function fetchAI(payload, model, forceApiType = 'AUTO') {
     
     const a4fBase = config.API_BASE[0]; 
     const geminiBase = config.API_BASE[1];
+    
+    // Determine which API type is being targeted
+    const targetApiType = (forceApiType === 'GEMINI' || (forceApiType === 'AUTO' && isGeminiModel)) 
+                          ? 'GEMINI' 
+                          : 'A4F';
 
     let urlsToTry = [];
     
     // Logic for deciding which base URL to use first
-    if (forceApiType === 'GEMINI' || (forceApiType === 'AUTO' && isGeminiModel)) {
+    if (targetApiType === 'GEMINI') {
         urlsToTry.push(geminiBase);
-    } else if (forceApiType === 'A4F' || (forceApiType === 'AUTO' && !isGeminiModel)) {
+    } else {
         urlsToTry.push(a4fBase);
     }
 
@@ -327,7 +332,8 @@ async function fetchAI(payload, model, forceApiType = 'AUTO') {
                 // Gemini URL structure: /v1beta/models/MODEL_ID:generateContent
                 urlBuilder: (b, m) => `${b}/models/${m}:generateContent`,
                 requiresBearer: false, // Key in URL query
-                name: 'Gemini Direct'
+                name: 'Gemini Direct',
+                keySource: 'GEMINI' // New identifier
             };
         } else {
             return { 
@@ -335,7 +341,8 @@ async function fetchAI(payload, model, forceApiType = 'AUTO') {
                 // A4F Proxy URL structure: PROXY + encode(A4F_BASE)
                 urlBuilder: (b, m) => config.proxiedURL(b), 
                 requiresBearer: true, // Key in Authorization header
-                name: 'A4F Proxy'
+                name: 'A4F Proxy',
+                keySource: 'A4F' // New identifier
             };
         }
     });
@@ -346,14 +353,30 @@ async function fetchAI(payload, model, forceApiType = 'AUTO') {
     for (const urlConfig of urlConfigurations) {
         const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
 
-        // --- Inner loop is now forced to run only once using the first key ---
-        // We use an array containing only the first key: [config.API_KEYS[0]]
-        for (const key of [config.API_KEYS[0]]) { 
-            // Note: This check relies on the API_KEYS array having at least one element.
-            if (!key) {
-                console.warn("API_KEYS[0] is undefined. Skipping attempt.");
-                break; // Exit the inner loop if the key doesn't exist
+        // --- Select Keys based on Target API ---
+        let keysToTry;
+        if (urlConfig.keySource === 'GEMINI') {
+            // Use only the first key for Gemini
+            keysToTry = [config.API_KEYS[0]];
+            // Also check if key exists before proceeding
+            if (!keysToTry[0]) {
+                console.warn("Gemini API key (index 0) is undefined. Skipping attempt.");
+                lastErrText = "Gemini key missing from config.";
+                continue; 
             }
+        } else {
+            // Use keys from index 1 onwards for A4F Proxy
+            // Ensure we only use valid keys
+            keysToTry = config.API_KEYS.slice(1).filter(key => key);
+            if (keysToTry.length === 0) {
+                console.warn("A4F Proxy API keys (index 1+) are missing. Skipping attempt.");
+                lastErrText = "A4F keys missing from config.";
+                continue; 
+            }
+        }
+        
+        // --- Inner loop iterates through selected keys (either [0] or [1...n]) ---
+        for (const key of keysToTry) {
             try {
                 let finalUrl = baseUrl;
                 let headers = { 'Content-Type': 'application/json' };
