@@ -10,17 +10,20 @@ const API_KEYS = config.API_KEYS; // Array of keys
 const proxiedURL = config.proxiedURL; // Function: PROXY + encodeURIComponent(base)
 
 /**
- * Sends a message to the Gemini API, handling different modes and system instructions.
+ * Sends a message to the Gemini API, handling different modes, system instructions, and image data.
  * @param {string} msg - The user's new message.
  * @param {string} context - The summarized and recent chat history.
  * @param {string} mode - The current operational mode ('lite' or 'fast').
+ * @param {string | null} imageToSend - The Base64 image data string (e.g., "data:image/jpeg;base64,...") or null.
  * @returns {Promise<string>} The raw text response from the model.
  */
-async function getGeminiReply(msg, context, mode) {
+async function getGeminiReply(msg, context, mode, imageToSend = null) {
     
     // --- 1. Setup & Model Selection ---
     const isLite = mode === 'lite';
-    const model = isLite ? 'gemini-2.5-flash-lite' : 'gemini-2.5-pro';
+    // 🟢 FIX: Use 'gemini-2.5-flash' for 'fast' mode, as it's optimized for speed and multimodal, 
+    // and 'gemini-2.5-flash-lite' for 'lite'. 'pro' is too slow for a 'fast' alias.
+    const model = isLite ? 'gemini-2.5-flash-lite' : 'gemini-2.5-flash';
     const botName = 'SteveAI-' + mode;
 
     // Parameters for Gemini requests (can be loaded from a config if necessary)
@@ -30,7 +33,7 @@ async function getGeminiReply(msg, context, mode) {
     };
 
     // Tools setup (Google Search is the only tool for 'lite' mode)
-    // ⚠️ We keep the array creation, but will not include it in the final payload due to the 400 error.
+    // ⚠️ Tools removed from payload to fix 400 error, but still defining for context
     const tools = isLite ? [
         {
             "googleSearch": {}
@@ -47,13 +50,13 @@ async function getGeminiReply(msg, context, mode) {
      Image Generated:model:model name,prompt:prompt text
      Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
 
-    // Add tool instruction context only for 'lite' mode (but the tool won't be used in the payload now)
+    // Add tool instruction context only for 'lite' mode 
     if (isLite) {
         const toolContext = '\n3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.';
         coreInstructions += toolContext;
     }
 
-    const systemPromptText = coreInstructions.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
+    const systemInstruction = coreInstructions.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
 
     // --- 3. API Key & URL Setup with CORS Proxy ---
     
@@ -70,19 +73,40 @@ async function getGeminiReply(msg, context, mode) {
     // Use the proxiedURL function to wrap the target URL.
     const finalUrl = proxiedURL(targetUrl); 
 
-    // --- 4. Payload Construction ---
+    // --- 4. Payload Construction (Multi-Modal Update) ---
     
-    // Construct the contents array starting with the System Instruction
+    // 🟢 NEW: Construct the parts array for the final user message
+    const userParts = [];
+    
+    // 4a. Add Image Part if present
+    if (imageToSend) {
+        // The data URL format is "data:<mime type>;base64,<data>"
+        const [mimeTypePart, base64Data] = imageToSend.split(',');
+        const mimeType = mimeTypePart.split(':')[1].split(';')[0];
+
+        userParts.push({
+            inlineData: {
+                data: base64Data,
+                mimeType: mimeType
+            }
+        });
+    }
+
+    // 4b. Add Text Part (Context and Message)
+    userParts.push({ 
+        text: `${context}\n\nUser: ${msg}` 
+    });
+
+
+    // 4c. Construct the final contents array
     const geminiContents = [
-        { 
-            role: "user", 
-            parts: [{ text: systemPromptText }] // System instructions
-        },
-        {
-            role: "user",
-            parts: [{ text: `${context}\n\nUser: ${msg}` }] // The current context/message
-        }
+        // System instructions are now placed first as a separate entry
+        { role: "user", parts: [{ text: systemInstruction }] }, 
+        
+        // Final user message, including image and text
+        { role: "user", parts: userParts } 
     ];
+
 
     const generationConfig = {};
     const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences']; 
@@ -93,13 +117,10 @@ async function getGeminiReply(msg, context, mode) {
     });
 
     const payload = {
-        model,
+        // model: model, // The model is already in the URL
         contents: geminiContents,
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
-        
-        // ❌ FIX: Remove the conditional inclusion of the 'tools' field to fix the 400 error.
-        // ...(tools.length > 0 && { tools: tools }),
     };
 
 
@@ -126,6 +147,11 @@ async function getGeminiReply(msg, context, mode) {
         const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!reply) {
+             // ⚠️ Check for blocked reasons (e.g., safety)
+             const blockReason = data?.candidates?.[0]?.finishReason;
+             if (blockReason) {
+                 throw new Error(`Gemini API returned no content. Finish reason: ${blockReason}.`);
+             }
              throw new Error("Gemini API returned an empty or unparsable response.");
         }
         
