@@ -1,1 +1,31 @@
-VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} 
+# .github/workflows/build-and-deploy.yml
+
+name: CI/CD Build
+
+on:
+  push:
+    branches:
+      - main
+  # ... other triggers
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ... (Checkout, Setup Node.js, Install dependencies steps) ...
+
+      # 5. The crucial step where the secret is exposed as an ENV variable
+      - name: Run Build with API Key
+        # The 'env:' keyword must be under the step it applies to.
+        env:
+          # This is where you write the line you mentioned:
+          VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} 
+          
+        run: |
+          echo "Starting build process with environment variable..."
+          # This command will now have access to VITE_GEMINI_API_KEY
+          npm run build
+          echo "Build finished."
+
+      # ... (Deployment step, e.g., to GitHub Pages) ...
