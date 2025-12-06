@@ -49,11 +49,14 @@ function shouldSummarize() {
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
-    // Range is [25ms, 75ms]
-    const minDelay = 25;
-    const maxDelay = 75; 
+    // Range is [0ms, 4ms] for maximum speed and slight variation.
+    const minDelay = 0;
+    const maxDelay = 0.4; 
+    
+    // Formula: Math.floor(Math.random() * (max - min + 1)) + min
     return Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
 }
+
 
 
 // --- Summarization ---
