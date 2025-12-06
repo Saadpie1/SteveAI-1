@@ -294,9 +294,9 @@ function addBotActions(container, bubble, text) {
   container.appendChild(actions);
 }
 
-// --- Fetch AI (Chat) - UPDATED FOR DUAL API SUPPORT ---
+// --- Fetch AI (Chat) - UPDATED FOR DUAL API SUPPORT AND SINGLE KEY USE ---
 /**
- * Sends the request, iterating through keys and base URLs until success.
+ * Sends the request, iterating through URLs but strictly using only the first key (index 0).
  * @param {object} payload - The body of the request.
  * @param {string} model - The model ID being used.
  * @param {string} [forceApiType='AUTO'] - Forces a specific API type ('GEMINI' or 'A4F').
@@ -342,10 +342,17 @@ async function fetchAI(payload, model, forceApiType = 'AUTO') {
 
     let lastErrText = "";
     
+    // --- Outer loop iterates through API URL Configurations (A4F or Gemini) ---
     for (const urlConfig of urlConfigurations) {
         const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
 
-        for (const key of config.API_KEYS) {
+        // --- ENFORCEMENT: Loop runs only once using the first key (index 0) ---
+        // This array ensures only the first key is ever passed to the fetch logic.
+        for (const key of [config.API_KEYS[0]]) { 
+            if (!key) {
+                console.warn("API_KEYS[0] is undefined. Skipping attempt.");
+                break; // Exit the inner loop if the key doesn't exist
+            }
             try {
                 let finalUrl = baseUrl;
                 let headers = { 'Content-Type': 'application/json' };
