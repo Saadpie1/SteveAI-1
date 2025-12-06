@@ -624,7 +624,8 @@ async function getChatReply(msg) {
   
   let model;
   let botName;
-  // Renamed to payloadConfig to clearly separate from the imported config object.
+  // Renamed to payloadConfig to clearly separate from the imported config object, 
+  // ensuring it only holds API-valid settings.
   let payloadConfig = {}; 
   let useGeminiPayload = false; 
 
@@ -634,9 +635,11 @@ async function getChatReply(msg) {
       model = "gemini-2.5-flash-lite"; 
       botName = "SteveAI-lite";
       useGeminiPayload = true;
-      payloadConfig = { // Now setting payloadConfig with only API-valid settings
-        thinkingConfig: { thinkingBudget: 0 },
+      payloadConfig = { // API-valid settings for 'lite'
+        // NOTE: systemInstruction is handled below and excluded from this object
         tools: [{ googleSearch: {} }], 
+        // Example: Add a temperature for generation
+        temperature: 0.7 
       };
       break;
     case 'fast': // Gemini 2.5 Flash
@@ -697,28 +700,49 @@ async function getChatReply(msg) {
   
   // 3. Payload Construction (The FIXED, Stable Logic)
   if (useGeminiPayload) {
-      // --- GEMINI PAYLOAD FORMAT (SystemInstruction in generationConfig) ---
+      // --- GEMINI PAYLOAD FORMAT ---
       
-      // 3a. Contents contains the user prompt and context
-      const geminiContents = [
-        { 
-          role: "user", 
-          parts: [{ text: `${context}\n\nUser: ${msg}` }]
-        }
-      ];
+      const geminiContents = [];
+      
+      // Determine if the System Prompt should go into the contents array (if tools are present)
+      if (payloadConfig.tools) {
+          // If tools are present, the system prompt must go into the contents array
+          geminiContents.push({ role: "system", parts: [{ text: systemPrompt }] });
+      } else {
+          // If no tools are present, we put systemInstruction at the top level
+          payloadConfig.systemInstruction = systemPrompt;
+      }
+      
+      // Add the actual user message
+      geminiContents.push({ 
+        role: "user", 
+        parts: [{ text: `${context}\n\nUser: ${msg}` }]
+      });
 
-      // 3b. Combine the system prompt into the configuration object (FIXED)
-      const fullConfig = {
-          // Spread the clean payloadConfig, not the global config
-          ...payloadConfig, 
-          systemInstruction: systemPrompt 
-      };
-
+      // --- Structure the payload based on payloadConfig properties ---
+      
+      // 3b. Separate properties for correct top-level keys
+      const generationConfig = {};
+      const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences', 'thinkingConfig'];
+      configKeys.forEach(key => {
+          if (payloadConfig[key] !== undefined) {
+              generationConfig[key] = payloadConfig[key];
+          }
+      });
+      
+      let tools = payloadConfig.tools || undefined;
+      let systemInstruction = payloadConfig.systemInstruction || undefined;
+      
       payload = {
         model,
         contents: geminiContents,
-        // CRITICAL FIX: Use 'generationConfig' as the top-level key for Gemini payload
-        ...(Object.keys(fullConfig).length > 0 && { generationConfig: fullConfig }),
+        
+        // Use 'generationConfig' for settings like temperature
+        ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
+        
+        // Add tools and systemInstruction at the top level (or omit if undefined)
+        ...(tools && { tools: tools }),
+        ...(systemInstruction && { systemInstruction: systemInstruction }),
       };
       
   } else {
