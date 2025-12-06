@@ -30,11 +30,17 @@
     "@type": "Organization",
     "name": "SteveAI",
     "url": "https://steve-ai.netlify.app/about.html",
-    "logo": "https://steve-ai.netlify.app/assets/favicon.png",
-    "founder": {
-      "@type": "Person",
-      "name": "Saadpie"
-    },
+    "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s",
+    "founder": [
+      {
+        "@type": "Person",
+        "name": "Saadpie"
+      },
+      {
+        "@type": "Person",
+        "name": "Shawaiz"
+      }
+    ],
     "description": "SteveAI-General is the ultimate AI assistant of 2025, surpassing Grok 4 0709 with features including AI chat, coding, reasoning, and image generation.",
     "contactPoint": {
       "@type": "ContactPoint",
@@ -72,6 +78,18 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid #00ffcc; /* Accent line */
+    }
+    .logo-link { /* New style for the clickable logo area */
+        text-decoration: none; 
+        color: inherit;
+        display: flex;
+        align-items: center;
+    }
+    .logo {
+        height: 30px; /* Adjust size as needed */
+        margin-right: 10px;
+        /* Ensures the logo has no border or odd styling */
+        border-radius: 4px; 
     }
     header h1 {
       margin: 0;
@@ -189,12 +207,71 @@
       color: #00ffcc;
       font-weight: bold;
     }
+
+    /* --- Responsive Design for Mobile and Smaller Screens (FIXED) --- */
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column; /* Stack logo/title on top of nav */
+            padding: 0.5rem 0.5rem; /* Reduced overall padding for compactness */
+            align-items: flex-start; /* Align everything to the left */
+        }
+        .logo-link {
+            margin-bottom: 0.5rem; /* Space between logo/title and nav */
+            width: 100%; /* Ensure logo/title takes full width for alignment */
+        }
+        header h1 {
+            font-size: 1.5rem; /* Smaller title font */
+        }
+        .logo {
+             height: 24px; /* Smaller logo */
+        }
+        nav {
+            display: flex;
+            flex-wrap: nowrap; /* FORCES horizontal layout - FIXES wrapping issue */
+            overflow-x: auto; /* Enables HORIZONTAL SCROLLING - FIXES hidden links */
+            width: 100%; /* Defines the scrollable area */
+            justify-content: flex-start; 
+            padding: 0 0.5rem; /* Small horizontal padding */
+            margin-top: 0;
+            padding-bottom: 0.5rem; /* Small bottom padding for scroll visibility */
+        }
+        nav a {
+            flex-shrink: 0; /* Ensures links don't shrink */
+            margin: 0 0.75rem 0 0; /* Tightened link spacing */
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
+        }
+        main {
+            width: 95%;
+            padding: 0 0.5rem;
+            margin: 1rem auto;
+        }
+        section {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .update-banner .visual-sticker {
+            display: block;
+            float: none;
+            margin: 10px auto;
+        }
+        .about-steveai ul, .model-list ul {
+            grid-template-columns: 1fr;
+        }
+        footer {
+            padding: 1rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    }
   </style>
   </head>
 
 <body>
   <header>
-    <h1>About SteveAI</h1>
+    <a href="/" class="logo-link">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" alt="SteveAI Logo" class="logo" loading="lazy"/> 
+        <h1>SteveAI <span style="font-size: 0.8em; color: #ff00ff;">(Ultimate AI Assistant)</span></h1>
+    </a>
     <nav>
       <a href="/">Home</a>
       <a href="/about.html" class="active">About</a>
@@ -209,7 +286,7 @@
     <section class="update-banner">
       <h2>🚀 Major Update: <strong>SteveAI-General 2025</strong></h2>
       <p>
-        SteveAI-General now surpasses <strong>Grok 4 0709</strong> in intelligence, speed, and creativity.  
+        SteveAI-General now surpasses **Grok 4 0709** in intelligence, speed, and creativity.  
         Enjoy ultra-fast reasoning, AI-assisted coding, image generation, and smarter, more context-aware chat.
       </p>
       <ul>
@@ -224,7 +301,7 @@
     <section>
       <h2>Our Mission</h2>
       <p>
-        <strong>SteveAI</strong> exists to make AI accessible, intelligent, and creative for everyone.  
+        **SteveAI** exists to make AI accessible, intelligent, and creative for everyone.  
         Chat, learn, create, and explore using the same reasoning engine powering next-gen AI experiences.
       </p>
     </section>
@@ -232,11 +309,11 @@
     <section>
       <h2>Why SteveAI?</h2>
       <ul>
-        <li>⚡ <strong>Faster</strong> than ever with SteveAI-General</li>
-        <li>💡 <strong>Understands complex logic</strong> and creative ideas</li>
-        <li>🌍 Built for <strong>learners, creators, and innovators</strong></li>
-        <li>🧠 Features include <strong>Chat</strong>, <strong>Docs</strong>, <strong>Image Generation</strong>, and <strong>Coding Assistance</strong></li>
-        <li>🔒 <strong>Privacy-focused</strong> and intuitive to use</li>
+        <li>⚡ **Faster** than ever with SteveAI-General</li>
+        <li>💡 **Understands complex logic** and creative ideas</li>
+        <li>🌍 Built for **learners, creators, and innovators**</li>
+        <li>🧠 Features include **Chat**, **Docs**, **Image Generation**, and **Coding Assistance**</li>
+        <li>🔒 **Privacy-focused** and intuitive to use</li>
       </ul>
     </section>
 
@@ -253,9 +330,9 @@
     <section>
       <h2>Behind the Project</h2>
       <p>
-        <strong>SteveAI</strong> is created and maintained by 
-        <a href="https://github.com/saad-pie" target="_blank">Saadpie</a>,  
-        a 14-year-old innovator pushing the limits of AI, automation, and intelligent systems.  
+        **SteveAI** is created and maintained by 
+        <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> (Founder) and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a> (Co-founder).
+        Saadpie is a 14-year-old innovator pushing the limits of AI, automation, and intelligent systems.  
         Check out the full project on the 
         <a href="https://github.com/saad-pie/SteveAI" target="_blank">official GitHub repository</a>.
       </p>
@@ -273,7 +350,7 @@
   </main>
 
   <footer>
-    <p>© 2025 <strong>SteveAI</strong> — Powered by <strong>SteveAI-General</strong> • Created with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> • Contact: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
+    <p>© 2025 <strong>SteveAI</strong> — Powered by <strong>SteveAI-General</strong> • Created with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a> • Contact: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
   </footer>
 </body>
 </html>
