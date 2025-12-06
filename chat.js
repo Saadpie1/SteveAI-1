@@ -4,9 +4,7 @@
 // --- Module Imports ---
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
-import { getGeminiReply } from './gemini.js'; // <-- NEW: Import Gemini logic
-// 🟢 NEW: Import elements/data from the HTML script block
-import { showLoader, hideLoader, base64Image } from '../chat.html'; // Assuming chat.js is in a subdirectory
+import { getGeminiReply } from './gemini.js'; // <-- Import Gemini logic
 
 // --- Config Variables from Import ---
 const API_BASE = config.API_BASE; // Array: [A4F, Gemini]
@@ -21,10 +19,6 @@ const input = document.getElementById('messageInput');
 const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
-
-// 🟢 NEW: DOM element from HTML file
-const clearImageBtn = document.getElementById('clearImageBtn');
-
 
 // --- Memory / Summary ---
 let memory = {};
@@ -55,8 +49,7 @@ function shouldSummarize() {
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
-    // 🐞 CRITICAL FIX: Reverting to integer millisecond range.
-    // Range is [0ms, 4ms] for maximum speed and slight variation.
+    // Fixed to use valid integer millisecond range for fast, randomized typing
     const minDelay = 0;
     const maxDelay = 4; 
     
@@ -79,8 +72,6 @@ async function generateSummary() {
   };
   try {
     // NOTE: Summary generation uses the A4F proxy path and OpenAI payload format
-    // fetchAI is only handling A4F now, so the third arg 'A4F' is technically unnecessary 
-    // but kept for clarity on the payload format.
     const data = await fetchAI(payload, payload.model);
     return data?.choices?.[0]?.message?.content?.trim() || "";
   } catch (e) {
@@ -384,6 +375,7 @@ async function fetchAI(payload, model) {
 }
 
 // --- Commands (Unchanged) ---
+
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -584,11 +576,11 @@ async function getChatReply(msg) { // <-- EXPORTED
   
   let model;
   let botName;
-  let reply = ""; // Initialize reply variable
+  let reply = ""; 
 
-  // 1. Show the loader immediately
-  if (showLoader) {
-      showLoader();
+  // 1. Show the loader immediately (Access via window, as fixed)
+  if (window.showLoader) {
+      window.showLoader();
   }
   
   try {
@@ -596,8 +588,8 @@ async function getChatReply(msg) { // <-- EXPORTED
       if (mode === 'lite' || mode === 'fast') {
           // --- GEMINI FLOW ---
           
-          // 🟢 NEW: Check for base64 image data
-          const imageToSend = base64Image;
+          // 🟢 FIX: Access base64Image globally from window
+          const imageToSend = window.base64Image;
 
           if (imageToSend && mode !== 'fast') {
               // Safety check: Only fast mode (Gemini Flash) supports images currently
@@ -609,9 +601,10 @@ async function getChatReply(msg) { // <-- EXPORTED
               // 📸 INTEGRATION: Pass message, context, mode, AND the image data
               reply = await getGeminiReply(msg, context, mode, imageToSend);
               
-              // 📸 CLEANUP: If the send was successful, clear the image data and preview
-              if (imageToSend && clearImageBtn) {
-                   clearImageBtn.click();
+              // 📸 CLEANUP: If the send was successful AND an image was sent, clear the image data and preview
+              // 🟢 FIX: Access clearImageBtn globally from window
+              if (imageToSend && window.clearImageBtn) {
+                   window.clearImageBtn.click();
               }
               
           } catch (e) {
@@ -624,9 +617,11 @@ async function getChatReply(msg) { // <-- EXPORTED
           // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
           
           // ⚠️ IMPORTANT: Clear image data if user tries to send an image in a non-Gemini mode.
-          if (base64Image) {
+          // 🟢 FIX: Access base64Image globally from window
+          if (window.base64Image) {
                addMessage("⚠️ Cannot send image in this mode. Image data has been cleared.", 'bot');
-               if (clearImageBtn) clearImageBtn.click();
+               // 🟢 FIX: Access clearImageBtn globally from window
+               if (window.clearImageBtn) window.clearImageBtn.click();
           }
 
           switch (mode) {
@@ -697,9 +692,9 @@ async function getChatReply(msg) { // <-- EXPORTED
       }
       throw e; // Re-throw the error
   } finally {
-      // 7. Hide the loader always
-      if (hideLoader) {
-          hideLoader();
+      // 7. Hide the loader always (Access via window, as fixed)
+      if (window.hideLoader) {
+          window.hideLoader();
       }
   }
 }
@@ -709,8 +704,9 @@ form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
   
-  // 📸 NEW: Allow sending an image without text
-  if (!msg && !base64Image) return; 
+  // 📸 Allow sending an image without text
+  // 🟢 FIX: Access base64Image globally from window
+  if (!msg && !window.base64Image) return; 
   
   if (msg.startsWith('/')) {
     await handleCommand(msg);
@@ -719,7 +715,7 @@ form.onsubmit = async e => {
     return;
   }
   
-  // 📸 IMPROVED: Show message in UI immediately before getting reply
+  // 📸 Show message in UI immediately before getting reply
   addMessage(msg, 'user');
   input.value = '';
   input.style.height = 'auto';
