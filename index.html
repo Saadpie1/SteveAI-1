@@ -252,24 +252,36 @@
       font-weight: bold;
     }
 
-    /* --- Responsive Design for Mobile and Smaller Screens --- */
+    /* --- Responsive Design for Mobile and Smaller Screens (FIXED) --- */
     @media (max-width: 768px) {
         header {
-            flex-direction: column;
-            padding: 1rem;
+            /* Keep on one line with overflow for navigation */
+            flex-direction: row; 
+            justify-content: space-between;
+            padding: 0.5rem 1rem; /* Reduced vertical padding */
+            overflow-x: hidden; /* Hide horizontal scrollbar for the header itself */
         }
         header h1 {
-            margin-bottom: 0.5rem;
+            font-size: 1.5rem; /* Slightly smaller title on mobile */
+        }
+        .logo {
+             height: 24px; /* Slightly smaller logo on mobile */
         }
         nav {
+            /* Allow navigation links to scroll horizontally if needed */
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-wrap: nowrap; /* Prevent wrapping */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* For smoother iOS scrolling */
+            justify-content: flex-end;
+            padding: 0 1rem 0 0.5rem; /* Padding for the scrollable area */
+            margin-top: 0; /* Remove top margin that might push things down */
         }
         nav a {
-            margin: 0.5rem 0.5rem;
-            padding: 0.4rem 0.6rem;
-            font-size: 0.9rem;
+            flex-shrink: 0; /* Ensures links don't shrink */
+            margin: 0 0.5rem; /* Reduced margins */
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
         }
         main {
             width: 95%;
@@ -431,4 +443,4 @@
     <p>© 2025 <strong>SteveAI</strong> • Made with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a></p>
   </footer>
 </body>
-</html>
+  </html>
