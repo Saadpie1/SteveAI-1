@@ -70,8 +70,7 @@ async function fetchGemini(payload, model) {
         }
     }
     
-    // ✅ CRITICAL FIX APPLIED: Use the captured detailed error message in the throw statement.
-    // This message will be caught and displayed by the fix in chat.js.
+    // CRITICAL FIX APPLIED: Use the captured detailed error message in the throw statement.
     const finalErrorMessage = lastErrText || "Gemini API failed with an unknown error or no key was available.";
     
     // Re-throw the error with a message that chat.js can catch and display
@@ -104,7 +103,8 @@ export async function getGeminiReply(msg, context, mode) {
             throw new Error("Invalid mode passed to getGeminiReply.");
     }
 
-    const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
+    // The imageModelNames variable is no longer used in the prompt but kept for context if needed elsewhere.
+    // const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
     // 2. System Prompt Construction
     const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
@@ -114,9 +114,9 @@ export async function getGeminiReply(msg, context, mode) {
     1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
     2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
         Image Generated:model:model name,prompt:prompt text
-        Available image models: ${imageModelNames}. Use the most relevant model name in your response.
-    
-    `; // <-- FIXED: Removed "The user has asked: ${msg}" from the static systemInstruction
+        
+        The model name must be a single, logical choice (e.g., "DALL-E 2", "Animagine XL 2.0"). DO NOT list all available models.
+    `; // <-- FIXED: Prompt is now simplified and the model list removed.
 
     // 3. Payload Construction (CRITICALLY CORRECT)
     const geminiContents = [
