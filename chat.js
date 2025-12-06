@@ -617,14 +617,15 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow (FINAL STABLE VERSION) ---
+// --- Chat Flow (FINAL STABLE VERSION WITH PAYLOAD FIX) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   
   let model;
   let botName;
-  let config = {}; 
+  // Renamed to payloadConfig to clearly separate from the imported config object.
+  let payloadConfig = {}; 
   let useGeminiPayload = false; 
 
   // 1. Model & Config Setup
@@ -633,7 +634,7 @@ async function getChatReply(msg) {
       model = "gemini-2.5-flash-lite"; 
       botName = "SteveAI-lite";
       useGeminiPayload = true;
-      config = {
+      payloadConfig = { // Now setting payloadConfig with only API-valid settings
         thinkingConfig: { thinkingBudget: 0 },
         tools: [{ googleSearch: {} }], 
       };
@@ -642,6 +643,7 @@ async function getChatReply(msg) {
       model = "gemini-2.5-flash";
       botName = "SteveAI-fast";
       useGeminiPayload = true;
+      payloadConfig = {}; // Initialize as empty for 'fast'
       break;
     
     // --- A4F/OpenAI Fallback Models ---
@@ -695,7 +697,7 @@ async function getChatReply(msg) {
   
   // 3. Payload Construction (The FIXED, Stable Logic)
   if (useGeminiPayload) {
-      // --- GEMINI PAYLOAD FORMAT (SystemInstruction in config) ---
+      // --- GEMINI PAYLOAD FORMAT (SystemInstruction in generationConfig) ---
       
       // 3a. Contents contains the user prompt and context
       const geminiContents = [
@@ -707,15 +709,16 @@ async function getChatReply(msg) {
 
       // 3b. Combine the system prompt into the configuration object (FIXED)
       const fullConfig = {
-          ...config, 
+          // Spread the clean payloadConfig, not the global config
+          ...payloadConfig, 
           systemInstruction: systemPrompt 
       };
 
       payload = {
         model,
         contents: geminiContents,
-        // Include the config object only if it has settings (like tools or systemInstruction)
-        ...(Object.keys(fullConfig).length > 0 && { config: fullConfig }),
+        // CRITICAL FIX: Use 'generationConfig' as the top-level key for Gemini payload
+        ...(Object.keys(fullConfig).length > 0 && { generationConfig: fullConfig }),
       };
       
   } else {
