@@ -617,7 +617,7 @@ ${imageHTML}
   }
 }
 
-// --- Chat Flow (UPDATED Model Routing and Payload) ---
+// --- Chat Flow (FINAL STABLE VERSION) ---
 async function getChatReply(msg) {
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
@@ -625,8 +625,9 @@ async function getChatReply(msg) {
   let model;
   let botName;
   let config = {}; 
-  let useGeminiPayload = false; // Flag to switch payload/response format
+  let useGeminiPayload = false; 
 
+  // 1. Model & Config Setup
   switch (mode) {
     case 'lite': // Gemini 2.5 Flash-Lite + Google Search
       model = "gemini-2.5-flash-lite"; 
@@ -643,16 +644,13 @@ async function getChatReply(msg) {
       useGeminiPayload = true;
       break;
     
-    // --- CORRECTED: 'chat' mode uses A4F proxy model ---
+    // --- A4F/OpenAI Fallback Models ---
     case 'chat': 
     default:
-      model = "provider-5/gpt-5-nano"; // RESTORED: Original A4F alias
+      model = "provider-5/gpt-5-nano"; 
       botName = "SteveAI-chat";
       useGeminiPayload = false; 
       break;
-    // ---------------------------------------------------
-
-    // --- A4F Proxy Models (Retain Provider Prefix) ---
     case 'math':
       model = "provider-1/qwen3-235b-a22b-instruct-2507";
       botName = "SteveAI-math";
@@ -681,6 +679,7 @@ async function getChatReply(msg) {
   
   const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
+  // 2. System Prompt Construction
   const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
   
   ${mode === 'lite' ? '3. **Real-Time Knowledge:** You have access to the Google Search tool to answer questions about current events or information not present in your training data.' : ''}
@@ -694,13 +693,11 @@ async function getChatReply(msg) {
 
   let payload;
   
-  // --- CORRECTED GEMINI PAYLOAD CONSTRUCTION ---
+  // 3. Payload Construction (The FIXED, Stable Logic)
   if (useGeminiPayload) {
+      // --- GEMINI PAYLOAD FORMAT (SystemInstruction in config) ---
       
-      // 1. Combine context and current message into the user's current turn
-      // Note: We assume 'context' already contains properly formatted turns (User/Bot) 
-      // or is the summary/recent turns. For the API, we package all context 
-      // and the current message into a single 'user' message for the first request.
+      // 3a. Contents contains the user prompt and context
       const geminiContents = [
         { 
           role: "user", 
@@ -708,22 +705,21 @@ async function getChatReply(msg) {
         }
       ];
 
-      // 2. Combine the system prompt into the configuration object
+      // 3b. Combine the system prompt into the configuration object (FIXED)
       const fullConfig = {
-          ...config, // existing tools/thinking config
-          systemInstruction: systemPrompt // Add system instruction here
+          ...config, 
+          systemInstruction: systemPrompt 
       };
 
       payload = {
         model,
         contents: geminiContents,
-        // Only include the configuration object if it's not empty, 
-        // using the combined fullConfig
+        // Include the config object only if it has settings (like tools or systemInstruction)
         ...(Object.keys(fullConfig).length > 0 && { config: fullConfig }),
       };
       
   } else {
-      // --- A4F/OPENAI PAYLOAD FORMAT (Unchanged, uses system role in messages) ---
+      // --- A4F/OPENAI PAYLOAD FORMAT (System role in messages) ---
       payload = {
         model,
         messages: [
@@ -738,6 +734,7 @@ async function getChatReply(msg) {
 
   const data = await fetchAI(payload, model, apiType);
   
+  // 4. Response Parsing
   let reply;
   if (useGeminiPayload) {
       // --- GEMINI RESPONSE PARSING ---
@@ -771,16 +768,3 @@ form.onsubmit = async e => {
   } catch {
     addMessage('⚠️ Request failed. Check console.', 'bot');
   }
-};
-
-// --- Input Auto Resize (Unchanged) ---
-input.oninput = () => {
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-};
-
-// --- Theme Toggle (Unchanged) ---
-themeToggle.onclick = () => toggleTheme();
-
-// --- Clear Chat (Unchanged) ---
-clearChatBtn.onclick = () => clearChat();
