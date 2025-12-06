@@ -693,19 +693,37 @@ async function getChatReply(msg) {
   The user has asked: ${msg}`;
 
   let payload;
-
+  
+  // --- CORRECTED GEMINI PAYLOAD CONSTRUCTION ---
   if (useGeminiPayload) {
-      // --- GEMINI PAYLOAD FORMAT ---
+      
+      // 1. Combine context and current message into the user's current turn
+      // Note: We assume 'context' already contains properly formatted turns (User/Bot) 
+      // or is the summary/recent turns. For the API, we package all context 
+      // and the current message into a single 'user' message for the first request.
+      const geminiContents = [
+        { 
+          role: "user", 
+          parts: [{ text: `${context}\n\nUser: ${msg}` }]
+        }
+      ];
+
+      // 2. Combine the system prompt into the configuration object
+      const fullConfig = {
+          ...config, // existing tools/thinking config
+          systemInstruction: systemPrompt // Add system instruction here
+      };
+
       payload = {
         model,
-        contents: [
-            { role: "system", parts: [{ text: systemPrompt }] },
-            { role: "user", parts: [{ text: `${context}\n\nUser: ${msg}` }] }
-        ],
-        ...(Object.keys(config).length > 0 && { config }),
+        contents: geminiContents,
+        // Only include the configuration object if it's not empty, 
+        // using the combined fullConfig
+        ...(Object.keys(fullConfig).length > 0 && { config: fullConfig }),
       };
+      
   } else {
-      // --- A4F/OPENAI PAYLOAD FORMAT ---
+      // --- A4F/OPENAI PAYLOAD FORMAT (Unchanged, uses system role in messages) ---
       payload = {
         model,
         messages: [
