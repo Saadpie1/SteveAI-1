@@ -48,7 +48,9 @@ async function getGeminiReply(msg, context, mode, imageToSend = null) {
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
      Image Generated:model:model name,prompt:prompt text
-     Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
+     Available image models: ${imageModelNames}. Use the most relevant model name in your response.
+     recommend model that supports everything and is best is imagen4
+     `;
 
     // Add tool instruction context only for 'lite' mode 
     if (isLite) {
