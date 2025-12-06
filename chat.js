@@ -158,7 +158,7 @@ function parseImageGenerationCommand(text) {
 }
 
 // --- UI: Add Messages (Fixed for image generation command and typing speed) ---
-function addMessage(text, sender) {
+function addMessage(text, sender) { // <-- EXPORTED
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
 
@@ -457,7 +457,7 @@ function showHelp() {
 }
 
 // --- Command Router (Unchanged) ---
-async function handleCommand(cmdOrParsedData) {
+async function handleCommand(cmdOrParsedData) { // <-- EXPORTED
   let command, prompt, model, numImages;
   
   if (typeof cmdOrParsedData === 'string') {
@@ -566,7 +566,7 @@ ${imageHTML}
 }
 
 // --- Chat Flow (FINAL ROUTING VERSION) ---
-async function getChatReply(msg) {
+async function getChatReply(msg) { // <-- EXPORTED
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   
@@ -625,20 +625,20 @@ async function getChatReply(msg) {
   const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
 
   // 2. System Prompt Construction (for A4F/OpenAI models)
+  // FIXED: System prompt only contains rules, not the user's message.
   const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
 
   1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
   2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
      Image Generated:model:model name,prompt:prompt text
-     Available image models: ${imageModelNames}. Use the most relevant model name in your response.
+     Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
   
-  The user has asked: ${msg}`;
-
   // 3. Payload Construction (A4F/OpenAI format)
   const payload = {
     model,
     messages: [
       { role: "system", content: systemPrompt },
+      // The user content includes the full history/context and the new message.
       { role: "user", content: `${context}\n\nUser: ${msg}` } 
     ],
   };
@@ -672,18 +672,4 @@ form.onsubmit = async e => {
   } catch {
     // This catch block now correctly relies on addMessage already being called
     // either by fetchAI (A4F path) or by the catch in getChatReply (Gemini path).
-    console.warn("Chat reply failed, error message already displayed or silent failure.");
-  }
-};
-
-// --- Input Auto Resize (Unchanged) ---
-input.oninput = () => {
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-};
-
-// --- Theme Toggle (Unchanged) ---
-themeToggle.onclick = () => toggleTheme();
-
-// --- Clear Chat (Unchanged) ---
-clearChatBtn.onclick = () => clearChat();
+    console.warn("Chat reply failed, error message already displayed or
