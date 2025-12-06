@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SteveAI Docs – SteveAI-General Update 2025 | AI Chat, Coding & Image Generation</title>
+  <title>SteveAI Docs – Ultimate AI Assistant | AI Chat, Coding & Image Generation</title>
 
-  <meta name="description" content="Official SteveAI Documentation for SteveAI-General 2025 – the most advanced AI assistant surpassing Grok 4 0709. Learn chat, reasoning, coding, image generation, and commands.">
-  <meta name="keywords" content="SteveAI, SteveAI-General, AI assistant, AI chat, reasoning AI, coding AI, AI image generation, Grok 4, AI commands, next-gen AI 2025, advanced AI documentation">
+  <meta name="description" content="Official SteveAI Documentation for the ultimate multi-modal AI assistant. Learn chat, reasoning, coding, image generation, and commands.">
+  <meta name="keywords" content="SteveAI, AI assistant, AI chat, reasoning AI, coding AI, AI image generation, AI commands, next-gen AI 2025, advanced AI documentation">
   <meta name="robots" content="index, follow">
   <meta name="author" content="Saadpie">
   <meta name="theme-color" content="#111">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="SteveAI Docs – SteveAI-General Update 2025">
-  <meta property="og:description" content="Explore SteveAI-General, surpassing Grok 4 0709 with insane features: reasoning, coding, image generation, commands, and AI chat.">
+  <meta property="og:title" content="SteveAI Docs – Ultimate AI Assistant">
+  <meta property="og:description" content="Explore SteveAI's ultimate multi-modal features: reasoning, coding, image generation, commands, and AI chat.">
   <meta property="og:url" content="https://steve-ai.netlify.app/docs.html">
   <meta property="og:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="SteveAI Docs – SteveAI-General Update 2025">
-  <meta property="twitter:description" content="SteveAI-General surpasses Grok 4 0709 with insane AI features. Learn to chat, code, and generate images with next-gen intelligence.">
+  <meta name="twitter:title" content="SteveAI Docs – Ultimate AI Assistant">
+  <meta property="twitter:description" content="SteveAI features insane AI tools. Learn to chat, code, and generate images with next-gen intelligence.">
   <meta property="twitter:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
 
   <link rel="canonical" href="https://steve-ai.netlify.app/docs.html">
@@ -28,8 +28,8 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "SteveAI Documentation – SteveAI-General Update 2025",
-    "description": "Official documentation for SteveAI-General 2025: Chat, reasoning, coding, image generation, commands, and next-gen AI features.",
+    "headline": "SteveAI Documentation – Ultimate AI Assistant",
+    "description": "Official documentation for SteveAI: Chat, reasoning, coding, image generation, commands, and next-gen AI features.",
     "author": {
       "@type": "Person",
       "name": "Saadpie"
@@ -76,6 +76,18 @@
       align-items: center;
       border-bottom: 2px solid #00ffcc; /* Accent line */
     }
+    /* ADDED Logo Link and Logo styles from index.html */
+    .logo-link { 
+        text-decoration: none; 
+        color: inherit;
+        display: flex;
+        align-items: center;
+    }
+    .logo {
+        height: 30px; 
+        margin-right: 10px;
+        border-radius: 4px; 
+    }
     header h1 {
       margin: 0;
       font-size: 1.8rem;
@@ -119,7 +131,7 @@
       font-size: 1.5rem;
     }
 
-    /* Update Banner Specific Styles (re-applied from index.html) */
+    /* Update Banner Specific Styles */
     .update-banner {
       background: linear-gradient(135deg, #1b1b1b, #333); /* Gradient background */
       border: 2px solid #00ffcc;
@@ -222,12 +234,66 @@
       color: #00ffcc;
       font-weight: bold;
     }
+    
+    /* --- Responsive Design for Mobile and Smaller Screens (From index.html fix) --- */
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column; /* Stack logo/title on top of nav */
+            padding: 0.5rem 0.5rem; /* Reduced overall padding for compactness */
+            align-items: flex-start; /* Align everything to the left */
+        }
+        .logo-link {
+            margin-bottom: 0.5rem; /* Space between logo/title and nav */
+            width: 100%; /* Ensure logo/title takes full width for alignment */
+        }
+        header h1 {
+            font-size: 1.5rem; /* Smaller title font */
+        }
+        .logo {
+             height: 24px; /* Smaller logo */
+        }
+        nav {
+            display: flex;
+            flex-wrap: nowrap; /* FORCES horizontal layout - FIXES wrapping issue */
+            overflow-x: auto; /* Enables HORIZONTAL SCROLLING - FIXES hidden links */
+            width: 100%; /* Defines the scrollable area */
+            justify-content: flex-start; 
+            padding: 0 0.5rem; /* Small horizontal padding */
+            margin-top: 0;
+            padding-bottom: 0.5rem; /* Small bottom padding for scroll visibility */
+        }
+        nav a {
+            flex-shrink: 0; /* Ensures links don't shrink */
+            margin: 0 0.75rem 0 0; /* Tightened link spacing */
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
+        }
+        main {
+            width: 95%;
+            padding: 0 0.5rem;
+            margin: 1rem auto;
+        }
+        section {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .update-banner ul {
+             column-count: 1; /* Stack list items vertically on mobile */
+        }
+        footer {
+            padding: 1rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    }
   </style>
   </head>
 
 <body>
   <header>
-    <h1>SteveAI Documentation</h1>
+    <a href="/" class="logo-link">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" alt="SteveAI Logo" class="logo" loading="lazy"/> 
+        <h1>SteveAI <span style="font-size: 0.8em; color: #ff00ff;">(Ultimate AI Assistant)</span></h1>
+    </a>
     <nav>
       <a href="/">Home</a>
       <a href="/about.html">About</a>
@@ -240,9 +306,9 @@
   <main>
 
     <section class="update-banner">
-      <h2>🚀 Major Update: <strong>SteveAI-General 2025</strong></h2>
+      <h2>🚀 Major Update: <strong>Ultimate AI Assistant</strong></h2>
       <p>
-        SteveAI-General now surpasses <strong>Grok 4 0709</strong> in speed, intelligence, and features.  
+        SteveAI now provides **ultimate** speed, intelligence, and features.  
         Unlock lightning-fast reasoning, deep context understanding, AI-assisted coding, and next-level image generation.
       </p>
       <ul>
@@ -258,8 +324,8 @@
     <section>
       <h2>Introduction</h2>
       <p>
-        Welcome to the official <strong>SteveAI Documentation</strong>.  
-        This guide covers everything about using SteveAI-General — from chatting and coding to generating images and leveraging advanced AI reasoning.
+        Welcome to the official **SteveAI Documentation**.  
+        This guide covers everything about using SteveAI — from chatting and coding to generating images and leveraging advanced AI reasoning.
       </p>
     </section>
 
@@ -268,15 +334,15 @@
       <ol>
         <li>Open the <a href="/chat.html">Chat</a> page to start a conversation.</li>
         <li>Type your question, command, or creative prompt.</li>
-        <li>Press <strong>Enter</strong> or click <strong>Send</strong> for instant AI responses.</li>
+        <li>Press **Enter** or click **Send** for instant AI responses.</li>
       </ol>
     </section>
 
     <section>
-      <h2>About SteveAI-General</h2>
+      <h2>About SteveAI's Reasoning Model</h2>
       <p>
-        SteveAI-General is the next-generation reasoning engine that powers all interactions.  
-        It exceeds Grok 4 0709 in every dimension: speed, logic, creativity, and adaptability. Key highlights:
+        SteveAI uses a multi-modal reasoning engine that powers all interactions.  
+        It is designed for superior speed, logic, creativity, and adaptability. Key highlights:
       </p>
       <ul>
         <li>🧠 Multi-step logical reasoning and problem-solving</li>
@@ -297,7 +363,7 @@
         <li>🌙 Dark/Light theme toggle</li>
         <li>🗑️ One-click chat clearing</li>
         <li>📦 Export chats in .txt or .json format</li>
-        <li>📧 Integrated contact via <strong>saadabdulrehman2010@gmail.com</strong></li>
+        <li>📧 Integrated contact via **saadabdulrehman2010@gmail.com**</li>
         <li>📝 Markdown & syntax highlighting support</li>
       </ul>
     </section>
@@ -310,7 +376,7 @@
         <li><code>/help</code> – Lists available commands</li>
         <li><code>/image &lt;prompt&gt;</code> – Generates an image from text</li>
         <li><code>/export</code> – Exports your chat as .txt or .json</li>
-        <li><code>/contact</code> – Opens contact form or mailto <strong>saadabdulrehman2010@gmail.com</strong></li>
+        <li><code>/contact</code> – Opens contact form or mailto **saadabdulrehman2010@gmail.com**</li>
         <li><code>/play</code> – Generates a summary of your conversation</li>
       </ul>
     </section>
@@ -330,9 +396,9 @@
         <p>Yes! Use the <a href="/image.html">Image Generator</a> page for instant AI image creation.</p>
       </details>
       <details>
-        <summary>How does SteveAI-General’s reasoning model work?</summary>
+        <summary>How does SteveAI’s reasoning model work?</summary>
         <p>
-          It uses multi-chain reasoning for both logic and creativity, giving fast, accurate, and context-aware AI responses far beyond traditional transformer-only models like DeepSeekV3-0324.
+          It uses multi-chain reasoning for both logic and creativity, giving fast, accurate, and context-aware AI responses far beyond traditional transformer-only models.
         </p>
       </details>
     </section>
@@ -341,8 +407,8 @@
 
   <footer>
     <p>
-      © 2025 <strong>SteveAI</strong> – Powered by <strong>SteveAI-General</strong> • Created with ❤️ by 
-      <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> • Contact: 
+      © 2025 **SteveAI** • Created with ❤️ by 
+      <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz</a> • Contact: 
       <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a>
     </p>
   </footer>
