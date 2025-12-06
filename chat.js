@@ -208,6 +208,7 @@ function addMessage(text, sender) {
     chat.scrollTop = chat.scrollHeight;
 
     let i = 0, buf = "";
+    // When thinking is present, only type out the final answer to avoid markdown conflicts during typing
     const contentToType = thinking ? answer : text;
 
     (function type() {
@@ -624,9 +625,10 @@ async function getChatReply(msg) {
   
   let model;
   let botName;
-  // Renamed to payloadConfig to clearly separate from the imported config object, 
-  // ensuring it only holds API-valid settings.
-  let payloadConfig = {}; 
+  // This object will hold *only* generation parameters like temperature.
+  let generationParams = {}; 
+  // This array will hold tool configurations, if any.
+  let tools = [];
   let useGeminiPayload = false; 
 
   // 1. Model & Config Setup
@@ -635,18 +637,16 @@ async function getChatReply(msg) {
       model = "gemini-2.5-flash-lite"; 
       botName = "SteveAI-lite";
       useGeminiPayload = true;
-      payloadConfig = { // API-valid settings for 'lite'
-        // NOTE: systemInstruction is handled below and excluded from this object
-        tools: [{ googleSearch: {} }], 
-        // Example: Add a temperature for generation
-        temperature: 0.7 
-      };
+      // Tools are placed here
+      tools = [{ googleSearch: {} }]; 
+      // Generation parameters (like temperature) are placed here
+      generationParams = { temperature: 0.7 };
       break;
     case 'fast': // Gemini 2.5 Flash
       model = "gemini-2.5-flash";
       botName = "SteveAI-fast";
       useGeminiPayload = true;
-      payloadConfig = {}; // Initialize as empty for 'fast'
+      generationParams = {}; // Empty for 'fast'
       break;
     
     // --- A4F/OpenAI Fallback Models ---
@@ -702,47 +702,38 @@ async function getChatReply(msg) {
   if (useGeminiPayload) {
       // --- GEMINI PAYLOAD FORMAT ---
       
-      const geminiContents = [];
-      
-      // Determine if the System Prompt should go into the contents array (if tools are present)
-      if (payloadConfig.tools) {
-          // If tools are present, the system prompt must go into the contents array
-          geminiContents.push({ role: "system", parts: [{ text: systemPrompt }] });
-      } else {
-          // If no tools are present, we put systemInstruction at the top level
-          payloadConfig.systemInstruction = systemPrompt;
-      }
-      
-      // Add the actual user message
-      geminiContents.push({ 
-        role: "user", 
-        parts: [{ text: `${context}\n\nUser: ${msg}` }]
-      });
+      const geminiContents = [
+        // Contents array ONLY contains the user prompt and context (role: user/model ONLY)
+        { 
+          role: "user", 
+          parts: [{ text: `${context}\n\nUser: ${msg}` }]
+        }
+      ];
 
-      // --- Structure the payload based on payloadConfig properties ---
+      // 3b. Build generationConfig object
       
-      // 3b. Separate properties for correct top-level keys
       const generationConfig = {};
-      const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences', 'thinkingConfig'];
+      // Keys that belong inside the generationConfig object
+      const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences']; 
+      
       configKeys.forEach(key => {
-          if (payloadConfig[key] !== undefined) {
-              generationConfig[key] = payloadConfig[key];
+          if (generationParams[key] !== undefined) {
+              generationConfig[key] = generationParams[key];
           }
       });
-      
-      let tools = payloadConfig.tools || undefined;
-      let systemInstruction = payloadConfig.systemInstruction || undefined;
       
       payload = {
         model,
         contents: geminiContents,
         
+        // CRITICAL FIX: The system prompt MUST be a top-level property.
+        systemInstruction: systemPrompt, 
+        
         // Use 'generationConfig' for settings like temperature
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
         
-        // Add tools and systemInstruction at the top level (or omit if undefined)
-        ...(tools && { tools: tools }),
-        ...(systemInstruction && { systemInstruction: systemInstruction }),
+        // Add tools at the top level (only for lite mode)
+        ...(tools.length > 0 && { tools: tools }),
       };
       
   } else {
