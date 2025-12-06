@@ -672,4 +672,30 @@ form.onsubmit = async e => {
   } catch {
     // This catch block now correctly relies on addMessage already being called
     // either by fetchAI (A4F path) or by the catch in getChatReply (Gemini path).
-    console.warn("Chat reply failed, error message already displayed or
+    console.warn("Chat reply failed, error message already displayed or silent failure.");
+  }
+};
+
+// --- Input Auto Resize (Unchanged) ---
+input.oninput = () => {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
+};
+
+// --- Theme Toggle (Unchanged) ---
+themeToggle.onclick = () => toggleTheme();
+
+// --- Clear Chat (Unchanged) ---
+clearChatBtn.onclick = () => clearChat();
+
+// =========================================================================
+// --- EXPORTS for external access (e.g., from main.js) ---
+// =========================================================================
+export { 
+  memory, 
+  memorySummary, 
+  turn, 
+  getChatReply, 
+  addMessage, 
+  handleCommand 
+};
