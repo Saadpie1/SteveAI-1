@@ -5,6 +5,8 @@
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
 import { getGeminiReply } from './gemini.js'; // <-- NEW: Import Gemini logic
+// 🟢 NEW: Import elements/data from the HTML script block
+import { showLoader, hideLoader, base64Image } from '../chat.html'; // Assuming chat.js is in a subdirectory
 
 // --- Config Variables from Import ---
 const API_BASE = config.API_BASE; // Array: [A4F, Gemini]
@@ -19,6 +21,10 @@ const input = document.getElementById('messageInput');
 const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
+
+// 🟢 NEW: DOM element from HTML file
+const clearImageBtn = document.getElementById('clearImageBtn');
+
 
 // --- Memory / Summary ---
 let memory = {};
@@ -45,18 +51,18 @@ function shouldSummarize() {
 }
 
 /**
- * Generates a random delay for a more natural, fast typing effect (1ms to 2ms).
+ * Generates a random delay for a more natural, fast typing effect (0ms to 4ms).
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
+    // 🐞 CRITICAL FIX: Reverting to integer millisecond range.
     // Range is [0ms, 4ms] for maximum speed and slight variation.
     const minDelay = 0;
-    const maxDelay = 0.0005; 
+    const maxDelay = 4; 
     
     // Formula: Math.floor(Math.random() * (max - min + 1)) + min
     return Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
 }
-
 
 
 // --- Summarization ---
@@ -377,8 +383,7 @@ async function fetchAI(payload, model) {
     throw new Error("All A4F API key attempts failed.");
 }
 
-// --- Commands (Unchanged for most) ---
-
+// --- Commands (Unchanged) ---
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -581,18 +586,33 @@ async function getChatReply(msg) { // <-- EXPORTED
   let botName;
   let reply = ""; // Initialize reply variable
 
-  // 🟢 NEW: 1. Show the loader immediately
-  if (window.showLoader) {
-      window.showLoader();
+  // 1. Show the loader immediately
+  if (showLoader) {
+      showLoader();
   }
   
   try {
       // 2. Determine Model and API Type
       if (mode === 'lite' || mode === 'fast') {
           // --- GEMINI FLOW ---
+          
+          // 🟢 NEW: Check for base64 image data
+          const imageToSend = base64Image;
+
+          if (imageToSend && mode !== 'fast') {
+              // Safety check: Only fast mode (Gemini Flash) supports images currently
+              addMessage("⚠️ Image processing is only enabled in **SteveAI-fast** mode.", 'bot');
+              throw new Error("Image processing mode mismatch.");
+          }
+
           try {
-              // Direct call to the new gemini.js function
-              reply = await getGeminiReply(msg, context, mode);
+              // 📸 INTEGRATION: Pass message, context, mode, AND the image data
+              reply = await getGeminiReply(msg, context, mode, imageToSend);
+              
+              // 📸 CLEANUP: If the send was successful, clear the image data and preview
+              if (imageToSend && clearImageBtn) {
+                   clearImageBtn.click();
+              }
               
           } catch (e) {
               // CRITICAL FIX: Explicitly call addMessage to display the error text
@@ -602,6 +622,13 @@ async function getChatReply(msg) { // <-- EXPORTED
           }
       } else {
           // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
+          
+          // ⚠️ IMPORTANT: Clear image data if user tries to send an image in a non-Gemini mode.
+          if (base64Image) {
+               addMessage("⚠️ Cannot send image in this mode. Image data has been cleared.", 'bot');
+               if (clearImageBtn) clearImageBtn.click();
+          }
+
           switch (mode) {
             case 'chat': 
             default:
@@ -664,16 +691,15 @@ async function getChatReply(msg) { // <-- EXPORTED
       memory[++turn] = { user: msg, bot: reply };
       return reply;
   } catch (e) {
-      // If the error was not already displayed (i.e., not a Gemini error), display it here.
-      // fetchAI already handles adding the error message, so this primarily catches other issues.
-      if (e && !e.message.includes('Gemini Error:')) { 
+      // If the error was not already displayed, display it here.
+      if (e && !e.message.includes('Gemini Error:') && !e.message.includes('Image processing mode mismatch')) { 
           addMessage(`⚠️ **Critical Error:** ${e.message}`, 'bot');
       }
       throw e; // Re-throw the error
   } finally {
-      // 🟢 NEW: 7. Hide the loader always
-      if (window.hideLoader) {
-          window.hideLoader();
+      // 7. Hide the loader always
+      if (hideLoader) {
+          hideLoader();
       }
   }
 }
@@ -682,22 +708,26 @@ async function getChatReply(msg) { // <-- EXPORTED
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
-  if (!msg) return;
+  
+  // 📸 NEW: Allow sending an image without text
+  if (!msg && !base64Image) return; 
+  
   if (msg.startsWith('/')) {
     await handleCommand(msg);
     input.value = '';
     input.style.height = 'auto';
     return;
   }
+  
+  // 📸 IMPROVED: Show message in UI immediately before getting reply
   addMessage(msg, 'user');
   input.value = '';
   input.style.height = 'auto';
+  
   try {
     const r = await getChatReply(msg);
     addMessage(r, 'bot');
   } catch {
-    // This catch block now correctly relies on addMessage already being called
-    // either by fetchAI (A4F path) or by the catch in getChatReply (Gemini path).
     console.warn("Chat reply failed, error message already displayed or silent failure.");
   }
 };
