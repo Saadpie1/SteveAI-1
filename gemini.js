@@ -74,11 +74,11 @@ async function getGeminiReply(msg, context, mode) {
     // 3a. Target Gemini URL (Direct API endpoint)
     const geminiBase = API_BASE[1];
     
-    // **UPDATE:** Append the API key as a query parameter for CORS proxy compatibility.
-    const targetUrl = `${geminiBase}/${model}:generateContent?key=${geminiKey}`; 
+    // 🟢 FIX: Insert /models/ into the path to resolve the 404 error
+    const targetUrl = `${geminiBase}/models/${model}:generateContent?key=${geminiKey}`; 
 
     // 3b. Final Proxied URL
-    // **UPDATE:** Use the proxiedURL function to wrap the target URL.
+    // Use the proxiedURL function to wrap the target URL.
     const finalUrl = proxiedURL(targetUrl); 
 
     // --- 4. Payload Construction ---
@@ -106,7 +106,6 @@ async function getGeminiReply(msg, context, mode) {
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
         
-        // Include tools for lite mode
         ...(tools.length > 0 && { tools: tools }),
     };
 
@@ -114,11 +113,11 @@ async function getGeminiReply(msg, context, mode) {
     // --- 5. Fetch and Return Reply ---
     try {
         const headers = {
-            // **UPDATE:** Only Content-Type is needed, as the API key is now in the URL.
+            // Only Content-Type is needed, as the API key is now in the URL.
             'Content-Type': 'application/json',
         };
 
-        // **UPDATE:** Use the proxied URL
+        // Use the proxied URL
         const res = await fetch(finalUrl, {
             method: 'POST',
             headers: headers,
@@ -128,7 +127,6 @@ async function getGeminiReply(msg, context, mode) {
         if (!res.ok) {
             const errorText = await res.text();
             console.error(`Gemini API Error Status: ${res.status}. Text: ${errorText}`);
-            // Provide more context in the error message, since it's now proxied
             throw new Error(`Proxy/API call failed. Status: ${res.status}. Response: ${errorText.substring(0, 150)}...`);
         }
         
@@ -144,7 +142,6 @@ async function getGeminiReply(msg, context, mode) {
 
     } catch (e) {
         console.error("Gemini Fetch Error:", e);
-        // Re-throw with more specific context for chat.js
         throw new Error(`Failed to fetch. Check network or proxy configuration. Original error: ${e.message}`); 
     }
 }
