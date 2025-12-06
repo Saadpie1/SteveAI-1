@@ -1,7 +1,10 @@
 // config.js
 
 // --- API Config ---
-const API_BASE = "https://api.a4f.co/v1/chat/completions";
+const API_BASE = [
+  "https://api.a4f.co/v1/chat/completions",
+  "https://generativelanguage.googleapis.com/v1beta"
+];
 const PROXY = "https://corsproxy.io/?url=";
 const proxiedURL = (base) => PROXY + encodeURIComponent(base);
 
