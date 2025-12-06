@@ -768,3 +768,16 @@ form.onsubmit = async e => {
   } catch {
     addMessage('⚠️ Request failed. Check console.', 'bot');
   }
+};
+
+// --- Input Auto Resize (Unchanged) ---
+input.oninput = () => {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
+};
+
+// --- Theme Toggle (Unchanged) ---
+themeToggle.onclick = () => toggleTheme();
+
+// --- Clear Chat (Unchanged) ---
+clearChatBtn.onclick = () => clearChat();
