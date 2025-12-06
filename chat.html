@@ -68,14 +68,7 @@
   </div>
 
   <div id="chat">
-    <div id="loading-indicator" class="bot-message" style="display:none;">
-        <div class="bouncing-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
     </div>
-  </div>
 
   <div id="commandHints" hidden>
     <span>/help</span><span>/clear</span><span>/theme</span>
@@ -187,15 +180,13 @@
     }
     
     /* 🟢 NEW CSS FOR LOADING INDICATOR */
-    .bot-message { 
-        /* Assuming bot-message is already styled for alignment/padding */
-        /* If not, you'll need styles for user/bot message alignment */
-    }
+    /* .bot-message is assumed to have proper alignment/padding */
 
     .bouncing-dots {
       display: flex;
       align-items: center;
       margin-left: 5px; /* Adjust as needed */
+      height: 20px; /* Give it a set height so it doesn't collapse */
     }
     .bouncing-dots span {
       width: 8px; /* Dot size */
@@ -226,7 +217,7 @@
     // --- EXISTING SCRIPT LOGIC (Input/Hints) ---
     const inputEl = document.getElementById('messageInput');
     const hintsEl = document.getElementById('commandHints');
-
+    
     inputEl.addEventListener('input', () => {
       hintsEl.hidden = !inputEl.value.trim().startsWith('/');
     });
@@ -242,22 +233,56 @@
       };
     });
     
-    // --- 🟢 NEW SCRIPT LOGIC (Loader Control) ---
-    const loadingIndicator = document.getElementById('loading-indicator');
+    // --- 🟢 UPDATED SCRIPT LOGIC (Loader Control - Dynamic Creation) ---
+    const chatWindow = document.getElementById('chat');
+    // Global variable to hold the reference to the currently displayed loader element
+    let currentLoaderElement = null; 
 
-    // Make these functions global so they can be called from chat.js
+    // This function creates, appends, and stores the loader element
     window.showLoader = () => {
-        loadingIndicator.style.display = 'flex'; // Use flex to center the dots if needed, or block
-        // IMPORTANT: Ensure the chat scrolls to the bottom when the loader appears
-        const chatWindow = document.getElementById('chat');
+        // If a loader already exists, do nothing (prevents duplicates)
+        if (currentLoaderElement) return;
+
+        // 1. Create the container div
+        const container = document.createElement('div');
+        container.className = 'message-container bot'; 
+        
+        // 2. Create the bubble div
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble bot';
+        container.appendChild(bubble);
+
+        // 3. Create the content div
+        const content = document.createElement('div');
+        content.className = 'bubble-content';
+        
+        // 4. Inject the bouncing dots HTML
+        content.innerHTML = `
+            <div class="bouncing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        bubble.appendChild(content);
+
+        // 5. Store reference and append to chat window
+        currentLoaderElement = container; 
+        chatWindow.appendChild(currentLoaderElement);
+        
+        // 6. Scroll to the bottom
         chatWindow.scrollTop = chatWindow.scrollHeight;
     };
 
+    // This function removes the loader element
     window.hideLoader = () => {
-        loadingIndicator.style.display = 'none';
+        if (currentLoaderElement && chatWindow.contains(currentLoaderElement)) {
+            chatWindow.removeChild(currentLoaderElement);
+        }
+        currentLoaderElement = null; // Clear the reference
     };
 
-    // Export these for use in chat.js (Since chat.js uses modules, exporting to window is a common workaround)
+    // Export these for use in chat.js 
     export { showLoader, hideLoader }; 
   </script>
 </body>
