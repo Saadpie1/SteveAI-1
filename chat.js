@@ -582,8 +582,9 @@ async function getChatReply(msg) {
           memory[++turn] = { user: msg, bot: reply };
           return reply;
       } catch (e) {
-          // gemini.js will handle display messages via addMessage/fetchGemini
-          // so we just re-throw to stop the chat flow here.
+          // CRITICAL FIX: Explicitly call addMessage to display the error text
+          addMessage(`⚠️ **Gemini Error:** ${e.message}`, 'bot');
+          // Re-throw to stop the chat flow process cleanly
           throw e; 
       }
   }
@@ -669,7 +670,8 @@ form.onsubmit = async e => {
     const r = await getChatReply(msg);
     addMessage(r, 'bot');
   } catch {
-    // Already handled error message display inside fetchAI or getGeminiReply
+    // This catch block now correctly relies on addMessage already being called
+    // either by fetchAI (A4F path) or by the catch in getChatReply (Gemini path).
     console.warn("Chat reply failed, error message already displayed or silent failure.");
   }
 };
