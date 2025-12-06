@@ -65,7 +65,7 @@ async function generateSummary() {
   const payload = {
     // NOTE: Using a non-Gemini model here for summarization. 
     // This payload uses the OpenAI format ('messages').
-    model: "provider-3/gpt-4o-mini",
+    model: "provider-2/gpt-4o-mini",
     messages: [
       { role: "system", content: "You are SteveAI, made by saadpie and its vice ceo shawaiz. Summarize the following chat context clearly." },
       { role: "user", content: raw }
