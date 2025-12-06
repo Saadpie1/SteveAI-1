@@ -53,7 +53,7 @@ export async function generateImage(prompt, modelName = IMAGE_MODELS[0].id, numI
   if (numImages < 1 || numImages > 4) throw new Error("Number of images must be between 1 and 4."); // API limits often exist
 
   try {
-    const apiKey = config.API_KEYS[0]; 
+    const apiKey = config.API_KEYS[1]; 
 
     const response = await fetch("https://api.a4f.co/v1/images/generations", {
       method: "POST",
