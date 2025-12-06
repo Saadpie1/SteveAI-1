@@ -135,7 +135,7 @@
       border-top: 1px solid #333;
       background: #111;
       display: flex;
-      /* 🟢 NEW: Changed to block to allow preview area above form */
+      /* Changed to block to allow preview area above form */
       flex-direction: column; 
       align-items: center; /* Center the form and preview */
     }
@@ -198,7 +198,7 @@
       background: #333;
     }
     
-    /* 🟢 NEW: Styling for Image Button and Preview */
+    /* Styling for Image Button and Preview */
     #imageUploadBtn {
         width: 40px;
         height: 40px;
@@ -304,7 +304,7 @@
   </style>
 
   <script>
-    // 🟢 NEW: Global variable to hold the Base64 image data
+    // 🟢 FIX: Global variable to hold the Base64 image data (attached to window)
     let base64Image = null;
 
     // --- EXISTING SCRIPT LOGIC (Input/Hints) ---
@@ -326,7 +326,7 @@
       };
     });
     
-    // --- 🟢 NEW SCRIPT LOGIC (Image Handling) ---
+    // --- NEW SCRIPT LOGIC (Image Handling) ---
     const imageInputFile = document.getElementById('imageInputFile');
     const imageUploadBtn = document.getElementById('imageUploadBtn');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -345,8 +345,9 @@
             const reader = new FileReader();
             
             reader.onload = (event) => {
-                // Set the global Base64 variable
+                // Set the local variable, which is exposed to window below
                 base64Image = event.target.result; 
+                window.base64Image = base64Image; // ⬅️ EXPOSE TO WINDOW
                 
                 // Show preview
                 imagePreview.src = base64Image;
@@ -364,32 +365,18 @@
     // 3. Clear Image Handler
     clearImageBtn.addEventListener('click', () => {
         base64Image = null;
+        window.base64Image = null; // ⬅️ CLEAR FROM WINDOW
         imagePreview.src = '';
         imageInputFile.value = ''; // Clear the file input for re-uploading the same file
         imagePreviewContainer.style.display = 'none';
         inputEl.focus();
     });
-
-    // 4. Update Form Submission (This is illustrative, your chat.js will handle the actual send)
-    // NOTE: Your actual submission logic in chat.js needs to check for the global 'base64Image' variable
-    // inputForm.addEventListener('submit', (e) => {
-    //     e.preventDefault();
-    //     // Send logic here: use inputEl.value AND the global base64Image
-    //     if (base64Image) {
-    //         console.log("Sending image data and message:", inputEl.value);
-    //         // After successful send, clear the image
-    //         clearImageBtn.click();
-    //     } else {
-    //         // console.log("Sending text message:", inputEl.value);
-    //     }
-    //     // inputEl.value = '';
-    // });
-    
     
     // --- EXISTING SCRIPT LOGIC (Loader Control) ---
     const loadingIndicator = document.getElementById('loading-indicator');
     const chatWindow = document.getElementById('chat');
 
+    // 🟢 FIX: Attach loader functions to window
     window.showLoader = () => {
         if (!loadingIndicator || !chatWindow) return;
 
@@ -403,8 +390,8 @@
         loadingIndicator.style.display = 'none';
     };
 
-    // Export the loader functions and the image data for chat.js
-    export { showLoader, hideLoader, base64Image }; 
+    // 🟢 FIX: Expose the clear button globally so chat.js can trigger the image cleanup
+    window.clearImageBtn = clearImageBtn; 
   </script>
 </body>
 </html>
