@@ -468,40 +468,58 @@ function showHelp() {
   addMessage(helpText, 'bot');
 }
 
-// --- Command Router (Unchanged) ---
-// ... (handleCommand remains unchanged) ...
+// --- Command Router (Updated for Image Command String Check) ---
 async function handleCommand(cmdOrParsedData) { // <-- EXPORTED
   let command, prompt, model, numImages;
   
   if (typeof cmdOrParsedData === 'string') {
-    const parts = cmdOrParsedData.trim().split(' ');
-    command = parts[0].toLowerCase();
-    const args = parts.slice(1);
+    
+    // 🟢 NEW LOGIC: Check if the string is a raw 'Image Generated:' command (from getFastModelAnalysis)
+    const imageCommandCheck = parseImageGenerationCommand(cmdOrParsedData);
+    
+    if (imageCommandCheck) {
+        // If it matches the format, convert it to the internal object type and bypass standard string parsing
+        command = '/image';
+        prompt = imageCommandCheck.prompt;
+        // Use the model name to find the ID, falling back to a default if necessary
+        const modelObject = IMAGE_MODELS.find(m => m.name.toLowerCase() === imageCommandCheck.model.toLowerCase());
+        model = modelObject ? modelObject.id : IMAGE_MODELS[5].id; 
+        numImages = 1; // Analysis mode is designed for single-image execution
+        
+    } else {
+        // --- STANDARD STRING COMMAND PARSING (must start with /) ---
+        
+        const parts = cmdOrParsedData.trim().split(' ');
+        command = parts[0].toLowerCase();
+        const args = parts.slice(1);
 
-    if (command === '/image') {
-      prompt = args.join(' ');
-      numImages = 1;
-      model = IMAGE_MODELS[5].id;
+        if (command === '/image') {
+          prompt = args.join(' ');
+          numImages = 1;
+          model = IMAGE_MODELS[5].id;
 
-      const lastArg = args[args.length - 1];
-      if (!isNaN(parseInt(lastArg, 10)) && parseInt(lastArg, 10) > 0) {
-        numImages = Math.min(4, parseInt(lastArg, 10));
-        prompt = args.slice(0, -1).join(' '); 
-      }
-      
-      const modelMatch = IMAGE_MODELS.find(m => prompt.toLowerCase().includes(m.name.toLowerCase()));
-      if (modelMatch) {
-          model = modelMatch.id;
-          const nameRegex = new RegExp(modelMatch.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
-          prompt = prompt.replace(nameRegex, '').trim();
-      }
+          const lastArg = args[args.length - 1];
+          if (!isNaN(parseInt(lastArg, 10)) && parseInt(lastArg, 10) > 0) {
+            numImages = Math.min(4, parseInt(lastArg, 10));
+            prompt = args.slice(0, -1).join(' '); 
+          }
+          
+          const modelMatch = IMAGE_MODELS.find(m => prompt.toLowerCase().includes(m.name.toLowerCase()));
+          if (modelMatch) {
+              model = modelMatch.id;
+              const nameRegex = new RegExp(modelMatch.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+              prompt = prompt.replace(nameRegex, '').trim();
+          }
+        }
     }
   } else if (typeof cmdOrParsedData === 'object' && cmdOrParsedData.type === 'image_auto') {
+    // --- INTERNAL OBJECT PARSING (e.g., from addMessage) ---
     command = '/image';
     prompt = cmdOrParsedData.prompt;
     model = cmdOrParsedData.modelId;
     numImages = cmdOrParsedData.numImages; 
   } else {
+    // ⚠️ Fallback for unexpected string input (e.g., 'image' without / that failed parsing checks)
     const parts = cmdOrParsedData.trim().split(' ');
     command = parts[0].toLowerCase();
   }
