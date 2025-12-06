@@ -27,7 +27,6 @@ async function getGeminiReply(msg, context, mode) {
     const generationParams = {
         temperature: 0.8,
         topP: 0.9,
-        // ... other parameters
     };
 
     // Tools setup (Google Search is the only tool for 'lite' mode)
@@ -53,39 +52,35 @@ async function getGeminiReply(msg, context, mode) {
         coreInstructions += toolContext;
     }
 
-    // Clean up the text (remove newlines, collapse extra spaces)
     const systemPromptText = coreInstructions.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
-
-    // CRITICAL: Construct the systemInstruction as a structured object
-    const finalPayloadInstructions = {
-        systemInstruction: {
-            parts: [{ text: systemPromptText }]
-        }
-    };
 
     // --- 3. API Key & URL Setup with CORS Proxy ---
     
-    // Use the Gemini API key (Assumed to be the first key in the array: index 0)
     const geminiKey = API_KEYS[0]; 
     if (!geminiKey) {
         throw new Error("Gemini API key (index 0) is missing from config.");
     }
     
-    // 3a. Target Gemini URL (Direct API endpoint)
     const geminiBase = API_BASE[1];
     
-    // 🟢 FIX: Insert /models/ into the path to resolve the 404 error
+    // 🟢 CORRECTED URL: Insert /models/ into the path 
     const targetUrl = `${geminiBase}/models/${model}:generateContent?key=${geminiKey}`; 
 
-    // 3b. Final Proxied URL
     // Use the proxiedURL function to wrap the target URL.
     const finalUrl = proxiedURL(targetUrl); 
 
     // --- 4. Payload Construction ---
+    
+    // 🟢 FIX: Construct the contents array starting with the System Instruction
+    // The role "user" will then contain the history/context AND the new message.
     const geminiContents = [
         { 
             role: "user", 
-            parts: [{ text: `${context}\n\nUser: ${msg}` }]
+            parts: [{ text: systemPromptText }] // System instructions are passed in the first 'user' role message
+        },
+        {
+            role: "user",
+            parts: [{ text: `${context}\n\nUser: ${msg}` }] // The current context/message
         }
     ];
 
@@ -99,13 +94,14 @@ async function getGeminiReply(msg, context, mode) {
 
     const payload = {
         model,
+        // 🟢 FIX: contents now holds both the system instruction and user message
         contents: geminiContents,
         
-        // Include the structured systemInstruction object
-        ...finalPayloadInstructions, 
+        // ❌ REMOVED: finalPayloadInstructions (no longer needed)
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
         
+        // Include tools for lite mode
         ...(tools.length > 0 && { tools: tools }),
     };
 
@@ -113,11 +109,9 @@ async function getGeminiReply(msg, context, mode) {
     // --- 5. Fetch and Return Reply ---
     try {
         const headers = {
-            // Only Content-Type is needed, as the API key is now in the URL.
             'Content-Type': 'application/json',
         };
 
-        // Use the proxied URL
         const res = await fetch(finalUrl, {
             method: 'POST',
             headers: headers,
