@@ -2,7 +2,6 @@
 
 // --- Module Imports ---
 import { IMAGE_MODELS } from './image.js'; 
-// NOTE: Removed 'import { FUNCTION_TOOLS } from './function_tools.js';'
 import config from './config.js'; 
 
 // --- Configuration from Import ---
@@ -76,6 +75,8 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     const geminiBase = API_BASE[1];
     
     // Correct path: Insert /models/ into the path
+    // NOTE: This REST API endpoint (v1beta/models) requires the system instruction 
+    // to be inside the contents array with role: "system".
     const targetUrl = `${geminiBase}/models/${model}:generateContent?key=${geminiKey}`; 
 
     // Use the proxiedURL function to wrap the target URL.
@@ -110,11 +111,23 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     });
 
 
-    // 4c. Construct the final contents array - ONLY conversational turns go here.
-    const geminiContents = [
-        // Final user message, including image and text
-        { role: "user", parts: userParts } 
-    ];
+    // 4c. Construct the final contents array - Now includes system instruction at the start.
+    const geminiContents = [];
+    
+    // ⚠️ FIX: The system instruction must be the FIRST item in the contents array 
+    // and have role: "system" for this REST API endpoint.
+    if (systemInstruction) {
+        geminiContents.push({ 
+            role: "system", 
+            parts: [{ text: systemInstruction }] 
+        });
+    }
+
+    // Add the user's final message
+    geminiContents.push({ 
+        role: "user", 
+        parts: userParts 
+    });
 
 
     const generationConfig = {};
@@ -127,12 +140,12 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
 
     const payload = {
         // model: model, // The model is already in the URL
-        contents: geminiContents,
+        contents: geminiContents, // System instruction and user message are here
         
-        // 🟢 Correct placement of system instruction (Top-level field)
-        ...(systemInstruction && { systemInstruction: systemInstruction }), 
+        // ❌ REMOVED: systemInstruction top-level field to fix 400 error
+        // ...(systemInstruction && { systemInstruction: systemInstruction }), 
         
-        // 🟢 TOOLS: Only include the tools field if the tools array is populated (only for 'lite' mode here)
+        // 🟢 TOOLS: Only include the tools field if the tools array is populated
         ...(tools.length > 0 && { tools: tools }),
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
@@ -154,12 +167,14 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
         if (!res.ok) {
             const errorText = await res.text();
             console.error(`Gemini API Error Status: ${res.status}. Text: ${errorText}`);
+            // Check for known systemInstruction error for clearer debug
+            if (errorText.includes('Unknown name "systemInstruction"')) {
+                 throw new Error(`CRITICAL: API rejected 'systemInstruction' as top-level field. Check API version/docs. Status: ${res.status}.`);
+            }
             throw new Error(`Proxy/API call failed. Status: ${res.status}. Response: ${errorText.substring(0, 150)}...`);
         }
         
         const data = await res.json();
-        
-        // NOTE: Function Calling Check (step 6) removed as there are no function declarations
         
         const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
