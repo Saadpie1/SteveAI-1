@@ -624,6 +624,19 @@ async function getFastModelAnalysis(msg, imageToSend) {
 }
 // ----------------------------------------------
 
+/**
+ * Checks if the message is clearly requesting an image generation or edit.
+ * @param {string} msg - The user's message.
+ * @returns {boolean} True if keywords for generation are present.
+ */
+function isImageGenerationRequest(msg) {
+    if (!msg) return false;
+    const lowerMsg = msg.toLowerCase();
+    
+    // Keywords from gemini.js Rule 2: generate, create, make, show (in context of creation), edit.
+    const keywords = ['generate', 'create', 'make', 'show me', 'edit', 'remix', 'draw', 'paint'];
+    return keywords.some(keyword => lowerMsg.includes(keyword));
+}
 
 // --- Chat Flow (FINAL ROUTING VERSION - UPDATED) ---
 async function getChatReply(msg) { // <-- EXPORTED
@@ -644,50 +657,67 @@ async function getChatReply(msg) { // <-- EXPORTED
       // 2. Determine Model and API Type
       const imageToSend = window.base64Image;
 
-      // 🟢 CRITICAL: IF IMAGE IS PRESENT, BYPASS CHAT FLOW AND EXECUTE INTERNAL ANALYSIS
+      // 🟢 CRITICAL: IF IMAGE IS PRESENT, check for GENERATION intent
       if (imageToSend) {
-          if (mode !== 'fast') {
-              // This is a safety check; form.onsubmit should handle the mode switch.
-              modeSelect.value = 'fast'; 
-              addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for multi-modal processing.`, 'bot');
+          
+          const isGeneration = isImageGenerationRequest(msg);
+
+          if (isGeneration) {
+              // --- 2a. IMAGE GENERATION/EDITING FLOW (Force Command) ---
+              if (mode !== 'fast') {
+                  modeSelect.value = 'fast'; 
+                  addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for multi-modal processing.`, 'bot');
+              }
+              
+              // A. Call the hidden analysis model (FORCES command output)
+              const finalImageCommand = await getFastModelAnalysis(msg, imageToSend);
+              
+              // B. Execute the resulting command directly (which calls handleCommand)
+              handleCommand(finalImageCommand); 
+              
+              // C. Clean up and return early to stop the chat flow.
+              if (window.clearImageBtn) {
+                   window.clearImageBtn.click();
+                   if (modeSelect.value === 'fast') {
+                        modeSelect.value = 'chat';
+                   }
+              }
+              
+              return "IMAGE_GENERATION_EXECUTED"; 
+              
+          } else {
+              // --- 2b. IMAGE ANALYSIS/DISCUSSION FLOW (Standard Gemini Flow) ---
+              // The user attached an image but did NOT use a generation keyword (e.g., "Analyze this image").
+              // This relies on gemini.js Rule 1/2 to handle analysis/description correctly.
+              
+              if (mode !== 'fast' && mode !== 'lite') {
+                  // Fall back to a Gemini model if the user is in a non-Gemini text mode (like 'chat' or 'math')
+                   modeSelect.value = 'fast'; 
+                   addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for image analysis.`, 'bot');
+              }
+              
+              // Use standard getGeminiReply. Pass the image, but customSystemInstruction is null.
+              reply = await getGeminiReply(msg, context, modeSelect.value, imageToSend, null);
+              
+              // Image and mode cleanup happens in the finally block below, after the reply is processed.
           }
-          
-          // A. Call the hidden analysis model
-          const finalImageCommand = await getFastModelAnalysis(msg, imageToSend);
-          
-          // B. Execute the resulting command directly (which calls handleCommand)
-          // We do NOT add the model's analysis output (the command string) to the UI.
-          handleCommand(finalImageCommand); 
-          
-          // C. Clean up and return early to stop the chat flow.
-          if (window.clearImageBtn) {
-               window.clearImageBtn.click();
-               // Restore mode after image processing
-               if (modeSelect.value === 'fast') {
-                    modeSelect.value = 'chat';
-               }
-          }
-          
-          // Return a non-chat message to the outer try/catch/finally block
-          return "IMAGE_GENERATION_EXECUTED"; 
       } 
       // ----------------------------------------------------------------------
 
 
-      if (mode === 'lite' || mode === 'fast') {
+      if ((mode === 'lite' || mode === 'fast') && !imageToSend) {
           // --- GEMINI FLOW (TEXT ONLY) ---
           
           try {
               // Pass message, context, mode. imageToSend is null here.
-              // Note: customSystemInstruction is null by default.
               reply = await getGeminiReply(msg, context, mode, null); 
               
           } catch (e) {
               addMessage(`⚠️ **Gemini Error:** ${e.message}`, 'bot');
               throw e; 
           }
-      } else {
-          // --- A4F/OPENAI FLOW (Non-Gemini modes) ---
+      } else if (!imageToSend) {
+          // --- A4F/OPENAI FLOW (Non-Gemini modes, text only) ---
           
           // No image check needed here, as it's handled above.
 
@@ -769,6 +799,16 @@ async function getChatReply(msg) { // <-- EXPORTED
       if (window.hideLoader) {
           window.hideLoader();
       }
+      // 8. Clean up image from the UI/state if it was processed for analysis
+      if (window.base64Image && !isImageGenerationRequest(msg)) {
+           if (window.clearImageBtn) {
+               window.clearImageBtn.click();
+               // Restore mode after image processing
+               if (modeSelect.value === 'fast') {
+                    modeSelect.value = 'chat';
+               }
+          }
+      }
   }
 }
 
@@ -785,10 +825,11 @@ form.onsubmit = async e => {
     const currentMode = modeSelect.value.trim().toLowerCase();
     
     // Only override if the current mode isn't already 'fast'
-    if (currentMode !== 'fast') {
+    if (currentMode !== 'fast' && isImageGenerationRequest(msg)) {
         modeSelect.value = 'fast'; 
         addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for multi-modal processing.`, 'bot');
     }
+    // If it's *not* a generation request, we let the logic in getChatReply decide the temporary switch.
   }
   
   if (msg.startsWith('/')) {
