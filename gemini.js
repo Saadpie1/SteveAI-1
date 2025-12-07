@@ -15,10 +15,10 @@ const proxiedURL = config.proxiedURL; // Function: PROXY + encodeURIComponent(ba
  * @param {string} context - The summarized and recent chat history.
  * @param {string} mode - The current operational mode ('lite' or 'fast').
  * @param {string | null} imageToSend - The Base64 image data string (e.g., "data:image/jpeg;base64,...") or null.
- * @param {string | null} customSystemInstruction - An optional custom system prompt to override the default.
+ * @param {string | null} customSystemInstruction - An optional custom system prompt to override the default. // <-- NEW PARAMETER ADDED
  * @returns {Promise<string>} The raw text response from the model.
  */
-async function getGeminiReply(msg, context, mode, imageToSend = null, customSystemInstruction = null) {
+async function getGeminiReply(msg, context, mode, imageToSend = null, customSystemInstruction = null) { // <-- NEW PARAMETER ACCEPTED
     
     // --- 1. Setup & Model Selection ---
     const isLite = mode === 'lite';
@@ -31,7 +31,7 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
         topP: 0.9,
     };
 
-    // Tools setup: Only Google Search is available and only for 'lite' mode
+    // Tools setup (Google Search is the only tool for 'lite' mode)
     const tools = isLite ? [
         {
             "googleSearch": {}
@@ -109,14 +109,16 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     });
 
 
-    // 4c. Construct the final contents array - ONLY conversational turns go here.
+    // 4c. Construct the final contents array
     const geminiContents = [
+        // System instructions are placed first
+        { role: "user", parts: [{ text: systemInstruction }] }, 
+        
         // Final user message, including image and text
         { role: "user", parts: userParts } 
     ];
 
-    // NOTE: Removed the { role: "system", parts: [{ text: systemInstruction }] } part here to fix the "Invalid role" error.
-    
+
     const generationConfig = {};
     const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences']; 
     configKeys.forEach(key => {
@@ -128,12 +130,6 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     const payload = {
         // model: model, // The model is already in the URL
         contents: geminiContents,
-        
-        // 🟢 FIX: Re-enabling the top-level systemInstruction field to resolve the role error.
-        ...(systemInstruction && { systemInstruction: systemInstruction }), 
-        
-        // 🟢 TOOLS: Only include the tools field if the tools array is populated
-        ...(tools.length > 0 && { tools: tools }),
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
     };
@@ -154,10 +150,6 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
         if (!res.ok) {
             const errorText = await res.text();
             console.error(`Gemini API Error Status: ${res.status}. Text: ${errorText}`);
-            // Check for the known error to give a better message
-            if (errorText.includes('Unknown name "systemInstruction"')) {
-                 throw new Error(`CRITICAL: API rejected 'systemInstruction' as top-level field. Your API version may require a different structure. Status: ${res.status}.`);
-            }
             throw new Error(`Proxy/API call failed. Status: ${res.status}. Response: ${errorText.substring(0, 150)}...`);
         }
         
