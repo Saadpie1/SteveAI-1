@@ -75,8 +75,6 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     const geminiBase = API_BASE[1];
     
     // Correct path: Insert /models/ into the path
-    // NOTE: This REST API endpoint (v1beta/models) requires the system instruction 
-    // to be inside the contents array with role: "system".
     const targetUrl = `${geminiBase}/models/${model}:generateContent?key=${geminiKey}`; 
 
     // Use the proxiedURL function to wrap the target URL.
@@ -111,25 +109,14 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     });
 
 
-    // 4c. Construct the final contents array - Now includes system instruction at the start.
-    const geminiContents = [];
+    // 4c. Construct the final contents array - ONLY conversational turns go here.
+    const geminiContents = [
+        // Final user message, including image and text
+        { role: "user", parts: userParts } 
+    ];
+
+    // NOTE: Removed the { role: "system", parts: [{ text: systemInstruction }] } part here to fix the "Invalid role" error.
     
-    // ⚠️ FIX: The system instruction must be the FIRST item in the contents array 
-    // and have role: "system" for this REST API endpoint.
-    if (systemInstruction) {
-        geminiContents.push({ 
-            role: "system", 
-            parts: [{ text: systemInstruction }] 
-        });
-    }
-
-    // Add the user's final message
-    geminiContents.push({ 
-        role: "user", 
-        parts: userParts 
-    });
-
-
     const generationConfig = {};
     const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences']; 
     configKeys.forEach(key => {
@@ -140,10 +127,10 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
 
     const payload = {
         // model: model, // The model is already in the URL
-        contents: geminiContents, // System instruction and user message are here
+        contents: geminiContents,
         
-        // ❌ REMOVED: systemInstruction top-level field to fix 400 error
-        // ...(systemInstruction && { systemInstruction: systemInstruction }), 
+        // 🟢 FIX: Re-enabling the top-level systemInstruction field to resolve the role error.
+        ...(systemInstruction && { systemInstruction: systemInstruction }), 
         
         // 🟢 TOOLS: Only include the tools field if the tools array is populated
         ...(tools.length > 0 && { tools: tools }),
@@ -167,9 +154,9 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
         if (!res.ok) {
             const errorText = await res.text();
             console.error(`Gemini API Error Status: ${res.status}. Text: ${errorText}`);
-            // Check for known systemInstruction error for clearer debug
+            // Check for the known error to give a better message
             if (errorText.includes('Unknown name "systemInstruction"')) {
-                 throw new Error(`CRITICAL: API rejected 'systemInstruction' as top-level field. Check API version/docs. Status: ${res.status}.`);
+                 throw new Error(`CRITICAL: API rejected 'systemInstruction' as top-level field. Your API version may require a different structure. Status: ${res.status}.`);
             }
             throw new Error(`Proxy/API call failed. Status: ${res.status}. Response: ${errorText.substring(0, 150)}...`);
         }
