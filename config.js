@@ -10,7 +10,7 @@ const proxiedURL = (base) => PROXY + encodeURIComponent(base);
 
 // Two API keys as fallback
 const API_KEYS = [
-  "AIzaSyAFCOgQBF75Tek9UNa7brHqa1FiFE2L9yw",
+  "AIzaSyC708uF50FRON2Hyu_M-EuoU0jecab47jU",
   "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e",
   "ddc-a4f-d61cbe09b0f945ea93403a420dba8155"
 ];
