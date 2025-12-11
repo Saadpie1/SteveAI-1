@@ -1,190 +1,289 @@
 // live.js
+// Dedicated logic for the SteveAI Live Voice Assistant (Push-to-Talk)
+// Manages microphone access, audio recording, and interaction with gemini-live.js
 
-// 🛑 SECURITY UPDATE: API Key is REMOVED from the client and must be handled by the serverless proxy.
-const PROXY_ENDPOINT = "/.netlify/functions/gemini-audio-proxy"; 
-const MODEL_ID = "models/gemini-2.5-flash-native-audio-preview-09-2025";
+import { startLiveSession } from './gemini-live.js'; // The WebSocket manager
+import { AudioEncoder } from './audio-encoder.js'; // We will assume this file exists next
 
-// UI Elements
-const chatContainer = document.getElementById('chat-container');
-const recordBtn = document.getElementById('record-btn');
-const stopBtn = document.getElementById('stop-btn');
-const statusDiv = document.getElementById('status');
+// --- UI Elements ---
+const pttButton = document.getElementById('pttButton');
+const pttIcon = document.getElementById('pttIcon');
+const liveStatusDisplay = document.getElementById('liveStatusDisplay');
+const chatWindow = document.getElementById('chat');
+const clearChatBtn = document.getElementById('clearChat');
+const themeToggleBtn = document.getElementById('themeToggle');
 
-// Audio variables
-let mediaRecorder;
-let audioChunks = [];
-let audioContext;
-let audioSource;
+// --- State Variables ---
+let liveSession = null; // Holds the object returned by startLiveSession
+let mediaRecorder = null;
+let audioStream = null;
+let isRecording = false;
+let isSessionActive = false; // True when WebSocket is open
+let currentBotMessageElement = null; // Reference to the current bot message div for streaming text
+let currentEncoder = null; // The AudioEncoder instance
 
-// Parameters (as requested: closable voice)
-const customParams = {
-    voice: "closable",
-    session: "closable" 
-};
+// --- UTILITY FUNCTIONS (Placeholder for UI Rendering from chat.js style) ---
 
-/**
- * Appends a message to the chat UI.
- * @param {string} text - The content of the message.
- * @param {string} sender - 'user' or 'ai'.
- */
-function addMessage(text, sender) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}`;
-    messageDiv.textContent = text;
-    chatContainer.appendChild(messageDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+/** Creates and appends a new message element to the chat window. */
+function createMessageElement(text, sender, isPartial = false) {
+    let container = document.createElement('div');
+    container.className = `message-container ${sender}`;
+    let message = document.createElement('div');
+    message.className = `${sender}-message`;
+    
+    // Convert Markdown to HTML for the content
+    let htmlContent = window.marked ? window.marked.parse(text) : text;
+    message.innerHTML = htmlContent;
+
+    container.appendChild(message);
+    chatWindow.appendChild(container);
+    
+    // Scroll to the bottom and post-process for code/math
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    
+    if (window.postProcessChat) {
+        window.postProcessChat(message);
+    }
+    
+    return message;
 }
 
-/**
- * Updates the recording status and controls state.
- * @param {string} message - Status message to display.
- * @param {boolean} isRecording - Whether the recording is active.
- */
-function setStatus(message, isRecording = false) {
-    statusDiv.textContent = message;
-    recordBtn.disabled = isRecording;
-    stopBtn.disabled = !isRecording;
+/** Updates the status element with the current operational state. */
+function updateStatus(status, text, showLoader = false) {
+    // Clear previous status classes
+    liveStatusDisplay.className = 'live-status';
     
-    if (isRecording) {
-        recordBtn.classList.add('recording');
-        recordBtn.textContent = '🔴 Recording...';
+    // Set new status and text
+    liveStatusDisplay.classList.add(status);
+    liveStatusDisplay.textContent = text;
+    
+    // Handle loader visibility (if applicable)
+    if (showLoader && window.showLoader) {
+        window.showLoader();
+    } else if (!showLoader && window.hideLoader) {
+        window.hideLoader();
+    }
+    
+    // Update PTT icon based on main state
+    if (status === 'listening') {
+        pttIcon.textContent = '🔴';
+    } else if (status === 'speaking') {
+        pttIcon.textContent = '🔊';
     } else {
-        recordBtn.classList.remove('recording');
-        recordBtn.textContent = '🎤 Start Recording';
+        pttIcon.textContent = '🎙️';
     }
 }
 
-// --- Audio Recording Functions ---
+/** Handles real-time responses from gemini-live.js */
+function handleLiveMessage(content) {
+    if (content.text) {
+        // Start or continue the bot message stream
+        if (!currentBotMessageElement) {
+            // New turn begins, create a new message element
+            currentBotMessageElement = createMessageElement(content.text, 'bot', true);
+        } else {
+            // Append and re-render the partial content
+            const fullText = currentBotMessageElement.innerHTML + content.text;
+            // Note: Efficient real-time markdown parsing is complex. For simplicity, we append text
+            // In a production scenario, you would use a dedicated stream renderer.
+            currentBotMessageElement.innerHTML = window.marked ? window.marked.parse(fullText) : fullText;
+        }
+    }
+    
+    if (content.audio) {
+        // Audio chunk received, play it
+        if (window.playAudio) {
+            window.playAudio(content.audio.data);
+            updateStatus('speaking', 'AI Speaking...', true);
+        }
+    }
+    
+    if (content.turnComplete) {
+        // The model has finished its response for this turn.
+        console.log("Turn Complete.");
+        
+        // Finalize the message and clear state
+        if (currentBotMessageElement && window.postProcessChat) {
+            window.postProcessChat(currentBotMessageElement); // Final rendering
+        }
+        currentBotMessageElement = null; 
+        
+        // Status should revert to ready to listen (or idle)
+        updateStatus(isSessionActive ? 'active' : 'inactive', isSessionActive ? 'Ready. Press and Hold to Talk' : 'Session Closed', false);
+    }
+}
+
+// --- Session Lifecycle Management ---
+
+async function startSession() {
+    if (isSessionActive) return;
+
+    updateStatus('connecting', 'Connecting...', true);
+    window.showLoader();
+
+    liveSession = startLiveSession(
+        // onMessage callback
+        (content) => {
+            // Initial setup message is received here, but also real-time content
+            if (content.text && content.turnComplete) {
+                // This is typically the "Session connected. Ready to listen." message
+                isSessionActive = true;
+                updateStatus('active', content.text, false);
+                // Create the initial greeting message in the chat history
+                createMessageElement(content.text, 'bot', false);
+            } else {
+                handleLiveMessage(content);
+            }
+        },
+        // onError callback
+        (errorMsg) => {
+            isSessionActive = false;
+            window.hideLoader();
+            if (errorMsg) {
+                updateStatus('inactive', `Error: ${errorMsg}`);
+                alert(`Live Session Error: ${errorMsg}. Please refresh.`);
+            } else {
+                updateStatus('inactive', 'Session Closed.');
+            }
+            // Ensure mic/recording is stopped if an error occurs
+            stopRecording();
+        }
+    );
+}
+
+function stopSession() {
+    if (liveSession) {
+        liveSession.closeSession();
+        liveSession = null;
+        isSessionActive = false;
+        updateStatus('inactive', 'Session Closed.', false);
+        stopRecording(); // Just in case
+    }
+}
+
+// --- Recording Management (Web Audio API) ---
 
 async function startRecording() {
+    if (isRecording || !isSessionActive) return;
+
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Use a high-quality, widely supported format if possible, or stick to webm
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); 
-        audioChunks = [];
+        // 1. Get audio stream (asks for mic permission if not already granted)
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: { 
+            // Important constraints for 16kHz audio input config expected by the Live API
+            sampleRate: 16000,
+            channelCount: 1,
+        } });
+        
+        // 2. Initialize the encoder (handles buffering and encoding to 16-bit PCM)
+        currentEncoder = new AudioEncoder(audioStream, (pcmBuffer) => {
+            // This callback fires with raw 16-bit PCM data chunks
+            if (liveSession) {
+                // Send the ArrayBuffer directly to the WebSocket manager
+                liveSession.sendRealtimeInput(pcmBuffer);
+            }
+        });
 
-        mediaRecorder.ondataavailable = event => {
-            audioChunks.push(event.data);
-        };
+        currentEncoder.start();
+        isRecording = true;
+        
+        // Add user message placeholder (if this is the start of a turn)
+        currentBotMessageElement = createMessageElement("*(User Voice Input...)*", 'user', true);
+        
+        // Update UI
+        updateStatus('listening', 'Listening...');
+        pttButton.classList.add('active');
+        window.hideLoader(); // Hide loader if it was showing connection status
 
-        mediaRecorder.onstop = uploadAudio;
-
-        mediaRecorder.start();
-        setStatus('Recording...', true);
     } catch (err) {
-        console.error('Error accessing microphone:', err);
-        setStatus('Error: Microphone access denied.', false);
+        console.error('Microphone access failed:', err);
+        updateStatus('inactive', 'Error: Mic access denied/failed.');
+        isRecording = false;
+        pttButton.classList.remove('active');
+        if (currentBotMessageElement) currentBotMessageElement.remove();
     }
 }
 
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        setStatus('Processing...', false);
+    if (!isRecording) return;
+    
+    isRecording = false;
+    pttButton.classList.remove('active');
+
+    if (currentEncoder) {
+        currentEncoder.stop();
+        currentEncoder = null;
+    }
+
+    if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+        audioStream = null;
+    }
+    
+    // Status should revert to active/ready to listen
+    updateStatus('active', 'Sending and processing...', true);
+    
+    // Finalize the user's message (as the recording is done)
+    if (currentBotMessageElement) {
+        // NOTE: The Live API doesn't return the transcribed user text directly.
+        // We'll leave it as a placeholder until the model replies.
+        // Once the first text part of the bot's reply arrives, the bot's streaming text will replace this placeholder content.
+        currentBotMessageElement.querySelector('.message-content').textContent = '... processing voice ...'; 
+        window.postProcessChat(currentBotMessageElement);
     }
 }
 
-// --- API Interaction (Now points to Proxy) ---
+// --- Event Listeners for PTT ---
 
-async function uploadAudio() {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+function pttDown(e) {
+    // 🟢 CRITICAL: Prevent default browser behavior (context menu, image save, selection)
+    e.preventDefault(); 
+    if (e.target.tagName !== 'BUTTON') e.target.blur(); // Prevent focus outline sometimes
     
-    const reader = new FileReader();
-    reader.readAsArrayBuffer(audioBlob);
-    
-    reader.onloadend = async () => {
-        const arrayBuffer = reader.result;
-        // Base64 encode the audio data
-        const base64Audio = btoa(
-            new Uint8Array(arrayBuffer)
-                .reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
-
-        // 4. Construct the Payload for the PROXY
-        const payload = {
-            // Send the necessary data to the proxy function
-            model: MODEL_ID, 
-            audioData: base64Audio,
-            mimeType: audioBlob.type,
-            config: { custom_params: customParams } 
-        };
-
-        try {
-            setStatus('Sending audio to Proxy...');
-            // Call the Netlify Serverless Function endpoint
-            const response = await fetch(PROXY_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Proxy Error: ${response.status} - ${errorText}`);
-            }
-
-            const data = await response.json();
-            handleGeminiResponse(data);
-
-        } catch (error) {
-            console.error('Proxy request failed:', error);
-            setStatus(`API Failed: ${error.message}`, false);
-            addMessage('Sorry, I encountered an error.', 'ai');
-        }
-    };
-}
-
-// --- Response Handling ---
-
-/**
- * Handles the response from the Gemini API, displaying the text and playing the audio.
- * The proxy should ensure the response format is clean.
- * @param {object} data - The JSON response from the proxy/API.
- */
-function handleGeminiResponse(data) {
-    setStatus('Receiving response...', false);
-    
-    // Assuming the proxy returns a simplified object with text and audio data
-    const text = data.text || "No text response.";
-    addMessage(text, 'ai');
-
-    const audioPart = data.audio; // Proxy should package the audio part here
-    if (audioPart && audioPart.mimeType.startsWith('audio/') && audioPart.data) {
-        playAudio(audioPart.data, audioPart.mimeType);
-    }
-    
-    // If we only received text or had an error but no audio, set status back to ready
-    if (!audioPart) {
-        setStatus('Ready', false);
+    if (isSessionActive && !isRecording) {
+        startRecording();
+    } else if (!isSessionActive) {
+        // If not active, try to start the session first
+        startSession().then(() => {
+             // You may need a delay here before starting recording, depending on WSS setup speed
+        }).catch(err => console.error("Session start failed:", err));
     }
 }
 
-/**
- * Decodes and plays the audio data received from the proxy.
- * @param {string} base64Data - Base64 encoded audio data.
- * @param {string} mimeType - The MIME type of the audio.
- */
-function playAudio(base64Data, mimeType) {
-    try {
-        const audioBlob = new Blob([Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))], { type: mimeType });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        
-        audio.onplaying = () => setStatus('AI Speaking...');
-        audio.onended = () => setStatus('Ready');
-
-        audio.play().catch(e => console.error("Error playing audio:", e));
-    } catch (e) {
-        console.error("Audio playback failure:", e);
-        setStatus('Ready');
+function pttUp(e) {
+    e.preventDefault(); // Prevent accidental click triggers
+    if (isRecording) {
+        stopRecording();
     }
 }
 
-// --- Event Listeners ---
+// --- Initialization ---
 
-recordBtn.addEventListener('click', startRecording);
-stopBtn.addEventListener('click', stopRecording);
-
-// Initial message
-addMessage("Press 'Start Recording' and talk to SteveAI! (Proxy Enabled)", 'ai');
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Set up PTT Listeners
+    // Use touch events for mobile and mouse events for desktop PTT
+    pttButton.addEventListener('mousedown', pttDown);
+    pttButton.addEventListener('mouseup', pttUp);
+    pttButton.addEventListener('touchstart', pttDown, { passive: false }); // Passive: false is crucial for preventDefault
+    pttButton.addEventListener('touchend', pttUp);
     
+    // Prevent context menu on long press anywhere on the button
+    pttButton.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 2. Other UI Listeners (from chat.js)
+    clearChatBtn.addEventListener('click', () => {
+        chatWindow.innerHTML = '';
+        // Also clear the session if active
+        stopSession(); 
+        startSession(); // Restart session automatically
+    });
+    
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light');
+    });
+
+    // 3. Start the Live Session automatically on load
+    startSession(); 
+});
+
+// --- EXPORT (Optional) ---
+// If you need to access session controls globally, they would be exported here.
