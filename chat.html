@@ -314,7 +314,7 @@
       }
     }
     
-    /* 🟢 NEW: CSS for Code Blocks and Copy Button */
+    /* 🟢 CODE BLOCK CSS */
     pre {
       position: relative;
       padding-top: 35px; 
@@ -449,7 +449,8 @@
 
     window.copyCode = (button) => {
         const pre = button.closest('pre');
-        const code = pre.querySelector('code').textContent;
+        // Use innerText to grab the text content cleanly from the highlighted block
+        const code = pre.querySelector('code').innerText;
         navigator.clipboard.writeText(code).then(() => {
             button.textContent = 'Copied!';
             setTimeout(() => {
@@ -479,7 +480,6 @@
         const copyButton = document.createElement('button');
         copyButton.className = 'copy-btn';
         copyButton.textContent = 'Copy';
-        // Assign the globally exposed copyCode function
         copyButton.onclick = () => window.copyCode(copyButton); 
         header.appendChild(copyButton);
 
@@ -500,20 +500,26 @@
             createCopyButton(pre); 
         });
         
-        // B. MATH RENDERING (KaTeX) - ADDED try/catch FOR ROBUSTNESS
+        // B. MATH RENDERING (KaTeX) - Added robustness settings and a small delay
         if (window.renderMathInElement) {
-            try {
-                renderMathInElement(newChatElement, {
-                    delimiters: [
-                        {left: "$$", right: "$$", display: true},
-                        {left: "$", right: "$", display: false},
-                    ],
-                    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
-                    errorColor: "#ff0000" // Debug color
-                });
-            } catch (e) {
-                console.error("KaTeX rendering failed:", e);
-            }
+            // Use a short delay to ensure content is fully painted/available
+            setTimeout(() => {
+                try {
+                    renderMathInElement(newChatElement, {
+                        delimiters: [
+                            {left: "$$", right: "$$", display: true},
+                            {left: "$", right: "$", display: false},
+                        ],
+                        // Added throwOnError: false to prevent a single bad formula from crashing all rendering
+                        throwOnError: false, 
+                        // Cleaned up ignoredTags to prevent conflicts while still ignoring scripts/styles
+                        ignoredTags: ["script", "noscript", "style", "textarea"], 
+                        errorColor: "#ff0000" 
+                    });
+                } catch (e) {
+                    console.error("KaTeX rendering failed unexpectedly:", e);
+                }
+            }, 50); // 50ms delay for stability
         }
     };
     
