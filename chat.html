@@ -102,7 +102,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script type="module" src="chat.js"></script> 
   
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
@@ -112,6 +111,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+  
+  <script type="module" src="chat.js"></script>
   
   <style>
     /* EXISTING CSS */
@@ -126,7 +127,6 @@
       background: #fafafa;
       color: #111;
     }
-    /* ... (rest of existing CSS for header, chat, inputContainer, inputForm, textarea, sendBtn, commandHints) ... */
 
     #header {
       display: flex;
@@ -148,9 +148,8 @@
       border-top: 1px solid #333;
       background: #111;
       display: flex;
-      /* Changed to block to allow preview area above form */
       flex-direction: column; 
-      align-items: center; /* Center the form and preview */
+      align-items: center; 
     }
     #inputForm {
         display: flex;
@@ -318,7 +317,7 @@
     /* 🟢 NEW: CSS for Code Blocks and Copy Button */
     pre {
       position: relative;
-      padding-top: 35px; /* Make space for the header/copy button */
+      padding-top: 35px; 
       border-radius: 8px;
       overflow: hidden;
       margin: 1em 0;
@@ -326,7 +325,7 @@
     pre code {
       display: block;
       padding: 1em;
-      white-space: pre-wrap; /* Allows line wrapping */
+      white-space: pre-wrap; 
       word-break: break-all;
     }
     .code-header {
@@ -359,13 +358,12 @@
   </style>
 
   <script>
-    // 🟢 FIX: Global variable to hold the Base64 image data (attached to window)
+    // 🟢 Global variable to hold the Base64 image data (attached to window)
     let base64Image = null;
 
-    // --- EXISTING SCRIPT LOGIC (Input/Hints) ---
+    // --- INPUT/HINTS LOGIC ---
     const inputEl = document.getElementById('messageInput');
     const hintsEl = document.getElementById('commandHints');
-    // const inputForm = document.getElementById('inputForm'); // Not needed if not used
 
     inputEl.addEventListener('input', () => {
       hintsEl.hidden = !inputEl.value.trim().startsWith('/');
@@ -381,57 +379,49 @@
       };
     });
     
-    // --- NEW SCRIPT LOGIC (Image Handling) ---
+    // --- IMAGE HANDLING LOGIC ---
     const imageInputFile = document.getElementById('imageInputFile');
     const imageUploadBtn = document.getElementById('imageUploadBtn');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     const imagePreview = document.getElementById('imagePreview');
     const clearImageBtn = document.getElementById('clearImageBtn');
 
-    // 1. Image Upload Button Click
     imageUploadBtn.addEventListener('click', () => {
         imageInputFile.click();
     });
 
-    // 2. File Selection Handler
     imageInputFile.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             
             reader.onload = (event) => {
-                // Set the local variable, which is exposed to window below
                 base64Image = event.target.result; 
-                window.base64Image = base64Image; // ⬅️ EXPOSE TO WINDOW
+                window.base64Image = base64Image; 
                 
-                // Show preview
                 imagePreview.src = base64Image;
                 imagePreviewContainer.style.display = 'flex';
                 
-                // Optional: Focus back on text area
                 inputEl.focus();
             };
             
-            // Convert file to Base64 string
             reader.readAsDataURL(file);
         }
     });
 
-    // 3. Clear Image Handler
     clearImageBtn.addEventListener('click', () => {
         base64Image = null;
-        window.base64Image = null; // ⬅️ CLEAR FROM WINDOW
+        window.base64Image = null; 
         imagePreview.src = '';
-        imageInputFile.value = ''; // Clear the file input for re-uploading the same file
+        imageInputFile.value = ''; 
         imagePreviewContainer.style.display = 'none';
         inputEl.focus();
     });
     
-    // --- EXISTING SCRIPT LOGIC (Loader Control) ---
+    // --- LOADER CONTROL LOGIC ---
     const loadingIndicator = document.getElementById('loading-indicator');
     const chatWindow = document.getElementById('chat');
 
-    // 🟢 FIX: Attach loader functions to window
     window.showLoader = () => {
         if (!loadingIndicator || !chatWindow) return;
 
@@ -445,18 +435,11 @@
         loadingIndicator.style.display = 'none';
     };
 
-    // 🟢 FIX: Expose the clear button globally so chat.js can trigger the image cleanup
     window.clearImageBtn = clearImageBtn; 
 
-    // --- 🟢 NEW: Post-Render Utilities (Code and Math Formatting) ---
+    // --- 🟢 POST-RENDER UTILITIES (Code and Math Formatting) ---
     
-    /**
-     * Extracts the language from the Prism token list or defaults to 'Code'.
-     * @param {HTMLElement} codeElement 
-     * @returns {string}
-     */
     function getCodeLanguage(codeElement) {
-        // Prism adds a class 'language-xyz' to the <code> element
         const match = codeElement.className.match(/language-(\w+)/);
         if (match) {
             return match[1].charAt(0).toUpperCase() + match[1].slice(1);
@@ -464,11 +447,7 @@
         return 'Code';
     }
 
-    /**
-     * Copies the code content to the clipboard and updates the button text.
-     * @param {HTMLButtonElement} button 
-     */
-    function copyCode(button) {
+    window.copyCode = (button) => {
         const pre = button.closest('pre');
         const code = pre.querySelector('code').textContent;
         navigator.clipboard.writeText(code).then(() => {
@@ -482,12 +461,8 @@
         });
     }
 
-    /**
-     * Creates and attaches a header with language and copy button to a <pre> block.
-     * @param {HTMLElement} preElement 
-     */
     function createCopyButton(preElement) {
-        if (preElement.querySelector('.code-header')) return; // Already processed
+        if (preElement.querySelector('.code-header')) return; 
         
         const codeElement = preElement.querySelector('code');
         if (!codeElement) return;
@@ -504,7 +479,8 @@
         const copyButton = document.createElement('button');
         copyButton.className = 'copy-btn';
         copyButton.textContent = 'Copy';
-        copyButton.onclick = () => copyCode(copyButton);
+        // Assign the globally exposed copyCode function
+        copyButton.onclick = () => window.copyCode(copyButton); 
         header.appendChild(copyButton);
 
         preElement.insertBefore(header, preElement.firstChild);
@@ -516,28 +492,28 @@
      * @param {HTMLElement} newChatElement The message container element.
      */
     window.postProcessChat = (newChatElement) => {
-        // --- A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js) ---
+        // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
         newChatElement.querySelectorAll('pre').forEach(pre => {
-            // Highlight must be run first
             if (window.Prism) {
                  Prism.highlightElement(pre.querySelector('code'));
             }
             createCopyButton(pre); 
         });
         
-        // --- B. MATH RENDERING (KaTeX) ---
-        // renderMathInElement comes from auto-render.min.js
+        // B. MATH RENDERING (KaTeX) - ADDED try/catch FOR ROBUSTNESS
         if (window.renderMathInElement) {
-            renderMathInElement(newChatElement, {
-                // Defines the delimiters for KaTeX: $$...$$ for display, $...$ for inline
-                delimiters: [
-                    {left: "$$", right: "$$", display: true},
-                    {left: "$", right: "$", display: false},
-                ],
-                // Prevents KaTeX from processing code blocks, which should be handled by Prism
-                ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
-                errorColor: "#cc0000"
-            });
+            try {
+                renderMathInElement(newChatElement, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false},
+                    ],
+                    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+                    errorColor: "#ff0000" // Debug color
+                });
+            } catch (e) {
+                console.error("KaTeX rendering failed:", e);
+            }
         }
     };
     
