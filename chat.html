@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SteveAI - Smart AI Assistant</title>
+  <title>SteveAI - Ultimate AI Assistant</title>
 
   <meta name="description" content="SteveAI is your smart AI assistant for chatting, learning, and creating.">
-  <meta name="keywords" content="SteveAI, AI assistant, chatbot, smart AI, generative AI, productivity, learning AI">
+  <meta name="keywords" content="SteveAI, AI assistant, chatbot, smart AI, generative AI, productivity, learning AI, Gemini Live">
   <meta name="author" content="SteveAI">
-  <meta property="og:title" content="SteveAI - Smart AI Assistant">
-  <meta property="og:description" content="Chat with SteveAI: your AI assistant for learning, productivity, and creativity.">
+  <meta property="og:title" content="SteveAI - Ultimate AI Assistant">
+  <meta property="og:description" content="Chat with SteveAI: your multi-modal AI orchestrator for learning, productivity, and creativity.">
   <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
   <meta property="og:url" content="https://steve-ai.netlify.app/chat.html">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="SteveAI - Smart AI Assistant">
+  <meta name="twitter:title" content="SteveAI - Ultimate AI Assistant">
   <meta name="twitter:description" content="Discover SteveAI: your AI-powered assistant for chat, learning, and creativity.">
   <meta name="twitter:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
   <meta name="theme-color" content="#1e1e1e"/>
@@ -60,11 +60,18 @@
         <option value="reasoning">SteveAI-reasoning</option>
         <option value="fast">SteveAI-fast</option>
         <option value="lite">SteveAI-instant</option>
-        <option value="general">SteveAI-general</option> <option value="math">SteveAI-math</option>
+        <option value="live">SteveAI-Live (WSS)</option> <option value="general">SteveAI-general</option> 
+        <option value="math">SteveAI-math</option>
         <option value="coding">SteveAI-coding</option>
         <option value="korean">SteveAI-Korean</option>
         <option value="arabic">SteveAI-Arabic</option>
       </select>
+      
+      <div class="live-controls-group">
+          <button id="liveToggleBtn" class="action-btn" title="Start/Stop Gemini Live Session">🎙️</button>
+          <div id="liveStatus" class="live-status inactive">Live Mode Ready</div>
+      </div>
+      
       <button id="clearChat" class="action-btn" title="Clear Chat">🗑️</button>
       <button id="themeToggle" class="action-btn" title="Toggle Theme">🌙</button>
     </div>
@@ -195,8 +202,20 @@
         }
     };
   
+    // 🟢 NEW: Global function for playing audio (required by gemini-live.js)
+    window.playAudio = (base64Audio) => {
+        if (base64Audio) {
+            try {
+                // Assuming the base64 audio is a common format like mp3 or ogg
+                const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                audio.play().catch(e => console.warn("Audio playback failed:", e));
+            } catch (e) {
+                console.error("Error creating audio element:", e);
+            }
+        }
+    };
+    
     // --- SETUP LOGIC WRAPPED IN DOMContentLoaded ---
-    // This handles UI setup and ensures initial messages are processed once all dependencies are loaded.
     document.addEventListener('DOMContentLoaded', () => {
         
         // 🟢 Global variable to hold the Base64 image data (attached to window)
@@ -205,10 +224,17 @@
         // --- INPUT/HINTS LOGIC ---
         const inputEl = document.getElementById('messageInput');
         const hintsEl = document.getElementById('commandHints');
+        const modeSelectEl = document.getElementById('modeSelect'); // 🟢 Added for Live logic
 
         inputEl.addEventListener('input', () => {
           hintsEl.hidden = !inputEl.value.trim().startsWith('/');
         });
+        
+        // 🟢 Live Mode Visual Toggle: Disable input field when in Live mode and session is active
+        inputEl.addEventListener('focus', () => {
+             // We can check if Live mode is active here, but better to check in form.onsubmit in chat.js
+        });
+
 
         document.querySelectorAll('#commandHints span').forEach(span => {
           span.onclick = () => {
@@ -313,6 +339,11 @@
       background: #111;
       color: #fff;
       border-bottom: 1px solid #333;
+    }
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
     }
     #chat {
       height: calc(100vh - 140px);
@@ -438,6 +469,64 @@
         font-size: 14px;
         padding: 0;
     }
+    
+    /* 🟢 NEW: LIVE MODE CSS */
+    .live-controls-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    #liveToggleBtn {
+        background: #333;
+        color: white;
+        transition: background 0.2s, color 0.2s, transform 0.2s;
+    }
+    #liveToggleBtn.active {
+        background: #ff4d4d; /* Red when active */
+        transform: scale(1.1);
+        animation: pulse 1.5s infinite;
+    }
+    #liveToggleBtn.active:hover {
+        background: #ff1a1a;
+    }
+    .live-status {
+        font-size: 0.7em;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        text-align: center;
+        min-width: 80px;
+    }
+    .live-status.inactive {
+        background: #222;
+        color: #aaa;
+    }
+    .live-status.active {
+        background: #007bff;
+        color: white;
+    }
+    .live-status.listening {
+        background: #00b300; /* Green for listening */
+        color: white;
+        animation: status-pulse 1s infinite alternate;
+    }
+    .live-status.speaking {
+        background: #ffae00; /* Yellow/Orange for speaking */
+        color: #111;
+        animation: status-pulse 0.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+    }
+    @keyframes status-pulse {
+        from { opacity: 1; }
+        to { opacity: 0.7; }
+    }
+    /* END NEW LIVE MODE CSS */
 
     /* FIXES FROM PREVIOUS STEPS (Kept) */
     .message-container {
