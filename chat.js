@@ -149,11 +149,10 @@ function parseImageGenerationCommand(text) {
     }
     
     const modelSegment = content.substring(0, commaIndex).trim();
-    const promptSegment = content.substring(commaIndex + 1).trim();
-
     if (!modelSegment.toLowerCase().startsWith('model:')) { return null; }
     const model = modelSegment.substring('model:'.length).trim();
 
+    const promptSegment = content.substring(commaIndex + 1).trim();
     if (!promptSegment.toLowerCase().startsWith('prompt:')) { return null; }
     const prompt = promptSegment.substring('prompt:'.length).trim();
 
@@ -176,8 +175,6 @@ function addMessage(text, sender) { // <-- EXPORTED
   bubble.appendChild(content);
 
   const { answer, thinking } = parseThinkingResponse(text);
-  
-  // ⚠️ FIX 1: Removed image command detection/execution here. It's now handled in form.onsubmit.
   
   // --- STANDARD MESSAGE FLOW ---
   const thinkingHTML = thinking ? `
@@ -228,7 +225,7 @@ function addMessage(text, sender) { // <-- EXPORTED
         // Render final HTML
         content.innerHTML = finalFullHTML; 
         addBotActions(container, bubble, text);
-        // 🟢 FIX 2: Call post-processing after final render
+        // 🟢 FIX 1: Call post-processing after final render (for Math and Code)
         if (window.postProcessChat) {
              window.postProcessChat(container);
         }
@@ -239,7 +236,7 @@ function addMessage(text, sender) { // <-- EXPORTED
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
     addUserActions(container, bubble, text);
-    // 🟢 FIX 2: Call post-processing for user message
+    // 🟢 FIX 2: Call post-processing for user message (for Math and Code)
     if (window.postProcessChat) {
         window.postProcessChat(container);
     }
