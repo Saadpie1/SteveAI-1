@@ -5,7 +5,9 @@
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
 // NOTE: getGeminiReply now accepts a 5th optional argument: customSystemInstruction
-import { getGeminiReply } from './gemini.js'; // <-- Import Gemini logic
+import { getGeminiReply } from './gemini.js'; // <-- Import Gemini logic (for REST/HTTP)
+// 🟢 NEW: Import the Live Session Manager (for WSS)
+import { startLiveSession } from './gemini-live.js'; // <--- ASSUMES YOU CREATED THIS FILE
 
 // --- Config Variables from Import ---
 const API_BASE = config.API_BASE; // Array: [A4F, Gemini]
@@ -20,6 +22,9 @@ const input = document.getElementById('messageInput');
 const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
+// 🟢 NEW: Elements for Live Mode
+const liveToggleBtn = document.getElementById('liveToggleBtn'); // Assuming a dedicated button exists
+const liveStatusIndicator = document.getElementById('liveStatus'); // Assuming a status indicator exists
 
 // --- Memory / Summary ---
 let memory = {};
@@ -27,6 +32,13 @@ let turn = 0;
 let memorySummary = "";
 const TOKEN_BUDGET = 2200;
 const approxTokens = s => Math.ceil((s || "").length / 4);
+
+// 🟢 NEW: Live Session State
+let liveSession = null;
+let liveIsSpeaking = false;
+let liveIsListening = false;
+let mediaRecorder = null; // For handling microphone input
+let audioChunks = []; // To store microphone data
 
 // --- Helpers ---
 function memoryString() {
@@ -220,6 +232,8 @@ function addMessage(text, sender) { // <-- EXPORTED
         
         content.innerHTML = tempHtml;
         chat.scrollTop = chat.scrollHeight;
+        // 🟢 FIX: Use window.requestAnimationFrame for smoother typing, especially in Live mode
+        // For now, keep setTimeout for compatibility:
         setTimeout(type, getRandomTypingDelay());
       } else {
         // Render final HTML
@@ -363,8 +377,7 @@ async function fetchAI(payload, model) {
     throw new Error("All A4F API key attempts failed.");
 }
 
-// --- Commands (Unchanged) ---
-// ... (All command functions remain the same) ...
+// --- Commands (Unchanged, adding 'live' to changeMode) ---
 
 function toggleTheme() {
   document.body.classList.toggle('light');
@@ -375,6 +388,8 @@ function clearChat() {
   memory = {};
   memorySummary = '';
   turn = 0;
+  // 🟢 NEW: Stop live session on clear
+  if (liveSession) stopLiveSession(true); 
   addMessage('🧹 Chat cleared.', 'bot');
 }
 function exportChat() {
@@ -408,8 +423,8 @@ function showAbout() {
 🤖 **About SteveAI**
 Built by *saadpie and shawaiz* — the bot from the future.
 
-- Models: GPT-5-Nano (Alias), DeepSeek-R1, **Gemini-2.5-flash**, Gemini-2.5-flash-lite, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
-- Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | **General** | Coding | Arabic
+- Models: GPT-5-Nano (Alias), DeepSeek-R1, **Gemini-2.5-flash**, Gemini-2.5-flash-lite, **Gemini-Live**, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
+- Modes: Chat | Reasoning | Fast | **Lite** | **Live** | Math | Korean | **General** | Coding | Arabic
 - Features: Context memory, Summarization, Commands, Theme toggle, Speech, Export, **Google Search (Lite Mode)**
 
 _Type /help to explore commands._
@@ -417,12 +432,17 @@ _Type /help to explore commands._
   addMessage(text, 'bot');
 }
 function changeMode(arg) {
-  const allowedModes = ['chat', 'reasoning', 'fast', 'lite', 'math', 'korean', 'general', 'coding', 'arabic'];
+  // 🟢 UPDATED: Added 'live'
+  const allowedModes = ['chat', 'reasoning', 'fast', 'lite', 'live', 'math', 'korean', 'general', 'coding', 'arabic'];
   if (!arg || !allowedModes.includes(arg.toLowerCase())) {
     addMessage(`⚙️ Usage: /mode ${allowedModes.join(' | ')}`, 'bot');
     return;
   }
   if (modeSelect) modeSelect.value = arg.toLowerCase();
+  // 🟢 NEW: Stop Live session if mode is changed away from 'live'
+  if (arg.toLowerCase() !== 'live' && liveSession) {
+      stopLiveSession(true);
+  }
   addMessage(`🧭 Switched mode to **${arg}**.`, 'bot');
 }
 function showTime() {
@@ -444,7 +464,7 @@ function showHelp() {
 - /contact — Show contact info
 - /play — Summarize / replay conversation
 - /about — About SteveAI
-- /mode <chat|reasoning|fast|lite|math|korean|general|coding|arabic> — Change mode 
+- /mode <chat|reasoning|fast|lite|**live**|math|korean|general|coding|arabic> — Change mode 
 - /time — Show local time
   `;
   addMessage(helpText, 'bot');
@@ -584,6 +604,117 @@ ${imageHTML}
   }
 }
 
+// --- NEW LIVE MODE HANDLERS ---
+function setLiveStatus(listening, speaking, message = '') {
+    liveIsListening = listening;
+    liveIsSpeaking = speaking;
+    if (liveStatusIndicator) {
+        if (listening) {
+            liveStatusIndicator.textContent = '🔊 Listening...';
+            liveStatusIndicator.className = 'live-status listening';
+        } else if (speaking) {
+            liveStatusIndicator.textContent = '🗣️ Speaking...';
+            liveStatusIndicator.className = 'live-status speaking';
+        } else if (liveSession) {
+             liveStatusIndicator.textContent = 'Live Session Active';
+             liveStatusIndicator.className = 'live-status active';
+        } else {
+            liveStatusIndicator.textContent = message || 'Live Mode Ready';
+            liveStatusIndicator.className = 'live-status inactive';
+        }
+    }
+}
+
+async function startLiveSession() {
+    if (liveSession) return;
+    
+    // 1. Get Microphone Access (required for Live)
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // 2. Initialize Media Recorder (for browser audio input)
+        // NOTE: This is a simplified way to capture audio. For real-time streaming, 
+        // a dedicated AudioWorklet/Processor is better to get raw PCM data.
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        
+        // 3. Start WebSocket Session
+        liveSession = startLiveSession(
+            (content) => { 
+                // onMessage callback from gemini-live.js
+                // Content can contain text, audio, or tool calls
+                if (content.text) {
+                    addMessage(content.text, 'bot');
+                }
+                if (content.audio && window.playAudio) {
+                    // Assuming you have a helper function to play streamed audio
+                    window.playAudio(content.audio);
+                    setLiveStatus(false, true); 
+                }
+                if (content.turnComplete) {
+                    setLiveStatus(true, false); // Go back to listening after turn
+                }
+            },
+            (errorMsg) => {
+                // onError callback
+                addMessage(`❌ Live Session Error: ${errorMsg}`, 'bot');
+                stopLiveSession(false);
+            }
+        );
+
+        // 4. Start recording user input on open
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+             // In a simple setup, you'd send the blob and then clear chunks. 
+             // In a real Live app, you'd stream chunks continuously.
+             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+             audioChunks = [];
+             // NOTE: Live API expects raw PCM (16-bit) data, not webm blob. 
+             // This is a placeholder for the more complex streaming logic.
+             // liveSession.sendRealtimeInput(audioBlob); 
+        };
+        
+        mediaRecorder.start(250); // Record every 250ms (for simplified chunking)
+
+        addMessage('🎙️ **Live Mode Activated.** Click the mic button to speak, or type a message.', 'bot');
+        setLiveStatus(true, false);
+        liveToggleBtn.classList.add('active');
+        
+    } catch (e) {
+        addMessage(`⚠️ Failed to start Live Mode: Microphone access denied or network error.`, 'bot');
+        liveSession = null;
+        liveToggleBtn.classList.remove('active');
+        console.error("Live Start Error:", e);
+    }
+}
+
+function stopLiveSession(silent = false) {
+    if (liveSession) {
+        liveSession.closeSession();
+        liveSession = null;
+    }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+    mediaRecorder = null;
+    audioChunks = [];
+    liveToggleBtn.classList.remove('active');
+    setLiveStatus(false, false);
+    if (!silent) {
+        addMessage('⏸️ **Live Mode Deactivated.**', 'bot');
+    }
+}
+
+liveToggleBtn.onclick = () => {
+    if (liveSession) {
+        stopLiveSession();
+    } else {
+        startLiveSession();
+    }
+};
+
 // --- NEW INTERNAL HELPER FOR IMAGE ANALYSIS (Unchanged) ---
 /**
  * Executes a hidden, one-shot call to the fast model to analyze the image/prompt
@@ -645,6 +776,17 @@ async function getChatReply(msg) { // <-- EXPORTED
   try {
       // 2. Determine Model and API Type
       
+      // 🟢 NEW: CHECK FOR LIVE MODE FIRST (Live mode uses its own handlers, manual text input sends a message via WSS)
+      if (liveSession) {
+          addMessage('Live session active. Sending message via WebSocket...', 'bot');
+          // In a real implementation, this would send the text chunk to the WSS:
+          // liveSession.sendRealtimeInput({ client_content: msg }); 
+          // For now, return a placeholder:
+          reply = `<think>Routing text input via active Live WebSocket session...</think> Live API text input not fully implemented yet, but the session is running!`;
+          return reply;
+      }
+      // -----------------------------------------------------------
+      
       // 🟢 CRITICAL: IF IMAGE IS PRESENT, check for GENERATION intent
       if (imageToSend) {
           
@@ -690,7 +832,7 @@ async function getChatReply(msg) { // <-- EXPORTED
               addMessage(`⚠️ **Gemini Error:** ${e.message}`, 'bot');
               throw e; 
           }
-      } else if (!imageToSend) {
+      } else if (!imageToSend && mode !== 'live') { // 🟢 UPDATED: Exclude 'live' mode from this block
           // --- A4F/OPENAI FLOW (Non-Gemini modes, text only) ---
           
           switch (mode) {
@@ -770,9 +912,18 @@ async function getChatReply(msg) { // <-- EXPORTED
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
+  const mode = (modeSelect?.value || 'chat').toLowerCase();
   
   // 📸 Allow sending an image without text
-  if (!msg && !window.base64Image) return; 
+  if (!msg && !window.base64Image) {
+      // 🟢 NEW: If Live mode is active and no text is present, assume user intends to speak/use voice
+      if (mode === 'live' && liveSession) {
+          // This would be where you trigger mic listening if it wasn't automatic
+          addMessage('🎙️ Please speak now, Live session is active.', 'bot');
+          return;
+      }
+      return; 
+  }
   
   // 1. Handle explicit commands first (e.g., /clear)
   if (msg.startsWith('/')) {
@@ -858,5 +1009,9 @@ export {
   turn, 
   getChatReply, 
   addMessage, 
-  handleCommand 
+  handleCommand,
+  // 🟢 NEW: Export Live helpers
+  startLiveSession,
+  stopLiveSession,
+  liveSession
 };
