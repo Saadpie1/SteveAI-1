@@ -5,7 +5,7 @@
 /**
  * Encodes incoming audio stream data into 16-bit PCM format at a 16kHz sample rate.
  */
-export class AudioEncoder {
+export class AudioEncoder { // <-- **EXPORT ADDED HERE**
     constructor(audioStream, callback) {
         // Target sample rate for Gemini Live API
         this.TARGET_SAMPLE_RATE = 16000; 
@@ -81,7 +81,7 @@ export class AudioEncoder {
         // Scale Float32 (-1.0 to 1.0) to Int16 (-32768 to 32767)
         for (let i = 0; i < buffer.length; i++) {
             let s = Math.max(-1, Math.min(1, buffer[i]));
-            // Scale and convert to signed 16-bit integer (little-endian: false)
+            // Scale and convert to signed 16-bit integer (little-endian: true, as is common)
             view.setInt16(i * 2, s * 32767, true); 
         }
         return buffer16Bit;
