@@ -2,6 +2,7 @@
 // Dedicated module for managing the stateful WebSocket connection to the Gemini Live API.
 
 // --- Module Imports ---
+// NOTE: Assuming config.js exports API_KEYS, LIVE_API_BASE, and GEMINI_MODELS.
 import config from './config.js'; 
 
 const { API_KEYS, LIVE_API_BASE, GEMINI_MODELS } = config; 
@@ -12,9 +13,7 @@ const LIVE_MODEL = GEMINI_MODELS.live;
 /**
  * Manages the WebSocket connection for the Gemini Live API.
  * This is a stateful session for continuous, real-time communication.
- * * NOTE: For full production use, handling raw PCM audio data streaming from the browser
- * would require a more complex AudioWorklet or Web Audio API processing stream.
- * * @param {Function} onMessage - Callback(content) for real-time model responses (text, audio, turnComplete).
+ * @param {Function} onMessage - Callback(content) for real-time model responses (text, audio, turnComplete).
  * @param {Function} onError - Callback(errorMsg) for connection or session errors.
  * @returns {object} An object with methods to start/stop the session and send media.
  */
@@ -39,7 +38,6 @@ function startLiveSession(onMessage, onError) {
     
     ws.onopen = () => {
         // --- A. SEND SESSION CONFIGURATION (BidiGenerateContentSetup) ---
-        // This is the first message sent over the WebSocket.
         const setupMessage = {
             setup: {
                 model: LIVE_MODEL,
@@ -79,7 +77,7 @@ function startLiveSession(onMessage, onError) {
         if (data.setupComplete) {
             isSetupComplete = true;
             console.log("Gemini Live Session Setup Complete.");
-            // You might send a "Ready" message to the chat here
+            // Send a ready message to the live.js front-end
             onMessage({ text: 'Session connected. Ready to listen.', turnComplete: true });
         } else if (data.serverContent) {
             // This is the model's real-time response stream
@@ -96,7 +94,9 @@ function startLiveSession(onMessage, onError) {
 
     ws.onerror = (e) => {
         console.error("Live WebSocket Error:", e);
-        onError(`Live session failed. Error: ${e.message}`);
+        // e.message might be undefined for some WS errors
+        const errorMsg = e.message || "Unknown WebSocket error.";
+        onError(`Live session failed. Error: ${errorMsg}`);
     };
 
     ws.onclose = () => {
@@ -121,10 +121,19 @@ function startLiveSession(onMessage, onError) {
             let message = {};
             
             if (input instanceof ArrayBuffer) {
-                // Sending raw audio data
-                message.audioChunk = { data: btoa(String.fromCharCode(...new Uint8Array(input))) };
+                // Sending raw audio data (ArrayBuffer)
+                // Convert ArrayBuffer to a binary string, then Base64 encode it.
+                const bytes = new Uint8Array(input);
+                let binaryString = '';
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binaryString += String.fromCharCode(bytes[i]);
+                }
+                const base64Audio = btoa(binaryString);
+                
+                message.audioChunk = { data: base64Audio };
+
             } else if (input.text) {
-                // Sending text data (e.g., if user types while in Live mode)
+                // Sending text data 
                 message.clientContent = { text: input.text };
             } else {
                 return;
