@@ -60,7 +60,7 @@
     <div class="bot-message initial-message">
         <div class="message-content">
             <h3>🎙️ Welcome to SteveAI Live</h3>
-            <p>I'm ready for a real-time voice conversation. Tap and **HOLD** the microphone button to speak, then release when you are done. </p>
+            <p>I'm ready for a real-time conversation. You can **type a message** or use the microphone button for **Push-to-Talk voice chat**.</p>
             <p>I can use **Google Search** to answer questions about the current world, thanks to my specialized model routing.</p>
         </div>
     </div>
@@ -73,7 +73,18 @@
   </div>
 
   <div id="inputContainer">
-      <div id="liveStatusDisplay" class="live-status inactive">Press and Hold to Talk</div>
+      <div id="liveStatusDisplay" class="live-status inactive">Ready. Type or Hold PTT.</div>
+
+      <div id="textInputForm" style="display: flex; width: 100%; max-width: 700px; gap: 10px; padding: 0 10px; margin-bottom: 15px;">
+          <input type="text" 
+                 id="textInput" 
+                 placeholder="Type a message or hold PTT..." 
+                 style="flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid #555; background: #222; color: white;">
+          
+          <button id="sendTextButton" title="Send Text" class="action-btn" style="background: #007bff; padding: 0 15px;">
+              ➤
+          </button>
+      </div>
 
       <button id="pttButton" title="Push to Talk" class="ptt-btn">
           <span id="pttIcon">🎙️</span>
@@ -145,47 +156,52 @@
     
     /* Make chat area taller to compensate for smaller input area */
     #chat {
-      height: calc(100vh - 200px); /* Adjusted for PTT area */
+      /* Adjusted height: 100vh - (Header + Input Area Height) */
+      height: calc(100vh - 250px); 
       overflow-y: auto;
       padding: 20px;
       scroll-behavior: smooth;
     }
 
     #inputContainer {
-      padding: 15px 10px 30px; /* More padding at the bottom for PTT button */
+      /* Increased padding to accommodate text input and button */
+      padding: 15px 10px 15px; 
       align-items: center;
       justify-content: center;
       border-top: 1px solid #333;
-      background: #111; /* Consistent background */
+      background: #111; 
       display: flex;
       flex-direction: column;
     }
-
-    /* Remove the old text input form (ensuring it's hidden) */
-    #inputForm, #imagePreviewContainer, #imageUploadBtn, #messageInput, #sendBtn {
-        display: none !important;
+    
+    /* Input Styling for Light Theme */
+    body.light #textInput {
+        background: #fff;
+        color: #111;
+        border-color: #ccc;
     }
 
+    /* Remove the old text input form (ensuring it's hidden) - REMOVED OLD IDS */
     /* PTT Button Styles */
     #pttButton {
-        width: 90px;
-        height: 90px;
+        width: 70px; /* Slightly smaller */
+        height: 70px; /* Slightly smaller */
         background: #ffae00;
         color: #111;
         border: none;
         border-radius: 50%;
-        font-size: 2.5em;
+        font-size: 2em; /* Smaller icon */
         line-height: 1;
         cursor: pointer;
         transition: all 0.2s ease-in-out;
         box-shadow: 0 4px 15px rgba(255, 174, 0, 0.4);
-        margin-top: 15px;
+        margin-top: 15px; /* Spacing from the text input */
         display: flex;
         align-items: center;
         justify-content: center;
-        user-select: none; /* Essential for preventing selection on hold */
-        -webkit-user-select: none; /* WebKit compatibility */
-        touch-action: manipulation; /* Helps with touch events */
+        user-select: none; 
+        -webkit-user-select: none; 
+        touch-action: manipulation; 
     }
     
     #pttButton:hover {
@@ -236,7 +252,7 @@
         animation: status-pulse-slow 0.5s infinite alternate;
     }
 
-    /* Keyframe Animations */
+    /* Keyframe Animations (Unchanged) */
     @keyframes ptt-pulse {
         0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
         70% { box-shadow: 0 0 0 15px rgba(255, 77, 77, 0.2); }
@@ -252,7 +268,7 @@
     }
 
     /* -------------------------------------- */
-    /* 3. MESSAGE & UTILITY STYLES (Required for rendering chat content) */
+    /* 3. MESSAGE & UTILITY STYLES (Unchanged) */
     /* -------------------------------------- */
     .message-container {
       display: flex;
@@ -263,7 +279,8 @@
     .user {
       justify-content: flex-end;
     }
-    .bot-message, .user-message {
+    /* Note: Adjusted bubble content class to match live.js update */
+    .bubble-content { 
       max-width: 80%;
       padding: 10px 15px;
       border-radius: 18px;
@@ -271,26 +288,25 @@
       word-wrap: break-word;
       white-space: pre-wrap;
     }
-    .user-message {
+    /* The CSS below targets the bubbles directly, not the container */
+    .user .bubble-content {
       background: #007bff;
       color: white;
       border-bottom-right-radius: 2px;
       margin-right: 5px;
     }
-    .bot-message {
+    .bot-message .bubble-content {
       background: #222;
       color: #fff;
       border-bottom-left-radius: 2px;
       margin-left: 5px;
     }
-    body.light .bot-message {
+    body.light .bot-message .bubble-content {
       background: #e9e9e9;
       color: #111;
     }
     
-    /* Code block, Loader, and Math styles are crucial */
-    
-    /* LOADER */
+    /* LOADER (Unchanged) */
     #loading-indicator {
         min-height: 25px; 
         padding: 8px 15px; 
@@ -325,7 +341,7 @@
       }
     }
     
-    /* CODE BLOCK CSS */
+    /* CODE BLOCK CSS (Unchanged) */
     pre {
       position: relative;
       padding-top: 35px; 
@@ -374,8 +390,9 @@
         if (base64Audio) {
             try {
                 // Prepend base64 audio data URI to be played
-                const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-                // NOTE: A more robust solution would track audio playback to adjust the 'speaking' status
+                // NOTE: The Live API typically returns raw audio chunks, not MP3. 
+                // Using 'audio/mpeg' as a generic fallback, but this part needs confirmation based on the Live API's actual stream format.
+                const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
                 audio.play().catch(e => console.warn("Audio playback failed:", e));
             } catch (e) {
                 console.error("Error creating audio element:", e);
@@ -435,9 +452,16 @@
      * @param {HTMLElement} newChatElement The message container element.
      */
     window.postProcessChat = (newChatElement) => {
+        // Find the actual content bubble, not the container
+        const contentTarget = newChatElement.closest('.message-container') 
+                                ? newChatElement.querySelector('.bubble-content')
+                                : newChatElement;
+
+        if (!contentTarget) return;
+
         // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
         if (window.Prism) {
-             newChatElement.querySelectorAll('pre').forEach(pre => {
+             contentTarget.querySelectorAll('pre').forEach(pre => {
                 try {
                     Prism.highlightElement(pre.querySelector('code'));
                     createCopyButton(pre); 
@@ -450,7 +474,7 @@
         // B. MATH RENDERING (KaTeX)
         if (window.renderMathInElement) {
             try {
-                renderMathInElement(newChatElement, {
+                renderMathInElement(contentTarget, {
                     delimiters: [
                         {left: "$$", right: "$$", display: true},
                         {left: "$", right: "$", display: false},
@@ -469,19 +493,14 @@
     document.addEventListener('DOMContentLoaded', () => {
         const loadingIndicator = document.getElementById('loading-indicator');
         const chatWindow = document.getElementById('chat');
-        const themeToggle = document.getElementById('themeToggle');
-
-        // Theme Toggle Logic
-        themeToggle.addEventListener('click', () => {
-             document.body.classList.toggle('light');
-             // Optionally save theme preference to localStorage
-        });
+        // Theme toggle listener is already set in live.js, but kept here for fallback
+        const themeToggle = document.getElementById('themeToggle'); 
 
         window.showLoader = () => {
             if (!loadingIndicator || !chatWindow) return;
 
             chatWindow.appendChild(loadingIndicator);
-            loadingIndicator.style.display = 'flex'; // Use flex for dots alignment
+            loadingIndicator.style.display = 'flex'; 
             chatWindow.scrollTop = chatWindow.scrollHeight;
         };
 
@@ -493,7 +512,9 @@
         // Process initial message
         if (window.postProcessChat) {
              document.querySelectorAll('.initial-message').forEach(message => {
-                 window.postProcessChat(message);
+                 // Must process the inner content element
+                 const content = message.querySelector('.message-content') || message;
+                 window.postProcessChat(content);
              });
         }
     });
