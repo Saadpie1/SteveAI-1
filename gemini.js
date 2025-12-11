@@ -3,11 +3,8 @@
 // --- Module Imports ---
 import { IMAGE_MODELS } from './image.js'; 
 import config from './config.js'; 
-
-// --- Configuration from Import ---
-const API_BASE = config.API_BASE; // Array: [A4F, Gemini]
-const API_KEYS = config.API_KEYS; // Array of keys
-const proxiedURL = config.proxiedURL; // Function: PROXY + encodeURIComponent(base)
+// 🟢 NEW: Destructure GEMINI_MODELS from config
+const { API_BASE, API_KEYS, proxiedURL, GEMINI_MODELS } = config; 
 
 /**
  * Sends a message to the Gemini API, handling different modes, system instructions, and image data.
@@ -15,28 +12,27 @@ const proxiedURL = config.proxiedURL; // Function: PROXY + encodeURIComponent(ba
  * @param {string} context - The summarized and recent chat history.
  * @param {string} mode - The current operational mode ('lite' or 'fast').
  * @param {string | null} imageToSend - The Base64 image data string (e.g., "data:image/jpeg;base64,...") or null.
- * @param {string | null} customSystemInstruction - An optional custom system prompt to override the default. // <-- NEW PARAMETER ADDED
+ * @param {string | null} customSystemInstruction - An optional custom system prompt to override the default.
  * @returns {Promise<string>} The raw text response from the model.
  */
-async function getGeminiReply(msg, context, mode, imageToSend = null, customSystemInstruction = null) { // <-- NEW PARAMETER ACCEPTED
+async function getGeminiReply(msg, context, mode, imageToSend = null, customSystemInstruction = null) {
     
     // --- 1. Setup & Model Selection ---
     const isLite = mode === 'lite';
-    const model = isLite ? 'gemini-2.5-flash-lite' : 'gemini-2.5-flash';
+    // 🟢 UPDATE: Use the model map from config
+    const model = GEMINI_MODELS[mode] || GEMINI_MODELS['fast']; // Fallback to fast
     const botName = 'SteveAI-' + mode;
 
     // Parameters for Gemini requests (can be loaded from a config if necessary)
     const generationParams = {
         temperature: 0.8,
         topP: 0.9,
+        // 🟢 FIX: You must pass the tools array in the generationConfig for Gemini
+        // Tools setup (Google Search is the only tool for 'lite' mode)
+        tools: isLite ? [{ googleSearch: {} }] : [],
     };
-
-    // Tools setup (Google Search is the only tool for 'lite' mode)
-    const tools = isLite ? [
-        {
-            "googleSearch": {}
-        }
-    ] : [];
+    
+    // ⚠️ The old `tools` variable is no longer needed
 
     // --- 2. System Prompt Construction and Formatting ---
     let systemInstruction;
@@ -54,13 +50,10 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
      If the condition is met, your reply MUST be **ONLY** the following single, raw command string: 
      Image Generated:model:Imagen 4 (Original),prompt:prompt text
      **DO NOT** add any reasoning, greetings, or extra text when generating this command. For all other requests, including image analysis/description, follow Rule 1 (use <think> tags). The model name **MUST** be "Imagen 4 (Original)".
-     `; // <-- CRITICAL FIX: Made the generation rule STRICTLY conditional.
+     `;
 
-        // Add tool instruction context only for 'lite' mode 
-        if (isLite) {
-            const toolContext = '\n3. Real-Time Knowledge: You have access to the Google Search tool to answer questions about current events or information not present in your training data.';
-            coreInstructions += toolContext;
-        }
+        // ⚠️ REMOVED: Tool instructions are now part of the `tools` array in generationConfig, 
+        // they don't need to be explicitly mentioned in the system prompt anymore for tool *use*.
 
         systemInstruction = coreInstructions.trim().replace(/\n\s*\n/g, '\n').replace(/\s\s+/g, ' '); 
     }
@@ -111,16 +104,18 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
 
     // 4c. Construct the final contents array
     const geminiContents = [
-        // System instructions are placed first
-        { role: "user", parts: [{ text: systemInstruction }] }, 
-        
-        // Final user message, including image and text
+        // 🟢 FIX: The system instruction should be passed in the generationConfig object's systemInstruction field, 
+        // not as a separate user turn, for proper API usage.
         { role: "user", parts: userParts } 
     ];
 
 
-    const generationConfig = {};
-    const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences']; 
+    // 🟢 FIX: Restructure generationConfig to correctly pass System Instruction and Tools
+    const generationConfig = {
+        systemInstruction: systemInstruction, // Moved here
+    };
+
+    const configKeys = ['temperature', 'topK', 'topP', 'maxOutputTokens', 'stopSequences', 'tools']; 
     configKeys.forEach(key => {
         if (generationParams[key] !== undefined) {
             generationConfig[key] = generationParams[key];
@@ -128,7 +123,6 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
     });
 
     const payload = {
-        // model: model, // The model is already in the URL
         contents: geminiContents,
         
         ...(Object.keys(generationConfig).length > 0 && { generationConfig: generationConfig }),
@@ -136,6 +130,7 @@ async function getGeminiReply(msg, context, mode, imageToSend = null, customSyst
 
 
     // --- 5. Fetch and Return Reply ---
+    // ... (rest of the fetch logic remains the same)
     try {
         const headers = {
             'Content-Type': 'application/json',
