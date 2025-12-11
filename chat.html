@@ -22,7 +22,6 @@
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
 
   <link rel="preload" href="chat.css" as="style">
-  <link rel="preload" href="index.js" as="script">
   <link rel="stylesheet" href="chat.css">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -113,7 +112,91 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
   
   <script>
-    // Wait until the entire DOM is parsed, including all deferred scripts (KaTeX/Prism).
+    // --- UTILITY FUNCTIONS DEFINED GLOBALLY ---
+    function getCodeLanguage(codeElement) {
+        const match = codeElement.className.match(/language-(\w+)/);
+        if (match) {
+            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        }
+        return 'Code';
+    }
+
+    function createCopyButton(preElement) {
+        if (preElement.querySelector('.code-header')) return; 
+        
+        const codeElement = preElement.querySelector('code');
+        if (!codeElement) return;
+
+        const lang = getCodeLanguage(codeElement);
+
+        const header = document.createElement('div');
+        header.className = 'code-header';
+        
+        const langSpan = document.createElement('span');
+        langSpan.textContent = lang;
+        header.appendChild(langSpan);
+
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-btn';
+        copyButton.textContent = 'Copy';
+        copyButton.onclick = () => window.copyCode(copyButton); 
+        header.appendChild(copyButton);
+
+        preElement.insertBefore(header, preElement.firstChild);
+    }
+    
+    window.copyCode = (button) => {
+        const pre = button.closest('pre');
+        const code = pre.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy code: ', err);
+            button.textContent = 'Error';
+        });
+    }
+
+    /**
+     * Post-render processing function to run after new chat content is added.
+     * chat.js calls this immediately after adding a new message.
+     * @param {HTMLElement} newChatElement The message container element.
+     */
+    window.postProcessChat = (newChatElement) => {
+        // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
+        if (window.Prism) {
+             newChatElement.querySelectorAll('pre').forEach(pre => {
+                try {
+                    Prism.highlightElement(pre.querySelector('code'));
+                    createCopyButton(pre); 
+                } catch (e) {
+                     console.error("Prism highlighting failed:", e);
+                }
+            });
+        }
+        
+        // B. MATH RENDERING (KaTeX)
+        if (window.renderMathInElement) {
+            try {
+                renderMathInElement(newChatElement, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false},
+                    ],
+                    throwOnError: false, 
+                    ignoredTags: ["script", "noscript", "style", "textarea"], 
+                    errorColor: "#ff0000" 
+                });
+            } catch (e) {
+                console.error("KaTeX rendering failed unexpectedly:", e);
+            }
+        }
+    };
+  
+    // --- SETUP LOGIC WRAPPED IN DOMContentLoaded ---
+    // This handles UI setup and ensures initial messages are processed once all dependencies are loaded.
     document.addEventListener('DOMContentLoaded', () => {
         
         // 🟢 Global variable to hold the Base64 image data (attached to window)
@@ -194,96 +277,14 @@
         };
 
         window.clearImageBtn = clearImageBtn; 
-
-        // --- 🟢 POST-RENDER UTILITIES (Code and Math Formatting) ---
         
-        function getCodeLanguage(codeElement) {
-            const match = codeElement.className.match(/language-(\w+)/);
-            if (match) {
-                return match[1].charAt(0).toUpperCase() + match[1].slice(1);
-            }
-            return 'Code';
+        // Re-process any initial messages that might have loaded before KaTeX/Prism were ready.
+        if (window.postProcessChat) {
+             document.querySelectorAll('.bot-message').forEach(message => {
+                 window.postProcessChat(message);
+             });
         }
-
-        window.copyCode = (button) => {
-            const pre = button.closest('pre');
-            const code = pre.querySelector('code').innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                button.textContent = 'Copied!';
-                setTimeout(() => {
-                    button.textContent = 'Copy';
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy code: ', err);
-                button.textContent = 'Error';
-            });
-        }
-
-        function createCopyButton(preElement) {
-            if (preElement.querySelector('.code-header')) return; 
-            
-            const codeElement = preElement.querySelector('code');
-            if (!codeElement) return;
-
-            const lang = getCodeLanguage(codeElement);
-
-            const header = document.createElement('div');
-            header.className = 'code-header';
-            
-            const langSpan = document.createElement('span');
-            langSpan.textContent = lang;
-            header.appendChild(langSpan);
-
-            const copyButton = document.createElement('button');
-            copyButton.className = 'copy-btn';
-            copyButton.textContent = 'Copy';
-            copyButton.onclick = () => window.copyCode(copyButton); 
-            header.appendChild(copyButton);
-
-            preElement.insertBefore(header, preElement.firstChild);
-        }
-
-
-        /**
-         * Post-render processing function to run after new chat content is added.
-         * @param {HTMLElement} newChatElement The message container element.
-         */
-        window.postProcessChat = (newChatElement) => {
-            // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
-            if (window.Prism) {
-                 newChatElement.querySelectorAll('pre').forEach(pre => {
-                    try {
-                        Prism.highlightElement(pre.querySelector('code'));
-                        createCopyButton(pre); 
-                    } catch (e) {
-                         console.error("Prism highlighting failed:", e);
-                    }
-                });
-            } else {
-                 console.warn("Prism is UNDEFINED. Code highlighting skipped.");
-            }
-            
-            // B. MATH RENDERING (KaTeX)
-            if (window.renderMathInElement) {
-                // DOMContentLoaded ensures the library is ready, so no more setTimeout needed.
-                try {
-                    renderMathInElement(newChatElement, {
-                        delimiters: [
-                            {left: "$$", right: "$$", display: true},
-                            {left: "$", right: "$", display: false},
-                        ],
-                        throwOnError: false, 
-                        ignoredTags: ["script", "noscript", "style", "textarea"], 
-                        errorColor: "#ff0000" 
-                    });
-                } catch (e) {
-                    console.error("KaTeX rendering failed unexpectedly:", e);
-                }
-            } else {
-                 console.warn("renderMathInElement is UNDEFINED. Math rendering skipped.");
-            }
-        };
-
+        
     }); // End of DOMContentLoaded
     
   </script>
