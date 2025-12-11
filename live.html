@@ -1,105 +1,337 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteveAI Live Voice Chat</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #1e1e1e;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-        #chat-container {
-            width: 100%;
-            max-width: 600px;
-            flex-grow: 1;
-            overflow-y: auto;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 10px;
-            background-color: #2a2a2a;
-            margin-bottom: 10px;
-        }
-        .message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 6px;
-        }
-        .user {
-            background-color: #007bff;
-            align-self: flex-end;
-            margin-left: 20%;
-        }
-        .ai {
-            background-color: #444;
-            align-self: flex-start;
-            margin-right: 20%;
-        }
-        #controls {
-            display: flex;
-            gap: 20px;
-            padding: 10px;
-            background-color: #111;
-            width: 100%;
-            max-width: 600px;
-            border-radius: 8px;
-            justify-content: center;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        #record-btn {
-            background-color: #ff4500;
-            color: white;
-        }
-        #record-btn:hover:not(:disabled) {
-            background-color: #e03c00;
-        }
-        #status {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #ffae00;
-        }
-        #model-info {
-            font-size: 0.8em;
-            color: #888;
-            margin-bottom: 15px;
-        }
-        .recording {
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 69, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
-        }
-    </style>
-</head>
-<body>
-    <div id="model-info">
-        Model: models/gemini-2.5-flash-native-audio-preview-09-2025
-    </div>
-    <div id="chat-container">
-        </div>
-    <div id="controls">
-        <button id="record-btn">🎤 Start Recording</button>
-        <button id="stop-btn" disabled>🛑 Stop/Send</button>
-    </div>
-    <div id="status">Ready</div>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SteveAI - Live Voice Assistant</title>
 
-    <script src="live.js"></script>
+  <meta name="description" content="SteveAI Live: Real-time, voice-enabled assistant powered by the Gemini Live API.">
+  <meta name="keywords" content="SteveAI, AI assistant, chatbot, smart AI, generative AI, productivity, learning AI, Gemini Live, Voice Chat, WebSocket">
+  <meta name="author" content="SteveAI">
+  <meta property="og:title" content="SteveAI - Live Voice Assistant">
+  <meta property="og:description" content="Talk to SteveAI in real-time.">
+  <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
+  <meta property="og:url" content="https://steve-ai.netlify.app/live.html">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SteveAI - Live Voice Assistant">
+  <meta name="twitter:description" content="Experience real-time voice chat with SteveAI.">
+  <meta name="twitter:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
+  <meta name="theme-color" content="#1e1e1e"/>
+  <link rel="canonical" href="https://steve-ai.netlify.app/live.html">
+  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
+
+  <link rel="preload" href="chat.css" as="style">
+  <link rel="stylesheet" href="chat.css">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+
+
+</head>
+
+<body>
+  <div id="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" 
+             alt="SteveAI Logo" 
+             style="width:100%; height:100%; border-radius:8px; object-fit:cover;">
+      </div>
+      <span>SteveAI **LIVE**</span>
+    </div>
+
+    <div class="header-actions">
+        <a href="chat.html" class="action-btn" title="Switch to Text Chat">💬 Text Chat</a>
+        <button id="clearChat" class="action-btn" title="Clear Chat">🗑️</button>
+        <button id="themeToggle" class="action-btn" title="Toggle Theme">🌙</button>
+    </div>
+  </div>
+
+  <div id="chat">
+    <div id="loading-indicator" class="bot-message" style="display:none;">
+        <div class="bouncing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+    
+    <div class="bot-message initial-message">
+        <div class="message-content">
+            <h3>🎙️ Welcome to SteveAI Live</h3>
+            <p>I'm ready for a real-time voice conversation. Tap and **HOLD** the microphone button to speak, then release when you are done. </p>
+            <p>I can use **Google Search** to answer questions about the current world, thanks to my specialized model routing.</p>
+        </div>
+    </div>
+
+  </div>
+
+  <div id="commandHints" hidden>
+    <span>/help</span><span>/clear</span><span>/theme</span>
+    <span>/export</span><span>/contact</span>
+  </div>
+
+  <div id="inputContainer">
+      <div id="liveStatusDisplay" class="live-status inactive">Press and Hold to Talk</div>
+
+      <button id="pttButton" title="Push to Talk" class="ptt-btn">
+          <span id="pttIcon">🎙️</span>
+      </button>
+  </div>
+  
+  <script type="module" src="live.js"></script>
+  
+  <style>
+    /* -------------------------------------- */
+    /* 🟢 LIVE.HTML SPECIFIC STYLES (Overrides/Additions) */
+    /* -------------------------------------- */
+    
+    /* Make chat area taller to compensate for smaller input area */
+    #chat {
+      height: calc(100vh - 200px); /* Adjusted for PTT area */
+    }
+
+    #inputContainer {
+      padding: 15px 10px 30px; /* More padding at the bottom for PTT button */
+      align-items: center;
+      justify-content: center;
+      border-top: 1px solid #333;
+    }
+
+    /* Remove the old text input form */
+    #inputForm, #imagePreviewContainer, #imageUploadBtn {
+        display: none !important;
+    }
+
+    /* PTT Button Styles */
+    #pttButton {
+        width: 90px;
+        height: 90px;
+        background: #ffae00;
+        color: #111;
+        border: none;
+        border-radius: 50%;
+        font-size: 2.5em;
+        line-height: 1;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 15px rgba(255, 174, 0, 0.4);
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #pttButton:hover {
+        background: #ffc107;
+    }
+
+    /* Active PTT State (Held Down) */
+    #pttButton.active {
+        background: #ff4d4d; /* Red when recording */
+        color: white;
+        transform: scale(1.15);
+        box-shadow: 0 0 0 15px rgba(255, 77, 77, 0.4), 0 0 0 0 rgba(255, 77, 77, 0.6);
+        animation: ptt-pulse 1.5s infinite;
+    }
+    
+    /* Status Display */
+    #liveStatusDisplay {
+        font-size: 1em;
+        padding: 5px 15px;
+        border-radius: 8px;
+        white-space: nowrap;
+        text-align: center;
+        min-width: 150px;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    
+    #liveStatusDisplay.inactive {
+        background: #222;
+        color: #aaa;
+    }
+    
+    #liveStatusDisplay.connecting {
+        background: #007bff;
+        color: white;
+    }
+    
+    #liveStatusDisplay.listening {
+        background: #00b300; /* Green for listening */
+        color: white;
+        animation: status-pulse-glow 1s infinite alternate;
+    }
+    
+    #liveStatusDisplay.speaking {
+        background: #ffae00; /* Orange for speaking */
+        color: #111;
+        animation: status-pulse-slow 0.5s infinite alternate;
+    }
+
+    /* Keyframe Animations */
+    @keyframes ptt-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(255, 77, 77, 0.2); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+    }
+    @keyframes status-pulse-glow {
+        from { box-shadow: 0 0 5px #00b300; }
+        to { box-shadow: 0 0 10px #00b300; }
+    }
+    @keyframes status-pulse-slow {
+        from { opacity: 1; }
+        to { opacity: 0.9; }
+    }
+    
+    /* Global Styles Kept (or imported from chat.css) */
+    
+    /* ... (The rest of the CSS that you provided for general styles should be either in chat.css 
+       or copied here, as this is a standalone file. For simplicity, assume all common styles 
+       are in `chat.css` and only these PTT specific styles are inline.) ... */
+    
+    
+  </style>
+  
+  <script>
+    // 🟢 NEW: Global function for playing audio (required by live.js)
+    window.playAudio = (base64Audio) => {
+        if (base64Audio) {
+            try {
+                // Prepend base64 audio data URI to be played
+                const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                // NOTE: A more robust solution would track audio playback to adjust the 'speaking' status
+                audio.play().catch(e => console.warn("Audio playback failed:", e));
+            } catch (e) {
+                console.error("Error creating audio element:", e);
+            }
+        }
+    };
+    
+    // 🟢 The core utility functions like postProcessChat must also be included, 
+    // as the live UI will still display text responses with markdown/code blocks.
+    
+    // --- UTILITY FUNCTIONS DEFINED GLOBALLY (Copied from chat.html) ---
+    function getCodeLanguage(codeElement) {
+        const match = codeElement.className.match(/language-(\w+)/);
+        if (match) {
+            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        }
+        return 'Code';
+    }
+
+    function createCopyButton(preElement) {
+        if (preElement.querySelector('.code-header')) return; 
+        
+        const codeElement = preElement.querySelector('code');
+        if (!codeElement) return;
+
+        const lang = getCodeLanguage(codeElement);
+
+        const header = document.createElement('div');
+        header.className = 'code-header';
+        
+        const langSpan = document.createElement('span');
+        langSpan.textContent = lang;
+        header.appendChild(langSpan);
+
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-btn';
+        copyButton.textContent = 'Copy';
+        copyButton.onclick = () => window.copyCode(copyButton); 
+        header.appendChild(copyButton);
+
+        preElement.insertBefore(header, preElement.firstChild);
+    }
+    
+    window.copyCode = (button) => {
+        const pre = button.closest('pre');
+        const code = pre.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy code: ', err);
+            button.textContent = 'Error';
+        });
+    }
+
+    /**
+     * Post-render processing function to run after new chat content is added.
+     * chat.js calls this immediately after adding a new message.
+     * @param {HTMLElement} newChatElement The message container element.
+     */
+    window.postProcessChat = (newChatElement) => {
+        // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
+        if (window.Prism) {
+             newChatElement.querySelectorAll('pre').forEach(pre => {
+                try {
+                    Prism.highlightElement(pre.querySelector('code'));
+                    createCopyButton(pre); 
+                } catch (e) {
+                     console.error("Prism highlighting failed:", e);
+                }
+            });
+        }
+        
+        // B. MATH RENDERING (KaTeX)
+        if (window.renderMathInElement) {
+            try {
+                renderMathInElement(newChatElement, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false},
+                    ],
+                    throwOnError: false, 
+                    ignoredTags: ["script", "noscript", "style", "textarea"], 
+                    errorColor: "#ff0000" 
+                });
+            } catch (e) {
+                console.error("KaTeX rendering failed unexpectedly:", e);
+            }
+        }
+    };
+    
+    // --- LOADER CONTROL LOGIC ---
+    // Must be defined globally for live.js to use.
+    document.addEventListener('DOMContentLoaded', () => {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const chatWindow = document.getElementById('chat');
+
+        window.showLoader = () => {
+            if (!loadingIndicator || !chatWindow) return;
+
+            chatWindow.appendChild(loadingIndicator);
+            loadingIndicator.style.display = 'block'; 
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        };
+
+        window.hideLoader = () => {
+            if (!loadingIndicator) return;
+            loadingIndicator.style.display = 'none';
+        };
+
+        // Process initial message
+        if (window.postProcessChat) {
+             document.querySelectorAll('.initial-message').forEach(message => {
+                 window.postProcessChat(message);
+             });
+        }
+    });
+    
+  </script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+
 </body>
 </html>
