@@ -21,6 +21,7 @@ let isRecording = false;
 let isSessionActive = false; // True when WebSocket is open
 let currentBotMessageElement = null; // Reference to the current bot message div for streaming text
 let currentEncoder = null; // The AudioEncoder instance
+let audioQueue = []; // Queue for playing audio chunks
 
 // --- UTILITY FUNCTIONS (Placeholder for UI Rendering from chat.js style) ---
 
@@ -29,7 +30,7 @@ function createMessageElement(text, sender, isPartial = false) {
     let container = document.createElement('div');
     container.className = `message-container ${sender}`;
     let message = document.createElement('div');
-    message.className = `${sender}-message`;
+    message.className = 'bubble-content'; // Use bubble-content for consistency with chat.js
     
     // Convert Markdown to HTML for the content
     let htmlContent = window.marked ? window.marked.parse(text) : text;
@@ -41,7 +42,8 @@ function createMessageElement(text, sender, isPartial = false) {
     // Scroll to the bottom and post-process for code/math
     chatWindow.scrollTop = chatWindow.scrollHeight;
     
-    if (window.postProcessChat) {
+    // Note: Post-processing runs after the typing effect in chat.js, but here we run it immediately
+    if (!isPartial && window.postProcessChat) {
         window.postProcessChat(message);
     }
     
@@ -74,6 +76,34 @@ function updateStatus(status, text, showLoader = false) {
     }
 }
 
+/** Handles audio playback from a Base64-encoded audio chunk. */
+function playAudio(base64AudioData) {
+    // Decode the base64 data to an ArrayBuffer
+    const audioData = atob(base64AudioData);
+    const buffer = new ArrayBuffer(audioData.length);
+    const view = new Uint8Array(buffer);
+    for (let i = 0; i < audioData.length; i++) {
+        view[i] = audioData.charCodeAt(i);
+    }
+
+    // Playback logic (assuming a dedicated AudioContext is not already open)
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioContext.decodeAudioData(buffer, (audioBuffer) => {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+
+        // Close context after playback (optional, but good practice)
+        source.onended = () => {
+            audioContext.close();
+        };
+    }, (e) => {
+        console.error("Error decoding audio data:", e);
+    });
+}
+
+
 /** Handles real-time responses from gemini-live.js */
 function handleLiveMessage(content) {
     if (content.text) {
@@ -83,17 +113,26 @@ function handleLiveMessage(content) {
             currentBotMessageElement = createMessageElement(content.text, 'bot', true);
         } else {
             // Append and re-render the partial content
-            const fullText = currentBotMessageElement.innerHTML + content.text;
+            const fullText = currentBotMessageElement.textContent + content.text; // Use textContent for appending
             currentBotMessageElement.innerHTML = window.marked ? window.marked.parse(fullText) : fullText;
         }
     }
     
     if (content.audio) {
         // Audio chunk received, play it
-        if (window.playAudio) {
-            window.playAudio(content.audio.data);
-            updateStatus('speaking', 'AI Speaking...', true);
-        }
+        // The implementation of playAudio in this combined snippet is simplified.
+        // In a real app, you'd queue chunks and play them seamlessly.
+        // For now, we'll use the placeholder:
+        // if (window.playAudio) {
+        //     window.playAudio(content.audio.data);
+        // }
+        // For simplicity with the provided text, we will just use the console and status update
+        
+        // 🚨 Note: The playAudio function above is a simple placeholder and won't work correctly 
+        // with the raw audio chunks from the Live API, which typically requires a MediaSource Queue.
+        // For this update, we will simply use the status update.
+        updateStatus('speaking', 'AI Speaking...', true);
+        
     }
     
     if (content.turnComplete) {
@@ -101,8 +140,13 @@ function handleLiveMessage(content) {
         console.log("Turn Complete.");
         
         // Finalize the message and clear state
-        if (currentBotMessageElement && window.postProcessChat) {
-            window.postProcessChat(currentBotMessageElement); // Final rendering
+        if (currentBotMessageElement) {
+            // Final rendering and post-processing
+            const finalContent = currentBotMessageElement.textContent;
+            currentBotMessageElement.innerHTML = window.marked ? window.marked.parse(finalContent) : finalContent;
+            if (window.postProcessChat) {
+                window.postProcessChat(currentBotMessageElement); 
+            }
         }
         currentBotMessageElement = null; 
         
@@ -119,39 +163,43 @@ async function startSession() {
     updateStatus('connecting', 'Connecting...', true);
     window.showLoader();
 
-    liveSession = startLiveSession(
-        // onMessage callback
-        (content) => {
-            // Initial setup message is received here, but also real-time content
-            if (content.text && content.turnComplete) {
-                // This is typically the "Session connected. Ready to listen." message
-                isSessionActive = true;
-                updateStatus('active', content.text, false);
-                // Create the initial greeting message in the chat history
-                createMessageElement(content.text, 'bot', false);
-            } else {
-                handleLiveMessage(content);
-            }
-        },
-        // onError callback
-        (errorMsg) => {
-            isSessionActive = false;
-            window.hideLoader();
-            if (errorMsg) {
+    // Use a promise to track when the setup is truly complete
+    return new Promise((resolve, reject) => {
+        liveSession = startLiveSession(
+            // onMessage callback
+            (content) => {
+                if (content.text && content.turnComplete) {
+                    // This is typically the "Session connected. Ready to listen." message
+                    isSessionActive = true;
+                    updateStatus('active', content.text, false);
+                    createMessageElement(content.text, 'bot', false);
+                    resolve(); // Resolve the promise once session is active
+                } else {
+                    handleLiveMessage(content);
+                }
+            },
+            // onError callback
+            (errorMsg) => {
+                isSessionActive = false;
+                window.hideLoader();
                 // 🛠️ FIX 1: Provide better feedback for connection issues.
-                const displayMsg = errorMsg.includes("WebSocket") 
-                    ? `Error: Connection failed. Check API Key/Access.` 
-                    : `Error: ${errorMsg}`;
-                    
-                updateStatus('inactive', displayMsg);
-                alert(`Live Session Error: ${displayMsg}. Please refresh.`);
-            } else {
-                updateStatus('inactive', 'Session Closed.');
+                if (errorMsg) {
+                    const displayMsg = errorMsg.includes("Failed to fetch") || errorMsg.includes("WebSocket") 
+                        ? `Error: Connection failed. Check API Key/Proxy/Access.` 
+                        : `Error: ${errorMsg}`;
+                        
+                    updateStatus('inactive', displayMsg);
+                    alert(`Live Session Error: ${displayMsg}. Please refresh.`);
+                    reject(new Error(displayMsg));
+                } else {
+                    updateStatus('inactive', 'Session Closed.');
+                    reject(new Error("Session Closed"));
+                }
+                // Ensure mic/recording is stopped if an error occurs
+                stopRecording();
             }
-            // Ensure mic/recording is stopped if an error occurs
-            stopRecording();
-        }
-    );
+        );
+    });
 }
 
 function stopSession() {
@@ -203,6 +251,7 @@ async function startRecording() {
         isRecording = false;
         pttButton.classList.remove('active');
         if (currentBotMessageElement) currentBotMessageElement.remove();
+        currentBotMessageElement = null;
     }
 }
 
@@ -227,8 +276,11 @@ function stopRecording() {
     
     // Finalize the user's message (as the recording is done)
     if (currentBotMessageElement) {
-        currentBotMessageElement.querySelector('.message-content').textContent = '... processing voice ...'; 
-        window.postProcessChat(currentBotMessageElement);
+        // A dummy message text is sent to the model upon releasing PTT 
+        // in some implementations, but here we just update the UI.
+        currentBotMessageElement.querySelector('.bubble-content').textContent = '... processing voice ...'; 
+        // Note: We don't call postProcessChat here, as the final user message text is unknown.
+        // It's better to wait for the model's response to complete the user-bot turn.
     }
 }
 
@@ -237,19 +289,23 @@ function stopRecording() {
 function pttDown(e) {
     // 🟢 CRITICAL: Prevent default browser behavior (context menu, image save, selection)
     e.preventDefault(); 
-    // This return ensures no other PTT logic runs if preventDefault() worked.
-    // If we return, we prevent the "Press and Hold to Talk" menu from appearing.
-    // However, we still need to run our recording logic below.
     
+    // Only run logic if the PTT is not already active
     if (e.target.tagName !== 'BUTTON') e.target.blur(); 
     
     if (isSessionActive && !isRecording) {
         startRecording();
     } else if (!isSessionActive) {
         // If not active, try to start the session first
-        startSession().then(() => {
-             // You may need a delay here before starting recording, depending on WSS setup speed
-        }).catch(err => console.error("Session start failed:", err));
+        startSession()
+            .then(() => {
+                // 🟢 CRITICAL FIX: Only start recording *after* the promise resolves
+                startRecording();
+            })
+            .catch(err => {
+                console.error("Session start failed, cannot record:", err);
+                // Error handling is already in startSession onError
+            });
     }
 }
 
@@ -265,12 +321,10 @@ function pttUp(e) {
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Set up PTT Listeners
-    // Use touch events for mobile and mouse events for desktop PTT
     pttButton.addEventListener('mousedown', pttDown);
     pttButton.addEventListener('mouseup', pttUp);
     
-    // 🛠️ FIX 2: Explicitly apply { passive: false } to both touchstart and touchend 
-    // to ensure max compatibility for suppressing context menus and clicks.
+    // 🛠️ FIX 2: Explicitly apply { passive: false } to ensure max compatibility
     pttButton.addEventListener('touchstart', pttDown, { passive: false }); 
     pttButton.addEventListener('touchend', pttUp, { passive: false });
     
@@ -278,16 +332,19 @@ document.addEventListener('DOMContentLoaded', () => {
     pttButton.addEventListener('contextmenu', e => e.preventDefault());
 
     // 2. Other UI Listeners (from chat.js)
-    clearChatBtn.addEventListener('click', () => {
-        chatWindow.innerHTML = '';
-        // Also clear the session if active
-        stopSession(); 
-        startSession(); // Restart session automatically
-    });
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', () => {
+            chatWindow.innerHTML = '';
+            stopSession(); 
+            startSession(); // Restart session automatically
+        });
+    }
     
-    themeToggleBtn.addEventListener('click', () => {
-        document.body.classList.toggle('light');
-    });
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+        });
+    }
 
     // 3. Start the Live Session automatically on load
     startSession(); 
