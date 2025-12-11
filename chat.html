@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SteveAI - Ultimate AI Assistant</title>
-  
+  <title>SteveAI - Smart AI Assistant</title>
+
   <meta name="description" content="SteveAI is your smart AI assistant for chatting, learning, and creating.">
   <meta name="keywords" content="SteveAI, AI assistant, chatbot, smart AI, generative AI, productivity, learning AI">
   <meta name="author" content="SteveAI">
@@ -20,14 +20,14 @@
   <meta name="theme-color" content="#1e1e1e"/>
   <link rel="canonical" href="https://steve-ai.netlify.app/chat.html">
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
-  
+
   <link rel="preload" href="chat.css" as="style">
   <link rel="preload" href="index.js" as="script">
   <link rel="stylesheet" href="chat.css">
-  
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+
 
   <script type="application/ld+json">
   {
@@ -61,8 +61,7 @@
         <option value="reasoning">SteveAI-reasoning</option>
         <option value="fast">SteveAI-fast</option>
         <option value="lite">SteveAI-instant</option>
-        <option value="general">SteveAI-general</option>
-        <option value="math">SteveAI-math</option>
+        <option value="general">SteveAI-general</option> <option value="math">SteveAI-math</option>
         <option value="coding">SteveAI-coding</option>
         <option value="korean">SteveAI-Korean</option>
         <option value="arabic">SteveAI-Arabic</option>
@@ -73,11 +72,6 @@
   </div>
 
   <div id="chat">
-    <div class="bot-message message-container">
-        <p>Hello! I am SteveAI, an Ultimate Multi-Modal AI Orchestrator. How can I help you today?</p>
-        <p>Try asking me for a code example or a math equation to see the new premium formatting!</p>
-    </div>
-    
     <div id="loading-indicator" class="bot-message" style="display:none;">
         <div class="bouncing-dots">
             <span></span>
@@ -108,6 +102,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module" src="chat.js"></script> 
   
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
@@ -117,11 +112,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
-
+  
   <style>
-    /* ------------------------------------------------------------------ */
-    /* CORE STRUCTURAL CSS (You should verify this matches your chat.css)  */
-    /* ------------------------------------------------------------------ */
+    /* EXISTING CSS */
     body {
       margin: 0;
       background: #0d0d0d;
@@ -133,6 +126,8 @@
       background: #fafafa;
       color: #111;
     }
+    /* ... (rest of existing CSS for header, chat, inputContainer, inputForm, textarea, sendBtn, commandHints) ... */
+
     #header {
       display: flex;
       justify-content: space-between;
@@ -149,12 +144,13 @@
       scroll-behavior: smooth;
     }
     #inputContainer {
-        padding: 10px;
-        border-top: 1px solid #333;
-        background: #111;
-        display: flex;
-        flex-direction: column; 
-        align-items: center; 
+      padding: 10px;
+      border-top: 1px solid #333;
+      background: #111;
+      display: flex;
+      /* Changed to block to allow preview area above form */
+      flex-direction: column; 
+      align-items: center; /* Center the form and preview */
     }
     #inputForm {
         display: flex;
@@ -163,217 +159,214 @@
         gap: 10px;
     }
     textarea {
-        flex-grow: 1;
-        resize: none;
-        background: #1a1a1a;
+      flex-grow: 1;
+      resize: none;
+      background: #1a1a1a;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 1em;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    #sendBtn {
+        width: 40px;
+        height: 40px;
+        background: #ffae00;
+        color: #111;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.5em;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    #sendBtn:hover {
+        background: #ffc107;
+    }
+    body.light textarea {
+      background: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+    #commandHints {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      background: #181818;
+      padding: 6px 0;
+      font-size: 0.9em;
+      border-top: 1px solid #222;
+    }
+    #commandHints span {
+      background: #222;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    #commandHints span:hover {
+      background: #333;
+    }
+    
+    /* Styling for Image Button and Preview */
+    #imageUploadBtn {
+        width: 40px;
+        height: 40px;
+        background: #333;
         color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.5em;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    #imageUploadBtn:hover {
+        background: #555;
+    }
+    
+    #imagePreviewContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        margin-bottom: 10px;
+        max-width: 800px;
+        width: 100%;
+        padding: 5px;
         border: 1px solid #333;
         border-radius: 10px;
-        padding: 10px;
-        font-size: 1em;
-        outline: none;
-        transition: all 0.3s ease;
+        background: #1a1a1a;
     }
-    /* ... (rest of input/button/loader CSS) ... */
-
-    /* ------------------------------------------------------------------ */
-    /* PREMIUM CODE FORMATTING FIXES (Code, Math, and UI Elements)        */
-    /* ------------------------------------------------------------------ */
-    
-    /* 1. Core Code Block Container (<pre>) */
-    #chat pre {
-        /* FIXES: Position, Soft Wrapping */
-        position: relative;
-        padding-top: 40px !important; 
-        white-space: pre-wrap;     
-        word-wrap: break-word;     
-        overflow-x: hidden;        
-        
-        /* PREMIUM LOOK */
-        background: #1e1e1e !important; 
-        border-radius: 12px;           
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); 
-        margin: 15px 0; 
-        border: 1px solid #333; 
-        line-height: 1.5;
+    #imagePreview {
+        max-width: 100%;
+        max-height: 150px;
+        border-radius: 8px;
+        object-fit: contain;
     }
-
-    /* 2. Code Content Area (<code>) */
-    #chat pre code {
-        padding: 0 !important; 
-        display: block; 
-        font-size: 0.95em;
-        padding: 15px; 
-    }
-
-    /* 3. Code Block Header (Language Label and Copy Button) */
-    .code-language-label, .copy-btn {
+    #clearImageBtn {
         position: absolute;
-        top: 0;
-        height: 35px; 
-        display: flex;
-        align-items: center;
-        font-weight: 600;
-        font-family: 'Inter', sans-serif; 
-        font-size: 0.85em;
-        transition: background 0.2s, opacity 0.2s;
-        z-index: 20;
-    }
-
-    /* Language Label (Left Side) */
-    .code-language-label {
-        left: 0;
-        background-color: #383838; 
-        color: #ddd;
-        padding: 0 15px;
-        border-top-left-radius: 12px; 
-        border-bottom-right-radius: 8px; 
-    }
-
-    /* Copy Button (Right Side) */
-    .copy-btn {
-        right: 0;
-        background-color: #383838; 
-        color: #fff;
-        padding: 0 15px;
-        border-top-right-radius: 12px; 
-        border-bottom-left-radius: 8px;
+        top: 5px;
+        right: 5px;
+        background: rgba(255, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        line-height: 1;
         cursor: pointer;
-        opacity: 0.9;
+        font-size: 14px;
+        padding: 0;
     }
 
+    /* FIXES FROM PREVIOUS STEPS (Kept) */
+    .message-container {
+        position: relative; 
+    }
+    .message-container .message-actions {
+        position: absolute; 
+        bottom: 0px; 
+        top: auto !important; 
+        z-index: 10; 
+        opacity: 0.8; 
+    }
+    .message-container.user .message-actions {
+        left: auto !important;
+        right: 0 !important; 
+    }
+    .message-container.bot .message-actions {
+        left: 0 !important; 
+        right: auto !important;
+    }
+    #loading-indicator {
+        min-height: 25px; 
+        padding: 8px 15px; 
+    }
+
+    .bouncing-dots {
+      display: flex;
+      align-items: center;
+      margin-left: 5px;
+    }
+    .bouncing-dots span {
+      width: 8px;
+      height: 8px;
+      margin: 0 2px;
+      background-color: #ffae00;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .bouncing-dots span:nth-child(2) {
+      animation-delay: 0.2s; 
+    }
+    .bouncing-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      44% {
+        transform: scale(1);
+      }
+    }
+    
+    /* 🟢 NEW: CSS for Code Blocks and Copy Button */
+    pre {
+      position: relative;
+      padding-top: 35px; /* Make space for the header/copy button */
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1em 0;
+    }
+    pre code {
+      display: block;
+      padding: 1em;
+      white-space: pre-wrap; /* Allows line wrapping */
+      word-break: break-all;
+    }
+    .code-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: #333;
+      color: #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 0.9em;
+    }
+    .copy-btn {
+      background: #ffae00;
+      color: #111;
+      border: none;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8em;
+      transition: background 0.2s;
+    }
     .copy-btn:hover {
-        opacity: 1;
-        background-color: #ffae00; /* SteveAI brand color highlight */
-        color: #111;
+      background: #ffc107;
     }
-    
-    /* 4. Optional: Inline code */
-    #chat code:not([class*="language-"]) {
-        background-color: #2b2b2b;
-        color: #fff0b5; 
-        padding: 2px 5px;
-        border-radius: 4px;
-        font-weight: 500;
-        font-size: 0.95em;
-    }
-    
-    /* 5. Table Styling */
-    .bot-message table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 15px 0;
-        color: #fff;
-    }
-    .bot-message table th, .bot-message table td {
-        border: 1px solid #444;
-        padding: 8px;
-        text-align: left;
-    }
-    .bot-message table th {
-        background-color: #2a2a2a;
-        font-weight: bold;
-    }
-
   </style>
 
   <script>
-    // 🟢 Global State and DOM References
+    // 🟢 FIX: Global variable to hold the Base64 image data (attached to window)
     let base64Image = null;
+
+    // --- EXISTING SCRIPT LOGIC (Input/Hints) ---
     const inputEl = document.getElementById('messageInput');
     const hintsEl = document.getElementById('commandHints');
-    const inputForm = document.getElementById('inputForm');
-    const imageInputFile = document.getElementById('imageInputFile');
-    const imageUploadBtn = document.getElementById('imageUploadBtn');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const imagePreview = document.getElementById('imagePreview');
-    const clearImageBtn = document.getElementById('clearImageBtn');
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const chatWindow = document.getElementById('chat');
+    // const inputForm = document.getElementById('inputForm'); // Not needed if not used
 
-    // Attach global references
-    window.base64Image = base64Image;
-    window.clearImageBtn = clearImageBtn; 
-
-    // --- Message Display and Core Logic ---
-    
-    /**
-     * Renders a message to the chat window and triggers post-processing.
-     * @param {string} text - The markdown text content.
-     * @param {('user'|'bot')} sender - The message sender.
-     */
-    function displayMessage(text, sender) {
-        const newMsgDiv = document.createElement('div');
-        newMsgDiv.className = (sender === 'user' ? 'user-message' : 'bot-message') + ' message-container';
-        
-        // Use marked.js to convert markdown to HTML
-        newMsgDiv.innerHTML = marked.parse(text); 
-        
-        chatWindow.appendChild(newMsgDiv);
-        
-        // 🚨 CRITICAL: Call the post-processor to fix math and code
-        window.postProcessChat(newMsgDiv);
-        
-        // Scroll to bottom
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-    
-    // 💡 Placeholder for actual API call (uses extracted project name)
-    function mockApiCall(prompt) {
-        window.showLoader();
-        setTimeout(() => {
-            window.hideLoader();
-            const mockResponse = `Hello **Saadpie**! I'm SteveAI, an orchestrator of 33+ AI models. Your prompt was: "${prompt}". 
-Here is a premium **JavaScript** code block with the new **Copy Button** and **Syntax Highlighting**:
-
-\`\`\`javascript
-/**
- * Core function for SteveAI's Multi-Modal Orchestration.
- * Routes the prompt based on content type (text, image, math, code).
- */
-function routePrompt(prompt, imageBase64) {
-  if (imageBase64) {
-    // Route to image models (23 models)
-    return \`Routing to image stack with \${imageBase64.substring(0, 10)}...\`;
-  } else if (prompt.includes('calculate') || prompt.includes('integral')) {
-    // Route to specialized math models
-    return \`Routing to math stack for precision.\`;
-  }
-  // Default route to conversational/reasoning models (10+ models)
-  return \`Routing to general reasoning stack.\`;
-}
-// This long line of code now wraps beautifully thanks to 'white-space: pre-wrap' and 'word-wrap: break-word' in the CSS!
-console.log(routePrompt("Calculate the value of x where 2x=5", null)); 
-\`\`\`
-
-And here is a complex **LaTeX** equation beautifully rendered by **KaTeX**:
-
-The Hamiltonian for a simple harmonic oscillator is given by:
-$$H = \\frac{p^2}{2m} + \\frac{1}{2}m\\omega^2 x^2$$
-
-This proves that all your formatting is now premium and functional!`;
-            
-            displayMessage(mockResponse, 'bot');
-        }, 1500); 
-    }
-
-    // --- Event Listeners and Image Handling ---
-    
-    inputForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const prompt = inputEl.value.trim();
-        if (!prompt) return;
-
-        displayMessage(prompt, 'user');
-        
-        inputEl.value = '';
-        inputEl.style.height = 'auto'; 
-        window.clearImageBtn.click(); 
-        
-        mockApiCall(prompt);
-    });
-
-    // ... (All other event listeners for input, hints, and image handling remain here) ...
     inputEl.addEventListener('input', () => {
       hintsEl.hidden = !inputEl.value.trim().startsWith('/');
     });
@@ -388,37 +381,60 @@ This proves that all your formatting is now premium and functional!`;
       };
     });
     
+    // --- NEW SCRIPT LOGIC (Image Handling) ---
+    const imageInputFile = document.getElementById('imageInputFile');
+    const imageUploadBtn = document.getElementById('imageUploadBtn');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const clearImageBtn = document.getElementById('clearImageBtn');
+
+    // 1. Image Upload Button Click
     imageUploadBtn.addEventListener('click', () => {
         imageInputFile.click();
     });
 
+    // 2. File Selection Handler
     imageInputFile.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
+            
             reader.onload = (event) => {
+                // Set the local variable, which is exposed to window below
                 base64Image = event.target.result; 
-                window.base64Image = base64Image; 
+                window.base64Image = base64Image; // ⬅️ EXPOSE TO WINDOW
+                
+                // Show preview
                 imagePreview.src = base64Image;
                 imagePreviewContainer.style.display = 'flex';
+                
+                // Optional: Focus back on text area
                 inputEl.focus();
             };
+            
+            // Convert file to Base64 string
             reader.readAsDataURL(file);
         }
     });
 
+    // 3. Clear Image Handler
     clearImageBtn.addEventListener('click', () => {
         base64Image = null;
-        window.base64Image = null; 
+        window.base64Image = null; // ⬅️ CLEAR FROM WINDOW
         imagePreview.src = '';
-        imageInputFile.value = ''; 
+        imageInputFile.value = ''; // Clear the file input for re-uploading the same file
         imagePreviewContainer.style.display = 'none';
         inputEl.focus();
     });
+    
+    // --- EXISTING SCRIPT LOGIC (Loader Control) ---
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const chatWindow = document.getElementById('chat');
 
-    // --- Loader Control ---
+    // 🟢 FIX: Attach loader functions to window
     window.showLoader = () => {
         if (!loadingIndicator || !chatWindow) return;
+
         chatWindow.appendChild(loadingIndicator);
         loadingIndicator.style.display = 'block'; 
         chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -428,87 +444,103 @@ This proves that all your formatting is now premium and functional!`;
         if (!loadingIndicator) return;
         loadingIndicator.style.display = 'none';
     };
+
+    // 🟢 FIX: Expose the clear button globally so chat.js can trigger the image cleanup
+    window.clearImageBtn = clearImageBtn; 
+
+    // --- 🟢 NEW: Post-Render Utilities (Code and Math Formatting) ---
     
-    // --- Post-Render Utilities (Code and Math Formatting) ---
-    
-    // Function to create the copy button and language label
-    function createCopyButton(preElement) {
-        // Add language label
-        const codeElement = preElement.querySelector('code');
-        const languageClass = Array.from(codeElement.classList).find(c => c.startsWith('language-'));
-        if (languageClass) {
-            const label = document.createElement('span');
-            label.className = 'code-language-label';
-            label.textContent = languageClass.replace('language-', '').toUpperCase();
-            preElement.insertBefore(label, preElement.firstChild);
+    /**
+     * Extracts the language from the Prism token list or defaults to 'Code'.
+     * @param {HTMLElement} codeElement 
+     * @returns {string}
+     */
+    function getCodeLanguage(codeElement) {
+        // Prism adds a class 'language-xyz' to the <code> element
+        const match = codeElement.className.match(/language-(\w+)/);
+        if (match) {
+            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
         }
-        
-        // Add copy button
-        const button = document.createElement('button');
-        button.className = 'copy-btn';
-        button.textContent = 'Copy';
-        button.onclick = () => copyCode(button);
-        preElement.insertBefore(button, preElement.querySelector('code'));
+        return 'Code';
     }
 
-    // Function to handle copying logic
+    /**
+     * Copies the code content to the clipboard and updates the button text.
+     * @param {HTMLButtonElement} button 
+     */
     function copyCode(button) {
-        const preElement = button.parentElement;
-        const codeElement = preElement.querySelector('code'); 
-        
-        if (codeElement) {
-            const codeToCopy = codeElement.textContent;
-            
-            navigator.clipboard.writeText(codeToCopy).then(() => {
-                const originalText = button.textContent;
-                button.textContent = "Copied!";
-                setTimeout(() => {
-                    button.textContent = originalText;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
-        }
+        const pre = button.closest('pre');
+        const code = pre.querySelector('code').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy code: ', err);
+            button.textContent = 'Error';
+        });
     }
 
-    // Post-render processing function to run after new chat content is added
+    /**
+     * Creates and attaches a header with language and copy button to a <pre> block.
+     * @param {HTMLElement} preElement 
+     */
+    function createCopyButton(preElement) {
+        if (preElement.querySelector('.code-header')) return; // Already processed
+        
+        const codeElement = preElement.querySelector('code');
+        if (!codeElement) return;
+
+        const lang = getCodeLanguage(codeElement);
+
+        const header = document.createElement('div');
+        header.className = 'code-header';
+        
+        const langSpan = document.createElement('span');
+        langSpan.textContent = lang;
+        header.appendChild(langSpan);
+
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-btn';
+        copyButton.textContent = 'Copy';
+        copyButton.onclick = () => copyCode(copyButton);
+        header.appendChild(copyButton);
+
+        preElement.insertBefore(header, preElement.firstChild);
+    }
+
+
+    /**
+     * Post-render processing function to run after new chat content is added.
+     * @param {HTMLElement} newChatElement The message container element.
+     */
     window.postProcessChat = (newChatElement) => {
-        // --- A. CODE HIGHLIGHTING & COPY BUTTON ---
+        // --- A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js) ---
         newChatElement.querySelectorAll('pre').forEach(pre => {
-            // Prism.js runs highlighting
-            Prism.highlightElement(pre.querySelector('code'));
-            // Add Copy Button
-            createCopyButton(pre);
+            // Highlight must be run first
+            if (window.Prism) {
+                 Prism.highlightElement(pre.querySelector('code'));
+            }
+            createCopyButton(pre); 
         });
         
         // --- B. MATH RENDERING (KaTeX) ---
-        renderMathInElement(newChatElement, {
-            delimiters: [
-                {left: "$$", right: "$$", display: true},
-                {left: "$", right: "$", display: false},
-            ]
-        });
+        // renderMathInElement comes from auto-render.min.js
+        if (window.renderMathInElement) {
+            renderMathInElement(newChatElement, {
+                // Defines the delimiters for KaTeX: $$...$$ for display, $...$ for inline
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                ],
+                // Prevents KaTeX from processing code blocks, which should be handled by Prism
+                ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+                errorColor: "#cc0000"
+            });
+        }
     };
     
-    window.copyCode = copyCode;
-
-    // Initial DOM setup (run when the page loads)
-    document.addEventListener("DOMContentLoaded", function() {
-        // Find existing elements and process them on load
-        document.querySelectorAll('#chat pre').forEach(pre => {
-            Prism.highlightElement(pre.querySelector('code'));
-            createCopyButton(pre);
-        });
-        
-        // Render any math that might be initially present in the DOM
-        renderMathInElement(document.body, {
-            delimiters: [
-                {left: "$$", right: "$$", display: true},
-                {left: "$", right: "$", display: false},
-            ]
-        });
-    });
-
   </script>
 </body>
 </html>
