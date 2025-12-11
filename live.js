@@ -3,7 +3,7 @@
 // Manages microphone access, audio recording, and interaction with gemini-live.js
 
 import { startLiveSession } from './gemini-live.js'; // The WebSocket manager
-import { AudioEncoder } from './audio-encoder.js'; // We will assume this file exists next
+import { AudioEncoder } from './audio-encoder.js'; // Now confirmed to be exported
 
 // --- UI Elements ---
 const pttButton = document.getElementById('pttButton');
@@ -15,7 +15,7 @@ const themeToggleBtn = document.getElementById('themeToggle');
 
 // --- State Variables ---
 let liveSession = null; // Holds the object returned by startLiveSession
-let mediaRecorder = null;
+let mediaRecorder = null; // Note: This variable is unused, but harmless.
 let audioStream = null;
 let isRecording = false;
 let isSessionActive = false; // True when WebSocket is open
@@ -84,8 +84,6 @@ function handleLiveMessage(content) {
         } else {
             // Append and re-render the partial content
             const fullText = currentBotMessageElement.innerHTML + content.text;
-            // Note: Efficient real-time markdown parsing is complex. For simplicity, we append text
-            // In a production scenario, you would use a dedicated stream renderer.
             currentBotMessageElement.innerHTML = window.marked ? window.marked.parse(fullText) : fullText;
         }
     }
@@ -140,8 +138,13 @@ async function startSession() {
             isSessionActive = false;
             window.hideLoader();
             if (errorMsg) {
-                updateStatus('inactive', `Error: ${errorMsg}`);
-                alert(`Live Session Error: ${errorMsg}. Please refresh.`);
+                // 🛠️ FIX 1: Provide better feedback for connection issues.
+                const displayMsg = errorMsg.includes("WebSocket") 
+                    ? `Error: Connection failed. Check API Key/Access.` 
+                    : `Error: ${errorMsg}`;
+                    
+                updateStatus('inactive', displayMsg);
+                alert(`Live Session Error: ${displayMsg}. Please refresh.`);
             } else {
                 updateStatus('inactive', 'Session Closed.');
             }
@@ -224,9 +227,6 @@ function stopRecording() {
     
     // Finalize the user's message (as the recording is done)
     if (currentBotMessageElement) {
-        // NOTE: The Live API doesn't return the transcribed user text directly.
-        // We'll leave it as a placeholder until the model replies.
-        // Once the first text part of the bot's reply arrives, the bot's streaming text will replace this placeholder content.
         currentBotMessageElement.querySelector('.message-content').textContent = '... processing voice ...'; 
         window.postProcessChat(currentBotMessageElement);
     }
@@ -237,7 +237,11 @@ function stopRecording() {
 function pttDown(e) {
     // 🟢 CRITICAL: Prevent default browser behavior (context menu, image save, selection)
     e.preventDefault(); 
-    if (e.target.tagName !== 'BUTTON') e.target.blur(); // Prevent focus outline sometimes
+    // This return ensures no other PTT logic runs if preventDefault() worked.
+    // If we return, we prevent the "Press and Hold to Talk" menu from appearing.
+    // However, we still need to run our recording logic below.
+    
+    if (e.target.tagName !== 'BUTTON') e.target.blur(); 
     
     if (isSessionActive && !isRecording) {
         startRecording();
@@ -250,7 +254,8 @@ function pttDown(e) {
 }
 
 function pttUp(e) {
-    e.preventDefault(); // Prevent accidental click triggers
+    // 🛠️ FIX 3: Also call preventDefault on mouseup/touchend to prevent any lingering click events
+    e.preventDefault(); 
     if (isRecording) {
         stopRecording();
     }
@@ -263,8 +268,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Use touch events for mobile and mouse events for desktop PTT
     pttButton.addEventListener('mousedown', pttDown);
     pttButton.addEventListener('mouseup', pttUp);
-    pttButton.addEventListener('touchstart', pttDown, { passive: false }); // Passive: false is crucial for preventDefault
-    pttButton.addEventListener('touchend', pttUp);
+    
+    // 🛠️ FIX 2: Explicitly apply { passive: false } to both touchstart and touchend 
+    // to ensure max compatibility for suppressing context menus and clicks.
+    pttButton.addEventListener('touchstart', pttDown, { passive: false }); 
+    pttButton.addEventListener('touchend', pttUp, { passive: false });
     
     // Prevent context menu on long press anywhere on the button
     pttButton.addEventListener('contextmenu', e => e.preventDefault());
@@ -284,6 +292,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Start the Live Session automatically on load
     startSession(); 
 });
-
-// --- EXPORT (Optional) ---
-// If you need to access session controls globally, they would be exported here.
