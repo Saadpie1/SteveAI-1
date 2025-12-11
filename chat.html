@@ -113,156 +113,159 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
   
   <script>
-    // 🟢 Global variable to hold the Base64 image data (attached to window)
-    let base64Image = null;
+    // Wait until the entire DOM is parsed, including all deferred scripts (KaTeX/Prism).
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // 🟢 Global variable to hold the Base64 image data (attached to window)
+        let base64Image = null;
 
-    // --- INPUT/HINTS LOGIC ---
-    const inputEl = document.getElementById('messageInput');
-    const hintsEl = document.getElementById('commandHints');
+        // --- INPUT/HINTS LOGIC ---
+        const inputEl = document.getElementById('messageInput');
+        const hintsEl = document.getElementById('commandHints');
 
-    inputEl.addEventListener('input', () => {
-      hintsEl.hidden = !inputEl.value.trim().startsWith('/');
-    });
-
-    document.querySelectorAll('#commandHints span').forEach(span => {
-      span.onclick = () => {
-        inputEl.value = span.textContent + ' ';
-        inputEl.focus();
-        const event = new Event('input');
-        inputEl.dispatchEvent(event);
-        hintsEl.hidden = true;
-      };
-    });
-    
-    // --- IMAGE HANDLING LOGIC ---
-    const imageInputFile = document.getElementById('imageInputFile');
-    const imageUploadBtn = document.getElementById('imageUploadBtn');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const imagePreview = document.getElementById('imagePreview');
-    const clearImageBtn = document.getElementById('clearImageBtn');
-
-    imageUploadBtn.addEventListener('click', () => {
-        imageInputFile.click();
-    });
-
-    imageInputFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            
-            reader.onload = (event) => {
-                base64Image = event.target.result; 
-                window.base64Image = base64Image; 
-                
-                imagePreview.src = base64Image;
-                imagePreviewContainer.style.display = 'flex';
-                
-                inputEl.focus();
-            };
-            
-            reader.readAsDataURL(file);
-        }
-    });
-
-    clearImageBtn.addEventListener('click', () => {
-        base64Image = null;
-        window.base64Image = null; 
-        imagePreview.src = '';
-        imageInputFile.value = ''; 
-        imagePreviewContainer.style.display = 'none';
-        inputEl.focus();
-    });
-    
-    // --- LOADER CONTROL LOGIC ---
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const chatWindow = document.getElementById('chat');
-
-    window.showLoader = () => {
-        if (!loadingIndicator || !chatWindow) return;
-
-        chatWindow.appendChild(loadingIndicator);
-        loadingIndicator.style.display = 'block'; 
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    };
-
-    window.hideLoader = () => {
-        if (!loadingIndicator) return;
-        loadingIndicator.style.display = 'none';
-    };
-
-    window.clearImageBtn = clearImageBtn; 
-
-    // --- 🟢 POST-RENDER UTILITIES (Code and Math Formatting) ---
-    
-    function getCodeLanguage(codeElement) {
-        const match = codeElement.className.match(/language-(\w+)/);
-        if (match) {
-            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
-        }
-        return 'Code';
-    }
-
-    window.copyCode = (button) => {
-        const pre = button.closest('pre');
-        // Use innerText to grab the text content cleanly from the highlighted block
-        const code = pre.querySelector('code').innerText;
-        navigator.clipboard.writeText(code).then(() => {
-            button.textContent = 'Copied!';
-            setTimeout(() => {
-                button.textContent = 'Copy';
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy code: ', err);
-            button.textContent = 'Error';
+        inputEl.addEventListener('input', () => {
+          hintsEl.hidden = !inputEl.value.trim().startsWith('/');
         });
-    }
 
-    function createCopyButton(preElement) {
-        // Prevent creating multiple headers/buttons
-        if (preElement.querySelector('.code-header')) return; 
+        document.querySelectorAll('#commandHints span').forEach(span => {
+          span.onclick = () => {
+            inputEl.value = span.textContent + ' ';
+            inputEl.focus();
+            const event = new Event('input');
+            inputEl.dispatchEvent(event);
+            hintsEl.hidden = true;
+          };
+        });
         
-        const codeElement = preElement.querySelector('code');
-        if (!codeElement) return;
+        // --- IMAGE HANDLING LOGIC ---
+        const imageInputFile = document.getElementById('imageInputFile');
+        const imageUploadBtn = document.getElementById('imageUploadBtn');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const clearImageBtn = document.getElementById('clearImageBtn');
 
-        // Use Prism's native class name
-        const lang = getCodeLanguage(codeElement);
+        imageUploadBtn.addEventListener('click', () => {
+            imageInputFile.click();
+        });
 
-        const header = document.createElement('div');
-        header.className = 'code-header';
+        imageInputFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    base64Image = event.target.result; 
+                    window.base64Image = base64Image; 
+                    
+                    imagePreview.src = base64Image;
+                    imagePreviewContainer.style.display = 'flex';
+                    
+                    inputEl.focus();
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+
+        clearImageBtn.addEventListener('click', () => {
+            base64Image = null;
+            window.base64Image = null; 
+            imagePreview.src = '';
+            imageInputFile.value = ''; 
+            imagePreviewContainer.style.display = 'none';
+            inputEl.focus();
+        });
         
-        const langSpan = document.createElement('span');
-        langSpan.textContent = lang;
-        header.appendChild(langSpan);
+        // --- LOADER CONTROL LOGIC ---
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const chatWindow = document.getElementById('chat');
 
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-btn';
-        copyButton.textContent = 'Copy';
-        copyButton.onclick = () => window.copyCode(copyButton); 
-        header.appendChild(copyButton);
+        window.showLoader = () => {
+            if (!loadingIndicator || !chatWindow) return;
 
-        preElement.insertBefore(header, preElement.firstChild);
-    }
+            chatWindow.appendChild(loadingIndicator);
+            loadingIndicator.style.display = 'block'; 
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        };
 
+        window.hideLoader = () => {
+            if (!loadingIndicator) return;
+            loadingIndicator.style.display = 'none';
+        };
 
-    /**
-     * Post-render processing function to run after new chat content is added.
-     * @param {HTMLElement} newChatElement The message container element.
-     */
-    window.postProcessChat = (newChatElement) => {
-        // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
-        if (window.Prism) {
-             newChatElement.querySelectorAll('pre').forEach(pre => {
-                // Highlight the code block
-                Prism.highlightElement(pre.querySelector('code'));
-                // Add the custom copy button/header (since the Prism toolbar plugin wasn't used)
-                createCopyButton(pre); 
+        window.clearImageBtn = clearImageBtn; 
+
+        // --- 🟢 POST-RENDER UTILITIES (Code and Math Formatting) ---
+        
+        function getCodeLanguage(codeElement) {
+            const match = codeElement.className.match(/language-(\w+)/);
+            if (match) {
+                return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+            }
+            return 'Code';
+        }
+
+        window.copyCode = (button) => {
+            const pre = button.closest('pre');
+            const code = pre.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code: ', err);
+                button.textContent = 'Error';
             });
         }
-        
-        // B. MATH RENDERING (KaTeX) - The main fix target
-        // Note: Due to 'defer' on KaTeX, we rely on the short delay or the browser to make it available.
-        if (window.renderMathInElement) {
-            setTimeout(() => {
+
+        function createCopyButton(preElement) {
+            if (preElement.querySelector('.code-header')) return; 
+            
+            const codeElement = preElement.querySelector('code');
+            if (!codeElement) return;
+
+            const lang = getCodeLanguage(codeElement);
+
+            const header = document.createElement('div');
+            header.className = 'code-header';
+            
+            const langSpan = document.createElement('span');
+            langSpan.textContent = lang;
+            header.appendChild(langSpan);
+
+            const copyButton = document.createElement('button');
+            copyButton.className = 'copy-btn';
+            copyButton.textContent = 'Copy';
+            copyButton.onclick = () => window.copyCode(copyButton); 
+            header.appendChild(copyButton);
+
+            preElement.insertBefore(header, preElement.firstChild);
+        }
+
+
+        /**
+         * Post-render processing function to run after new chat content is added.
+         * @param {HTMLElement} newChatElement The message container element.
+         */
+        window.postProcessChat = (newChatElement) => {
+            // A. CODE HIGHLIGHTING & COPY BUTTON (Prism.js)
+            if (window.Prism) {
+                 newChatElement.querySelectorAll('pre').forEach(pre => {
+                    try {
+                        Prism.highlightElement(pre.querySelector('code'));
+                        createCopyButton(pre); 
+                    } catch (e) {
+                         console.error("Prism highlighting failed:", e);
+                    }
+                });
+            } else {
+                 console.warn("Prism is UNDEFINED. Code highlighting skipped.");
+            }
+            
+            // B. MATH RENDERING (KaTeX)
+            if (window.renderMathInElement) {
+                // DOMContentLoaded ensures the library is ready, so no more setTimeout needed.
                 try {
                     renderMathInElement(newChatElement, {
                         delimiters: [
@@ -276,17 +279,18 @@
                 } catch (e) {
                     console.error("KaTeX rendering failed unexpectedly:", e);
                 }
-            }, 50); 
-        } else {
-             console.warn("renderMathInElement not found. KaTeX failed to load before postProcessChat.");
-        }
-    };
+            } else {
+                 console.warn("renderMathInElement is UNDEFINED. Math rendering skipped.");
+            }
+        };
+
+    }); // End of DOMContentLoaded
+    
   </script>
   
   <script type="module" src="chat.js"></script>
   
   <style>
-    /* ... (The existing CSS is fine, it remains here) ... */
     /* EXISTING CSS */
     body {
       margin: 0;
