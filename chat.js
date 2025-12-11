@@ -808,9 +808,9 @@ form.onsubmit = async e => {
             numImages: 1 
         });
         
-        // 3b. Memory: Record the turn with the user prompt and the raw command string
-        // Note: The bot's output is the raw command string, which is key for tracking the decision.
-        memory[++turn] = { user: msg, bot: r };
+        // 3b. Memory: Record the turn with the user prompt and the *displayed action*
+        const botMemoryText = `🖼️ Generated image: ${imageCommand.prompt} (Model: ${imageCommand.model})`;
+        memory[++turn] = { user: msg, bot: botMemoryText }; // <-- FIX APPLIED HERE
         
     } else {
         // --- STANDARD TEXT REPLY ---
