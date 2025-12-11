@@ -13,6 +13,10 @@ const chatWindow = document.getElementById('chat');
 const clearChatBtn = document.getElementById('clearChat');
 const themeToggleBtn = document.getElementById('themeToggle');
 
+// 🟢 NEW: Assuming a text input element exists in the HTML
+const textInput = document.getElementById('textInput'); 
+const sendTextButton = document.getElementById('sendTextButton');
+
 // --- State Variables ---
 let liveSession = null; // Holds the object returned by startLiveSession
 let mediaRecorder = null; // Note: This variable is unused, but harmless.
@@ -76,7 +80,10 @@ function updateStatus(status, text, showLoader = false) {
     }
 }
 
-/** Handles audio playback from a Base64-encoded audio chunk. */
+/** Handles audio playback from a Base64-encoded audio chunk. 
+ * NOTE: This is a simplified function and may not handle continuous streams well. 
+ * For this file, it's a placeholder.
+ */
 function playAudio(base64AudioData) {
     // Decode the base64 data to an ArrayBuffer
     const audioData = atob(base64AudioData);
@@ -86,7 +93,7 @@ function playAudio(base64AudioData) {
         view[i] = audioData.charCodeAt(i);
     }
 
-    // Playback logic (assuming a dedicated AudioContext is not already open)
+    // Playback logic 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioContext.decodeAudioData(buffer, (audioBuffer) => {
         const source = audioContext.createBufferSource();
@@ -94,7 +101,6 @@ function playAudio(base64AudioData) {
         source.connect(audioContext.destination);
         source.start(0);
 
-        // Close context after playback (optional, but good practice)
         source.onended = () => {
             audioContext.close();
         };
@@ -108,31 +114,23 @@ function playAudio(base64AudioData) {
 function handleLiveMessage(content) {
     if (content.text) {
         // Start or continue the bot message stream
-        if (!currentBotMessageElement) {
+        if (!currentBotMessageElement || currentBotMessageElement.dataset.sender !== 'bot') {
             // New turn begins, create a new message element
             currentBotMessageElement = createMessageElement(content.text, 'bot', true);
+            currentBotMessageElement.dataset.sender = 'bot'; // Tag it for better state management
         } else {
             // Append and re-render the partial content
-            const fullText = currentBotMessageElement.textContent + content.text; // Use textContent for appending
-            currentBotMessageElement.innerHTML = window.marked ? window.marked.parse(fullText) : fullText;
+            // Need to get the inner text content, not innerHTML which has markup
+            const currentContent = currentBotMessageElement.querySelector('.bubble-content').textContent;
+            const fullText = currentContent + content.text; 
+            currentBotMessageElement.querySelector('.bubble-content').innerHTML = window.marked ? window.marked.parse(fullText) : fullText;
         }
     }
     
     if (content.audio) {
         // Audio chunk received, play it
-        // The implementation of playAudio in this combined snippet is simplified.
-        // In a real app, you'd queue chunks and play them seamlessly.
-        // For now, we'll use the placeholder:
-        // if (window.playAudio) {
-        //     window.playAudio(content.audio.data);
-        // }
-        // For simplicity with the provided text, we will just use the console and status update
-        
-        // 🚨 Note: The playAudio function above is a simple placeholder and won't work correctly 
-        // with the raw audio chunks from the Live API, which typically requires a MediaSource Queue.
-        // For this update, we will simply use the status update.
+        // The playAudio implementation is a placeholder, but we update the status
         updateStatus('speaking', 'AI Speaking...', true);
-        
     }
     
     if (content.turnComplete) {
@@ -142,38 +140,51 @@ function handleLiveMessage(content) {
         // Finalize the message and clear state
         if (currentBotMessageElement) {
             // Final rendering and post-processing
-            const finalContent = currentBotMessageElement.textContent;
-            currentBotMessageElement.innerHTML = window.marked ? window.marked.parse(finalContent) : finalContent;
+            const contentDiv = currentBotMessageElement.querySelector('.bubble-content');
+            const finalContent = contentDiv.textContent;
+            contentDiv.innerHTML = window.marked ? window.marked.parse(finalContent) : finalContent;
             if (window.postProcessChat) {
-                window.postProcessChat(currentBotMessageElement); 
+                window.postProcessChat(contentDiv); 
             }
         }
         currentBotMessageElement = null; 
         
         // Status should revert to ready to listen (or idle)
-        updateStatus(isSessionActive ? 'active' : 'inactive', isSessionActive ? 'Ready. Press and Hold to Talk' : 'Session Closed', false);
+        updateStatus(isSessionActive ? 'active' : 'inactive', isSessionActive ? 'Ready. Press and Hold to Talk or Send Text' : 'Session Closed', false);
     }
 }
 
 // --- Session Lifecycle Management ---
 
-async function startSession() {
+/**
+ * Starts the live session. Accepts optional initial text/image for the first turn.
+ * @param {string | null} initialText - Optional text to send immediately after setup.
+ * @param {string | null} initialImage - Optional Base64 image to send immediately after setup.
+ */
+async function startSession(initialText = null, initialImage = null) {
     if (isSessionActive) return;
 
     updateStatus('connecting', 'Connecting...', true);
     window.showLoader();
 
-    // Use a promise to track when the setup is truly complete
+    // 🟢 PASS INITIAL INPUT TO GEMINI-LIVE.JS
+    const initialInput = (initialText || initialImage) ? { text: initialText, image: initialImage } : null;
+
     return new Promise((resolve, reject) => {
         liveSession = startLiveSession(
             // onMessage callback
             (content) => {
-                if (content.text && content.turnComplete) {
-                    // This is typically the "Session connected. Ready to listen." message
+                if (content.text && content.turnComplete && !initialInput) {
+                    // This is the default "Session connected" message
                     isSessionActive = true;
                     updateStatus('active', content.text, false);
                     createMessageElement(content.text, 'bot', false);
-                    resolve(); // Resolve the promise once session is active
+                    resolve(); 
+                } else if (content.text && content.turnComplete && initialInput) {
+                    // This is the bot's full reply to the initial message
+                    handleLiveMessage(content); // Process the reply
+                    isSessionActive = true;
+                    resolve();
                 } else {
                     handleLiveMessage(content);
                 }
@@ -195,9 +206,10 @@ async function startSession() {
                     updateStatus('inactive', 'Session Closed.');
                     reject(new Error("Session Closed"));
                 }
-                // Ensure mic/recording is stopped if an error occurs
                 stopRecording();
-            }
+            },
+            // 🟢 PASS THE INITIAL INPUT OBJECT
+            initialInput
         );
     });
 }
@@ -212,7 +224,40 @@ function stopSession() {
     }
 }
 
+// --- Text Input Management ---
+
+/**
+ * Sends a text message (and optional image) through the Live session.
+ * This is used for non-voice/PTT turns.
+ * @param {string} text - The user's text message.
+ * @param {string | null} imageToSend - Optional Base64 image data.
+ */
+function sendLiveTextMessage(text, imageToSend = null) {
+    if (!isSessionActive || (!text && !imageToSend)) {
+        console.warn("Session not active or no content to send.");
+        return;
+    }
+
+    // 1. Display user message
+    createMessageElement(text || "Image Attached.", 'user', false);
+
+    // 2. Set status to sending/processing
+    updateStatus('active', 'Sending and processing...', true);
+    
+    // 3. Send the message via the Live WebSocket
+    liveSession.sendRealtimeInput({ text: text, image: imageToSend });
+    
+    // 4. Clear the text input field
+    if (textInput) {
+        textInput.value = '';
+    }
+    
+    // Note: The reply will be handled by handleLiveMessage
+}
+
+
 // --- Recording Management (Web Audio API) ---
+// (Unchanged: startRecording, stopRecording, pttDown, pttUp functions remain the same)
 
 async function startRecording() {
     if (isRecording || !isSessionActive) return;
@@ -239,6 +284,7 @@ async function startRecording() {
         
         // Add user message placeholder (if this is the start of a turn)
         currentBotMessageElement = createMessageElement("*(User Voice Input...)*", 'user', true);
+        currentBotMessageElement.dataset.sender = 'user-voice';
         
         // Update UI
         updateStatus('listening', 'Listening...');
@@ -275,42 +321,31 @@ function stopRecording() {
     updateStatus('active', 'Sending and processing...', true);
     
     // Finalize the user's message (as the recording is done)
-    if (currentBotMessageElement) {
-        // A dummy message text is sent to the model upon releasing PTT 
-        // in some implementations, but here we just update the UI.
+    if (currentBotMessageElement && currentBotMessageElement.dataset.sender === 'user-voice') {
         currentBotMessageElement.querySelector('.bubble-content').textContent = '... processing voice ...'; 
-        // Note: We don't call postProcessChat here, as the final user message text is unknown.
-        // It's better to wait for the model's response to complete the user-bot turn.
     }
 }
 
 // --- Event Listeners for PTT ---
 
 function pttDown(e) {
-    // 🟢 CRITICAL: Prevent default browser behavior (context menu, image save, selection)
     e.preventDefault(); 
-    
-    // Only run logic if the PTT is not already active
     if (e.target.tagName !== 'BUTTON') e.target.blur(); 
     
     if (isSessionActive && !isRecording) {
         startRecording();
     } else if (!isSessionActive) {
-        // If not active, try to start the session first
         startSession()
             .then(() => {
-                // 🟢 CRITICAL FIX: Only start recording *after* the promise resolves
                 startRecording();
             })
             .catch(err => {
                 console.error("Session start failed, cannot record:", err);
-                // Error handling is already in startSession onError
             });
     }
 }
 
 function pttUp(e) {
-    // 🛠️ FIX 3: Also call preventDefault on mouseup/touchend to prevent any lingering click events
     e.preventDefault(); 
     if (isRecording) {
         stopRecording();
@@ -323,13 +358,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Set up PTT Listeners
     pttButton.addEventListener('mousedown', pttDown);
     pttButton.addEventListener('mouseup', pttUp);
-    
-    // 🛠️ FIX 2: Explicitly apply { passive: false } to ensure max compatibility
     pttButton.addEventListener('touchstart', pttDown, { passive: false }); 
     pttButton.addEventListener('touchend', pttUp, { passive: false });
-    
-    // Prevent context menu on long press anywhere on the button
     pttButton.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 🟢 NEW: Set up Text Input Listeners
+    if (sendTextButton) {
+        sendTextButton.addEventListener('click', () => {
+            if (textInput && textInput.value.trim() !== '') {
+                sendLiveTextMessage(textInput.value.trim());
+            }
+            // Note: If you need to send an attached image, you'll need to update this logic
+            // to fetch the image data from a dedicated variable (e.g., window.currentAttachedImage)
+        });
+    }
+
+    if (textInput) {
+        textInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && textInput.value.trim() !== '') {
+                e.preventDefault(); // Stop a new line in the text field
+                sendLiveTextMessage(textInput.value.trim());
+            }
+        });
+    }
+
 
     // 2. Other UI Listeners (from chat.js)
     if (clearChatBtn) {
@@ -348,4 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Start the Live Session automatically on load
     startSession(); 
+
+    // 4. 🟢 EXPORT FUNCTIONALITY (Allows chat.js to send messages)
+    // Export the function to the global scope (assuming this is a front-end module)
+    window.sendLiveTextMessage = sendLiveTextMessage;
 });
+
+// 🟢 EXPORT (If using modules in the browser)
+export { startSession, stopSession, sendLiveTextMessage };
