@@ -50,11 +50,8 @@ function shouldSummarize() {
  * @returns {number} Random delay in milliseconds.
  */
 function getRandomTypingDelay() {
-    // Fixed to use valid integer millisecond range for fast, randomized typing
     const minDelay = 0;
     const maxDelay = 4; 
-    
-    // Formula: Math.floor(Math.random() * (max - min + 1)) + min
     return Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
 }
 
@@ -63,8 +60,6 @@ function getRandomTypingDelay() {
 async function generateSummary() {
   const raw = memoryString();
   const payload = {
-    // NOTE: Using a non-Gemini model here for summarization. 
-    // This payload uses the OpenAI format ('messages').
     model: "provider-2/gpt-4o-mini",
     messages: [
       { role: "system", content: "You are SteveAI, made by saadpie and its vice ceo shawaiz. Summarize the following chat context clearly." },
@@ -72,7 +67,6 @@ async function generateSummary() {
     ]
   };
   try {
-    // NOTE: Summary generation uses the A4F proxy path and OpenAI payload format
     const data = await fetchAI(payload, payload.model);
     return data?.choices?.[0]?.message?.content?.trim() || "";
   } catch (e) {
@@ -102,8 +96,6 @@ function markdownToHTML(t) { return marked.parse(t || ""); }
 
 /**
  * Parses the response for <think> tags and separates the thinking steps from the final answer.
- * @param {string} text - The raw AI response.
- * @returns {{answer: string, thinking: string}}
  */
 function parseThinkingResponse(text) {
     const thinkingRegex = /<think>(.*?)<\/think>/gs;
@@ -125,8 +117,6 @@ function parseThinkingResponse(text) {
 
 /**
  * Parses the answer for the specific image generation command pattern.
- * @param {string} text - The raw AI answer text.
- * @returns {{prompt: string, model: string} | null}
  */
 function parseImageGenerationCommand(text) {
     const commandStart = "Image Generated:";
@@ -161,8 +151,8 @@ function parseImageGenerationCommand(text) {
     return { prompt, model };
 }
 
-// --- UI: Add Messages (FIXED: Now only displays content, removed image command detection, added post-processing) ---
-function addMessage(text, sender) { // <-- EXPORTED
+// --- UI: Add Messages ---
+function addMessage(text, sender) { 
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
 
@@ -176,7 +166,6 @@ function addMessage(text, sender) { // <-- EXPORTED
 
   const { answer, thinking } = parseThinkingResponse(text);
   
-  // --- STANDARD MESSAGE FLOW ---
   const thinkingHTML = thinking ? `
     <details class="thinking-details">
         <summary>🧠 **Reasoning/Steps**</summary>
@@ -195,7 +184,6 @@ function addMessage(text, sender) { // <-- EXPORTED
     chat.scrollTop = chat.scrollHeight;
 
     let i = 0, buf = "";
-    // When thinking is present, only type out the final answer to avoid markdown conflicts during typing
     const contentToType = thinking ? answer : text;
 
     (function type() {
@@ -222,10 +210,8 @@ function addMessage(text, sender) { // <-- EXPORTED
         chat.scrollTop = chat.scrollHeight;
         setTimeout(type, getRandomTypingDelay());
       } else {
-        // Render final HTML
         content.innerHTML = finalFullHTML; 
         addBotActions(container, bubble, text);
-        // 🟢 FIX 1: Call post-processing after final render (for Math and Code)
         if (window.postProcessChat) {
              window.postProcessChat(container);
         }
@@ -236,14 +222,11 @@ function addMessage(text, sender) { // <-- EXPORTED
     chat.appendChild(container);
     chat.scrollTop = chat.scrollHeight;
     addUserActions(container, bubble, text);
-    // 🟢 FIX 2: Call post-processing for user message (for Math and Code)
     if (window.postProcessChat) {
         window.postProcessChat(container);
     }
   }
 }
-
-// ... (addUserActions and addBotActions remain unchanged)
 
 function addUserActions(container, bubble, text) {
   const actions = document.createElement('div');
@@ -291,63 +274,43 @@ function addBotActions(container, bubble, text) {
   container.appendChild(actions);
 }
 
-// --- Fetch AI (Chat) - NOW ONLY FOR A4F/PROXY (Unchanged) ---
-/**
- * Sends the request to the A4F Proxy endpoint.
- * @param {object} payload - The body of the request (OpenAI format).
- * @param {string} model - The model ID being used.
- * @returns {Promise<object>} The successful response data.
- */
+// --- Fetch AI (Chat) ---
 async function fetchAI(payload, model) {
-    
-    // --- Determine API Routing (Always A4F/Proxy) ---
     const a4fBase = config.API_BASE[0]; 
 
-    const urlConfig = { 
-        base: a4fBase, 
-        urlBuilder: (b, m) => config.proxiedURL(b), 
-        requiresBearer: true, 
-        name: 'A4F Proxy',
-        keySource: 'A4F' 
-    };
+    // 🟢 FIX 1: Routing to chat/completions specifically to avoid 405 Method errors
+    const endpoint = `${a4fBase}/chat/completions`;
+    const finalUrl = config.proxiedURL(endpoint);
 
     let lastErrText = "";
-    const baseUrl = urlConfig.urlBuilder(urlConfig.base, model);
 
-    // --- Select Keys ---
-    // Use keys from index 1 onwards for A4F Proxy
+    // 🟢 FIX 2: Correcting the key array slice for A4F models (ignoring Gemini key at index 0)
     let keysToTry = config.API_KEYS.slice(1).filter(key => key);
+    
     if (keysToTry.length === 0) {
-        console.warn("A4F Proxy API keys (index 1+) are missing. Skipping attempt.");
+        console.warn("A4F Proxy API keys (index 1+) are missing.");
         lastErrText = "A4F keys missing from config.";
-        // Fall through to error handling if no keys are found
     }
     
-    // --- Loop iterates through selected keys ---
     for (const key of keysToTry) {
         try {
-            let finalUrl = baseUrl;
-            let headers = { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${key}` // For A4F Proxy
-            };
-
             const res = await fetch(finalUrl, {
                 method: 'POST',
-                headers: headers,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${key}` 
+                },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
                 const data = await res.json();
-                
                 if (data && data.error) {
                     console.error("A4F Proxy Error Object:", data.error);
                     lastErrText = data.error.message;
                     continue; 
                 }
-                
-                return data; // Success!
+                return data; 
             }
             
             lastErrText = await res.text();
@@ -363,9 +326,7 @@ async function fetchAI(payload, model) {
     throw new Error("All A4F API key attempts failed.");
 }
 
-// --- Commands (Unchanged) ---
-// ... (All command functions remain the same) ...
-
+// --- Commands ---
 function toggleTheme() {
   document.body.classList.toggle('light');
   addMessage('🌓 Theme toggled.', 'bot');
@@ -450,42 +411,31 @@ function showHelp() {
   addMessage(helpText, 'bot');
 }
 
-// --- Command Router (Unchanged) ---
-async function handleCommand(cmdOrParsedData) { // <-- EXPORTED
+// --- Command Router ---
+async function handleCommand(cmdOrParsedData) { 
   let command, prompt, model, numImages;
   
   if (typeof cmdOrParsedData === 'string') {
-    
-    // 🟢 NEW LOGIC: Check if the string is a raw 'Image Generated:' command (from getFastModelAnalysis)
     const imageCommandCheck = parseImageGenerationCommand(cmdOrParsedData);
-    
     if (imageCommandCheck) {
-        // If it matches the format, convert it to the internal object type and bypass standard string parsing
         command = '/image';
         prompt = imageCommandCheck.prompt;
-        // Use the model name to find the ID, falling back to a default if necessary
         const modelObject = IMAGE_MODELS.find(m => m.name.toLowerCase() === imageCommandCheck.model.toLowerCase());
         model = modelObject ? modelObject.id : IMAGE_MODELS[5].id; 
-        numImages = 1; // Analysis mode is designed for single-image execution
-        
+        numImages = 1; 
     } else {
-        // --- STANDARD STRING COMMAND PARSING (must start with /) ---
-        
         const parts = cmdOrParsedData.trim().split(' ');
         command = parts[0].toLowerCase();
         const args = parts.slice(1);
-
         if (command === '/image') {
           prompt = args.join(' ');
           numImages = 1;
           model = IMAGE_MODELS[5].id;
-
           const lastArg = args[args.length - 1];
           if (!isNaN(parseInt(lastArg, 10)) && parseInt(lastArg, 10) > 0) {
             numImages = Math.min(4, parseInt(lastArg, 10));
             prompt = args.slice(0, -1).join(' '); 
           }
-          
           const modelMatch = IMAGE_MODELS.find(m => prompt.toLowerCase().includes(m.name.toLowerCase()));
           if (modelMatch) {
               model = modelMatch.id;
@@ -495,19 +445,15 @@ async function handleCommand(cmdOrParsedData) { // <-- EXPORTED
         }
     }
   } else if (typeof cmdOrParsedData === 'object' && cmdOrParsedData.type === 'image_auto') {
-    // --- INTERNAL OBJECT PARSING (e.g., from form.onsubmit) ---
     command = '/image';
     prompt = cmdOrParsedData.prompt;
     model = cmdOrParsedData.modelId;
     numImages = cmdOrParsedData.numImages; 
   } else {
-    // ⚠️ Fallback for unexpected string input (e.g., 'image' without / that failed parsing checks)
     const parts = cmdOrParsedData.trim().split(' ');
     command = parts[0].toLowerCase();
   }
 
-
-  // --- BEGIN COMMON COMMAND LOGIC ---
   switch (command) {
     case '/clear': return clearChat();
     case '/theme': return toggleTheme();
@@ -518,317 +464,150 @@ async function handleCommand(cmdOrParsedData) { // <-- EXPORTED
     case '/about': return showAbout();
     case '/mode': return changeMode(cmdOrParsedData.trim().split(' ')[1]); 
     case '/time': return showTime();
-
     case '/image': {
       if (!prompt) {
         addMessage('⚠️ Usage: /image <prompt> [model name snippet] [n=1-4]', 'bot');
         return;
       }
-
       const modelNameForDisplay = IMAGE_MODELS.find(m => m.id === model)?.name || model.split('/').pop();
       addMessage(`🎨 Generating **${numImages}** image(s) with **${modelNameForDisplay}** for: *${prompt}* ...`, 'bot');
-
       try {
         const imageUrls = await generateImage(prompt, model, numImages);
-
         if (!imageUrls || imageUrls.length === 0) {
           addMessage('⚠️ No images were returned from the server.', 'bot');
           return;
         }
-
         const imageHTML = imageUrls.map((url, index) => {
-            return `
-<figure style="margin:5px 0;">
-    <img src="${url}" alt="AI Image ${index + 1}" style="max-width:90%;border-radius:10px;margin-top:10px;display:block;margin-left:auto;margin-right:auto;" />
-    <figcaption style="font-size:0.8em;text-align:center;">
-        🔗 <a href="${url}" target="_blank">${modelNameForDisplay} Image ${index + 1}</a>
-    </figcaption>
-</figure>
-            `;
+            return `<figure style="margin:5px 0;"><img src="${url}" alt="AI Image ${index + 1}" style="max-width:90%;border-radius:10px;margin-top:10px;display:block;margin-left:auto;margin-right:auto;" /><figcaption style="font-size:0.8em;text-align:center;">🔗 <a href="${url}" target="_blank">${modelNameForDisplay} Image ${index + 1}</a></figcaption></figure>`;
         }).join('');
-
-        const finalHTML = `
-**🖼️ Generated Images:** "${prompt}"
-${imageHTML}
-        `;
-
-        const container = document.createElement('div');
-        container.className = 'message-container bot';
-
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble bot';
+        const finalHTML = `**🖼️ Generated Images:** "${prompt}"\n${imageHTML}`;
+        const container = document.createElement('div'); container.className = 'message-container bot';
+        const bubble = document.createElement('div'); bubble.className = 'bubble bot';
         container.appendChild(bubble);
-
-        const content = document.createElement('div');
-        content.className = 'bubble-content';
-        // Note: Image HTML is already formatted, no need to markdownToHTML it again
-        content.innerHTML = finalHTML; 
-        bubble.appendChild(content);
-
-        chat.appendChild(container);
-        chat.scrollTop = chat.scrollHeight;
-
+        const content = document.createElement('div'); content.className = 'bubble-content';
+        content.innerHTML = finalHTML; bubble.appendChild(content);
+        chat.appendChild(container); chat.scrollTop = chat.scrollHeight;
         addBotActions(container, bubble, finalHTML);
-        
-        // 🟢 FIX 3: Apply post-processing (copy buttons/etc.) to the generated image block too
-        if (window.postProcessChat) {
-             window.postProcessChat(container);
-        }
+        if (window.postProcessChat) window.postProcessChat(container);
       } catch (err) {
         addMessage(`⚠️ Image generation failed: ${err.message}`, 'bot');
       }
       return;
     }
-
     default: return addMessage(`❓ Unknown command: ${command}`, 'bot');
   }
 }
 
-// --- NEW INTERNAL HELPER FOR IMAGE ANALYSIS (Unchanged) ---
-/**
- * Executes a hidden, one-shot call to the fast model to analyze the image/prompt
- * and return the final image generation command string.
- * @param {string} msg - The user's original message.
- * @param {string} imageToSend - The Base64 image data string.
- * @returns {Promise<string>} The raw 'Image Generated:model:...' command string.
- */
+// --- INTERNAL HELPER FOR IMAGE ANALYSIS ---
 async function getFastModelAnalysis(msg, imageToSend) {
     const analysisMode = 'fast'; 
-    
-    // System instruction to force the model to be a prompt engineer and output ONLY the command.
     const analysisSystemInstruction = `You are a hidden, advanced image analysis and prompt engineering engine for SteveAI.
     A user has provided an image and the following request: "${msg}".
-    
-    Your task is to analyze the image and the user's request. You MUST output ONLY the final, detailed, and highly specific image generation command string. 
-    
+    Your task is to analyze the image and the user's request. You MUST output ONLY the final image generation command string. 
     DO NOT output any thinking, greetings, or conversational text. Your sole output must be in the exact command format: 
-    Image Generated:model:Imagen 4 (Original),prompt:VERY DETAILED AND SPECIFIC PROMPT TEXT
-    
-    The prompt text you generate must be extremely descriptive of the desired image or edit, referencing the provided image's content and the user's request (e.g., adding a hat, changing the lighting, etc.). Use "Imagen 4 (Original)" as the model name.`;
-
-    // The context is empty ("") because we don't need chat history for this one-shot analysis.
-    // We pass the customSystemInstruction to the now-updated getGeminiReply.
+    Image Generated:model:Imagen 4 (Original),prompt:VERY DETAILED AND SPECIFIC PROMPT TEXT`;
     return getGeminiReply(msg, "", analysisMode, imageToSend, analysisSystemInstruction);
 }
-// ----------------------------------------------
 
-/**
- * Checks if the message is clearly requesting an image generation or edit. (Unchanged)
- * @param {string} msg - The user's message.
- * @returns {boolean} True if keywords for generation are present.
- */
 function isImageGenerationRequest(msg) {
     if (!msg) return false;
-    const lowerMsg = msg.toLowerCase();
-    
-    // Keywords from gemini.js Rule 2: generate, create, make, show (in context of creation), edit.
     const keywords = ['generate', 'create', 'make', 'show me', 'edit', 'remix', 'draw', 'paint'];
-    return keywords.some(keyword => lowerMsg.includes(keyword));
+    return keywords.some(keyword => msg.toLowerCase().includes(keyword));
 }
 
-// --- Chat Flow (UPDATED: Centralized image command return) ---
-async function getChatReply(msg) { // <-- EXPORTED
+// --- Chat Flow ---
+async function getChatReply(msg) { 
   const context = await buildContext();
   const mode = (modeSelect?.value || 'chat').toLowerCase();
-  
-  let model;
-  let botName;
-  let reply = ""; 
-  
+  let model; let botName; let reply = ""; 
   const imageToSend = window.base64Image;
 
-  // 1. Show the loader immediately
-  if (window.showLoader) {
-      window.showLoader();
-  }
+  if (window.showLoader) window.showLoader();
   
   try {
-      // 2. Determine Model and API Type
-      
-      // 🟢 CRITICAL: IF IMAGE IS PRESENT, check for GENERATION intent
       if (imageToSend) {
-          
           const isGeneration = isImageGenerationRequest(msg);
-
           if (isGeneration) {
-              // --- 2a. IMAGE GENERATION/EDITING FLOW (Force Command) ---
-              if (mode !== 'fast') {
-                  // Temporarily switch for the analysis call
-                  modeSelect.value = 'fast'; 
-                  addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for multi-modal processing.`, 'bot');
-              }
-              
-              // A. Call the hidden analysis model (FORCES command output)
-              const finalImageCommand = await getFastModelAnalysis(msg, imageToSend);
-              
-              // B. RETURN THE RAW COMMAND STRING. form.onsubmit will execute it.
-              return finalImageCommand; 
-              
+              if (mode !== 'fast') modeSelect.value = 'fast'; 
+              addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for multi-modal processing.`, 'bot');
+              return await getFastModelAnalysis(msg, imageToSend); 
           } else {
-              // --- 2b. IMAGE ANALYSIS/DISCUSSION FLOW (Standard Gemini Flow) ---
-              // User attached image but no generation keywords.
-              
               if (mode !== 'fast' && mode !== 'lite') {
                    modeSelect.value = 'fast'; 
                    addMessage(`📷 Image detected. Mode temporarily switched to **SteveAI-fast** for image analysis.`, 'bot');
               }
-              
-              // Use standard getGeminiReply. Pass the image.
               reply = await getGeminiReply(msg, context, modeSelect.value, imageToSend, null);
           }
       } 
-      // ----------------------------------------------------------------------
-
 
       if ((mode === 'lite' || mode === 'fast') && !imageToSend) {
-          // --- GEMINI FLOW (TEXT ONLY) ---
-          
           try {
               reply = await getGeminiReply(msg, context, mode, null); 
-              
           } catch (e) {
               addMessage(`⚠️ **Gemini Error:** ${e.message}`, 'bot');
               throw e; 
           }
       } else if (!imageToSend) {
-          // --- A4F/OPENAI FLOW (Non-Gemini modes, text only) ---
-          
           switch (mode) {
-            case 'chat': 
-            default:
-              model = "provider-5/gpt-5-nano"; 
-              botName = "SteveAI-chat";
-              break;
-            case 'math':
-              model = "provider-1/qwen3-235b-a22b-instruct-2507";
-              botName = "SteveAI-math";
-              break;
-            case 'korean':
-              model = "provider-1/ax-4.0";
-              botName = "SteveAI-Korean";
-              break;
-            case 'general': 
-              model = "provider-3/glm-4.5-free"; 
-              botName = "SteveAI-general";
-              break;
-            case 'coding':
-              model = "provider-1/deepseek-v3-0324";
-              botName = "SteveAI-coding";
-              break;
-            case 'arabic':
-              model = "provider-1/allam-7b-instruct-preview";
-              botName = "SteveAI-Arabic";
-              break;
-            case 'reasoning': 
-              model = "provider-1/deepseek-r1-0528";
-              botName = "SteveAI-reasoning";
-              break;
+            case 'chat': default: model = "provider-5/gpt-5-nano"; botName = "SteveAI-chat"; break;
+            case 'math': model = "provider-1/qwen3-235b-a22b-instruct-2507"; botName = "SteveAI-math"; break;
+            case 'korean': model = "provider-1/ax-4.0"; botName = "SteveAI-Korean"; break;
+            case 'general': model = "provider-3/glm-4.5-free"; botName = "SteveAI-general"; break;
+            case 'coding': model = "provider-1/deepseek-v3-0324"; botName = "SteveAI-coding"; break;
+            case 'arabic': model = "provider-1/allam-7b-instruct-preview"; botName = "SteveAI-Arabic"; break;
+            case 'reasoning': model = "provider-1/deepseek-r1-0528"; botName = "SteveAI-reasoning"; break;
           }
-          
           const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
-
-          // 3. System Prompt Construction (for A4F/OpenAI models)
           const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
-
-          1. **Reasoning:** You must always output your reasoning steps inside <think> tags, followed by the final answer, UNLESS an image is being generated.
-          2. **Image Generation:** If the user asks you to *generate*, *create*, or *show* an image, you must reply with **ONLY** the following exact pattern. **DO NOT add any greetings, explanations, emojis, periods, newlines, or follow-up text whatsoever.** Your output must be the single, raw command string: 
-             Image Generated:model:model name,prompt:prompt text
-             Available image models: ${imageModelNames}. Use the most relevant model name in your response.`;
+          1. **Reasoning:** You must always output your reasoning steps inside <think> tags.
+          2. **Image Generation:** If requested, reply with ONLY: Image Generated:model:model name,prompt:prompt text. Available image models: ${imageModelNames}.`;
           
-          // 4. Payload Construction (A4F/OpenAI format)
-          const payload = {
-            model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              // The user content includes the full history/context and the new message.
-              { role: "user", content: `${context}\n\nUser: ${msg}` } 
-            ],
-          };
-
-          // 5. Fetch and Parse Response
+          const payload = { model, messages: [ { role: "system", content: systemPrompt }, { role: "user", content: `${context}\n\nUser: ${msg}` } ] };
           const data = await fetchAI(payload, model);
-          
           reply = data?.choices?.[0]?.message?.content || "No response.";
       }
-
-      // 6. Return reply (could be text or a raw command string)
       return reply;
-
   } catch (e) {
       addMessage(`⚠️ **Critical Error:** ${e.message}`, 'bot');
       throw e; 
   } finally {
-      // 7. Hide the loader always
-      if (window.hideLoader) {
-          window.hideLoader();
-      }
-      // ⚠️ Note: Image cleanup is now handled in form.onsubmit/finally
+      if (window.hideLoader) window.hideLoader();
   }
 }
 
-// --- Form Submit (UPDATED: Handles image command string detection and centralized cleanup) ---
+// --- Form Submit ---
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
-  
-  // 📸 Allow sending an image without text
   if (!msg && !window.base64Image) return; 
+  if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; input.style.height = 'auto'; return; }
   
-  // 1. Handle explicit commands first (e.g., /clear)
-  if (msg.startsWith('/')) {
-    await handleCommand(msg);
-    input.value = '';
-    input.style.height = 'auto';
-    return;
-  }
-  
-  // 2. Show user message
   addMessage(msg, 'user');
-  input.value = '';
-  input.style.height = 'auto';
-  
-  // Store the state before the reply
+  input.value = ''; input.style.height = 'auto';
   const wasImageAttached = !!window.base64Image;
   const originalMode = modeSelect.value;
   
   try {
     const r = await getChatReply(msg);
-    
-    // 3. Check if the reply is a raw Image Generation Command
     const imageCommand = parseImageGenerationCommand(r);
 
     if (imageCommand) {
-        // --- IMAGE GENERATION DETECTED ---
-        
-        // 3a. Execute the resulting image command
         await handleCommand({
             type: 'image_auto',
             prompt: imageCommand.prompt,
             modelId: IMAGE_MODELS.find(m => m.name.toLowerCase() === imageCommand.model.toLowerCase())?.id || IMAGE_MODELS[5].id, 
             numImages: 1 
         });
-        
-        // 3b. Memory: Record the turn with the user prompt and the *displayed action*
-        const botMemoryText = `🖼️ Generated image: ${imageCommand.prompt} (Model: ${imageCommand.model})`;
-        memory[++turn] = { user: msg, bot: botMemoryText }; // <-- FIX APPLIED HERE
-        
+        memory[++turn] = { user: msg, bot: `🖼️ Generated image: ${imageCommand.prompt} (Model: ${imageCommand.model})` };
     } else {
-        // --- STANDARD TEXT REPLY ---
-        
-        // 3a. Display the text reply
         addMessage(r, 'bot');
-        
-        // 3b. Record memory
         memory[++turn] = { user: msg, bot: r };
     }
   } catch (e) {
     console.error("Chat flow failed:", e);
-    // Error message already displayed in getChatReply or fetchAI
   } finally {
-      // 4. Cleanup Image State (CRITICAL FIX)
       if (wasImageAttached && window.clearImageBtn) {
           window.clearImageBtn.click();
-          // Restore mode if it was temporarily switched for image processing
           if (modeSelect.value === 'fast' && originalMode !== 'fast') {
                modeSelect.value = originalMode;
                addMessage(`⚙️ Restored mode to **${originalMode}**.`, 'bot');
@@ -837,26 +616,10 @@ form.onsubmit = async e => {
   }
 };
 
-// --- Input Auto Resize (Unchanged) ---
-input.oninput = () => {
-  input.style.height = 'auto';
-  input.style.height = input.scrollHeight + 'px';
-};
-
-// --- Theme Toggle (Unchanged) ---
+// --- Standard Events ---
+input.oninput = () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; };
 themeToggle.onclick = () => toggleTheme();
-
-// --- Clear Chat (Unchanged) ---
 clearChatBtn.onclick = () => clearChat();
 
-// =========================================================================
-// --- EXPORTS for external access (e.g., from main.js) ---
-// =========================================================================
-export { 
-  memory, 
-  memorySummary, 
-  turn, 
-  getChatReply, 
-  addMessage, 
-  handleCommand 
-};
+// --- EXPORTS ---
+export { memory, memorySummary, turn, getChatReply, addMessage, handleCommand };
