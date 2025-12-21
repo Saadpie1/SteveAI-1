@@ -353,7 +353,7 @@ function showContact() {
   const info = `
 **📬 Contact SteveAI**
 - Creator: [@saadpie](https://github.com/saad-pie)
-- vice ceo: [@shawaiz](https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==)
+- vice ceo: [Ahmed](https://www.instagram.com/ahmxd15._?igsh=MXAxY2dsa2lzNG9yaw==)
 - Website: [steve-ai.netlify.app](https://steve-ai.netlify.app)
 - Feedback: Use /export to send logs.
   `;
@@ -367,7 +367,7 @@ async function playSummary() {
 function showAbout() {
   const text = `
 🤖 **About SteveAI**
-Built by *saadpie and shawaiz* — the bot from the future.
+Built by *saadpie and Ahmed* — the bot from the future.
 
 - Models: GPT-5-Nano (Alias), DeepSeek-R1, **Gemini-2.5-flash**, Gemini-2.5-flash-lite, Qwen-3, Ax-4.0, GLM-4.5, Deepseek-v3, Allam-7b, ${IMAGE_MODELS.map(m => m.name).join(', ')}
 - Modes: Chat | Reasoning | Fast | **Lite** | Math | Korean | **General** | Coding | Arabic
@@ -558,7 +558,7 @@ async function getChatReply(msg) {
             case 'reasoning': model = "provider-1/deepseek-r1-0528"; botName = "SteveAI-reasoning"; break;
           }
           const imageModelNames = IMAGE_MODELS.map(m => m.name).join(', ');
-          const systemPrompt = `You are ${botName}, made by saadpie and vice ceo shawaiz ali yasin. You enjoy getting previous conversation. 
+          const systemPrompt = `You are ${botName}, made by saadpie and vice ceo Ahmed Aftab. You enjoy getting previous conversation. 
           1. **Reasoning:** You must always output your reasoning steps inside <think> tags.
           2. **Image Generation:** If requested, reply with ONLY: Image Generated:model:model name,prompt:prompt text. Available image models: ${imageModelNames}.`;
           
