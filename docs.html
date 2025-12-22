@@ -5,50 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SteveAI Docs – Ultimate AI Assistant | AI Chat, Coding & Image Generation</title>
 
-  <meta name="description" content="Official SteveAI Documentation for the ultimate multi-modal AI assistant. Learn chat, reasoning, coding, image generation, and commands.">
-  <meta name="keywords" content="SteveAI, AI assistant, AI chat, reasoning AI, coding AI, AI image generation, AI commands, next-gen AI 2025, advanced AI documentation">
+  <meta name="description" content="Official SteveAI Documentation. Architected by Saadpie & Ahmed, powered by Shawaiz Ali Yasin's 16GB RAM infrastructure.">
+  <meta name="keywords" content="SteveAI, Shawaiz Ali Yasin, AI assistant, AI documentation, AI reasoning, coding AI, 16GB RAM AI">
   <meta name="robots" content="index, follow">
-  <meta name="author" content="Saadpie">
+  <meta name="author" content="Saadpie & Shawaiz Ali Yasin">
   <meta name="theme-color" content="#111">
 
   <meta property="og:type" content="website">
   <meta property="og:title" content="SteveAI Docs – Ultimate AI Assistant">
-  <meta property="og:description" content="Explore SteveAI's ultimate multi-modal features: reasoning, coding, image generation, commands, and AI chat.">
+  <meta property="og:description" content="Explore SteveAI's multi-modal features: reasoning, image generation, and the Shawaiz-powered infrastructure.">
   <meta property="og:url" content="https://steve-ai.netlify.app/docs.html">
   <meta property="og:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
 
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="SteveAI Docs – Ultimate AI Assistant">
-  <meta property="twitter:description" content="SteveAI features insane AI tools. Learn to chat, code, and generate images with next-gen intelligence.">
-  <meta property="twitter:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
-
-  <link rel="canonical" href="https://steve-ai.netlify.app/docs.html">
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "TechArticle",
-    "headline": "SteveAI Documentation – Ultimate AI Assistant",
-    "description": "Official documentation for SteveAI: Chat, reasoning, coding, image generation, commands, and next-gen AI features.",
-    "author": {
-      "@type": "Person",
-      "name": "Saadpie"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "SteveAI",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "SteveAI-logo.jpg"
-      }
-    },
-    "datePublished": "2025-10-19",
-    "mainEntityOfPage": "https://steve-ai.netlify.app/docs.html"
-  }
-  </script>
-
   <link rel="stylesheet" href="style.css">
-
   <link rel="icon" href="/assets/favicon.png">
 
   <style>
@@ -57,15 +26,14 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #0c0c0c; /* Deep Dark Background */
-      color: #e0e0e0; /* Light Gray Text */
+      background-color: #0c0c0c; 
+      color: #e0e0e0; 
       line-height: 1.6;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
     
-    /* Header Styling */
     header {
       background: #1a1a1a;
       color: #fff;
@@ -74,9 +42,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #00ffcc; /* Accent line */
+      border-bottom: 2px solid #00ffcc;
     }
-    /* ADDED Logo Link and Logo styles from index.html */
     .logo-link { 
         text-decoration: none; 
         color: inherit;
@@ -91,7 +58,7 @@
     header h1 {
       margin: 0;
       font-size: 1.8rem;
-      color: #00ffcc; /* Accent color for title */
+      color: #00ffcc;
     }
     nav a {
       color: #e0e0e0;
@@ -106,7 +73,6 @@
       color: #00ffcc;
     }
 
-    /* Main Content Area */
     main {
       flex-grow: 1;
       max-width: 1000px;
@@ -115,7 +81,6 @@
       padding: 0 1rem;
     }
 
-    /* Section Styling */
     section {
       background: #1a1a1a;
       padding: 2rem;
@@ -124,175 +89,85 @@
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
     }
     section h2 {
-      color: #00ffcc; /* Accent color for section headings */
+      color: #00ffcc;
       border-bottom: 1px solid #333;
       padding-bottom: 0.5rem;
       margin-top: 0;
       font-size: 1.5rem;
     }
 
-    /* Update Banner Specific Styles */
+    /* Update Banner */
     .update-banner {
-      background: linear-gradient(135deg, #1b1b1b, #333); /* Gradient background */
-      border: 2px solid #00ffcc;
-      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+      background: linear-gradient(135deg, #1b1b1b, #2c0b3d); 
+      border: 2px solid #ff00ff;
+      text-shadow: 0 0 5px rgba(255, 0, 255, 0.3);
     }
-    .update-banner strong {
-      color: #fff;
-      font-weight: 700;
-    }
+    .update-banner strong { color: #00ffcc; font-weight: 700; }
     .update-banner ul {
       list-style: none;
       padding-left: 0;
       margin-top: 1rem;
-      /* Using columns for a tighter doc look */
       column-count: 2; 
       column-gap: 20px;
     }
     .update-banner ul li {
-      background: #2c2c2c;
+      background: rgba(44, 44, 44, 0.6);
       padding: 0.5rem 1rem;
       border-radius: 6px;
       border-left: 3px solid #00ffcc;
       margin-bottom: 10px;
-      break-inside: avoid; /* Keeps list items together */
+      break-inside: avoid;
     }
 
-    /* General List and Link Styling */
-    ul, ol {
-      padding-left: 20px;
-    }
-    ul li, ol li {
-      margin-bottom: 0.8rem;
-    }
-    a {
-      color: #00ffcc;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    a:hover {
-      color: #00e6b8;
-      text-decoration: underline;
-    }
-    
-    /* Command Styling */
     code {
       background-color: #2c2c2c;
-      color: #ffae00; /* Amber/orange color for commands */
+      color: #ffae00; 
       padding: 3px 6px;
       border-radius: 4px;
       font-family: monospace;
       font-size: 0.95rem;
     }
 
-    /* FAQ (Details/Summary) Styling */
     details {
       background-color: #252525;
       border: 1px solid #3a3a3a;
       border-radius: 8px;
       margin-bottom: 10px;
-      transition: background-color 0.2s;
-    }
-    details:hover {
-      background-color: #303030;
     }
     summary {
       padding: 1rem;
       font-weight: bold;
       cursor: pointer;
-      color: #00ffcc; /* Accent color for questions */
-      outline: none;
-      user-select: none;
-      list-style-type: none; /* Hide default arrow */
+      color: #00ffcc;
+      list-style-type: none;
     }
-    summary::before {
-      content: '▶️'; /* Custom arrow symbol */
-      margin-right: 10px;
-      transition: transform 0.2s;
-      display: inline-block;
-    }
-    details[open] > summary::before {
-      content: '🔽';
-      transform: rotate(90deg);
-    }
-    details p {
-      padding: 0 1rem 1rem 1rem;
-      border-top: 1px solid #3a3a3a;
-      margin: 0;
-    }
+    summary::before { content: '▶️'; margin-right: 10px; }
+    details[open] > summary::before { content: '🔽'; }
+    details p { padding: 0 1rem 1rem 1rem; border-top: 1px solid #3a3a3a; margin: 0; }
     
-    /* Footer Styling */
     footer {
       background: #1a1a1a;
       color: #777;
       text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
+      padding: 2rem;
       border-top: 1px solid #2c2c2c;
     }
-    footer a {
-      color: #00ffcc;
-      font-weight: bold;
-    }
+    footer a { color: #00ffcc; font-weight: bold; }
     
-    /* --- Responsive Design for Mobile and Smaller Screens (From index.html fix) --- */
     @media (max-width: 768px) {
-        header {
-            flex-direction: column; /* Stack logo/title on top of nav */
-            padding: 0.5rem 0.5rem; /* Reduced overall padding for compactness */
-            align-items: flex-start; /* Align everything to the left */
-        }
-        .logo-link {
-            margin-bottom: 0.5rem; /* Space between logo/title and nav */
-            width: 100%; /* Ensure logo/title takes full width for alignment */
-        }
-        header h1 {
-            font-size: 1.5rem; /* Smaller title font */
-        }
-        .logo {
-             height: 24px; /* Smaller logo */
-        }
-        nav {
-            display: flex;
-            flex-wrap: nowrap; /* FORCES horizontal layout - FIXES wrapping issue */
-            overflow-x: auto; /* Enables HORIZONTAL SCROLLING - FIXES hidden links */
-            width: 100%; /* Defines the scrollable area */
-            justify-content: flex-start; 
-            padding: 0 0.5rem; /* Small horizontal padding */
-            margin-top: 0;
-            padding-bottom: 0.5rem; /* Small bottom padding for scroll visibility */
-        }
-        nav a {
-            flex-shrink: 0; /* Ensures links don't shrink */
-            margin: 0 0.75rem 0 0; /* Tightened link spacing */
-            padding: 0.3rem 0.6rem;
-            font-size: 0.85rem;
-        }
-        main {
-            width: 95%;
-            padding: 0 0.5rem;
-            margin: 1rem auto;
-        }
-        section {
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .update-banner ul {
-             column-count: 1; /* Stack list items vertically on mobile */
-        }
-        footer {
-            padding: 1rem 0.5rem;
-            font-size: 0.8rem;
-        }
+        header { flex-direction: column; align-items: flex-start; }
+        nav { display: flex; overflow-x: auto; width: 100%; padding-bottom: 0.5rem; }
+        nav a { flex-shrink: 0; margin: 0 0.75rem 0 0; }
+        .update-banner ul { column-count: 1; }
     }
   </style>
-  </head>
+</head>
 
 <body>
   <header>
     <a href="/" class="logo-link">
-        <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo" loading="lazy"/> 
-        <h1>SteveAI <span style="font-size: 0.8em; color: #ff00ff;">(Ultimate AI Assistant)</span></h1>
+        <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo"/> 
+        <h1>SteveAI Docs <span style="font-size: 0.6em; color: #ff00ff;">v2.5 High-Speed</span></h1>
     </a>
     <nav>
       <a href="/">Home</a>
@@ -304,113 +179,70 @@
   </header>
 
   <main>
-
     <section class="update-banner">
-      <h2>🚀 Major Update: <strong>Ultimate AI Assistant</strong></h2>
+      <h2>🚀 Hardware Optimization: <strong>Shawaiz Infrastructure</strong></h2>
       <p>
-        SteveAI now provides **ultimate** speed, intelligence, and features.  
-        Unlock lightning-fast reasoning, deep context understanding, AI-assisted coding, and next-level image generation.
+        SteveAI has migrated to a high-performance **16GB RAM Neural Engine** maintained by **Shawaiz Ali Yasin**. This allows for:
       </p>
       <ul>
-        <li>⚡ Ultra-fast logical reasoning and multi-step problem solving</li>
-        <li>💬 Smarter AI chat with deeper context awareness</li>
-        <li>💻 AI coding assistance, debugging, and suggestions</li>
-        <li>🎨 Image generation and creative content creation</li>
-        <li>🔍 Advanced command system integrated with full documentation</li>
-        <li>🌙 Dark/Light theme support, chat export, and /play summaries</li>
+        <li>⚡ **Zero Latency** in reasoning-heavy tasks</li>
+        <li>🖼️ **Bulk Image Generation** (Up to 4 images/prompt)</li>
+        <li>🎞️ **SteveAI-Vid-gen** Video Alpha support</li>
+        <li>🧠 **Massive Context Window** (2200+ token memory)</li>
       </ul>
     </section>
 
     <section>
-      <h2>Introduction</h2>
+      <h2>System Architecture</h2>
       <p>
-        Welcome to the official **SteveAI Documentation**.  
-        This guide covers everything about using SteveAI — from chatting and coding to generating images and leveraging advanced AI reasoning.
+        SteveAI is a Multi-Modal Orchestrator built by **Saadpie** and **Ahmed**. Unlike single-model bots, SteveAI routes your messages through 33+ specialized models to ensure peak accuracy.
       </p>
     </section>
 
     <section>
-      <h2>Getting Started</h2>
-      <ol>
-        <li>Open the <a href="/chat.html">Chat</a> page to start a conversation.</li>
-        <li>Type your question, command, or creative prompt.</li>
-        <li>Press **Enter** or click **Send** for instant AI responses.</li>
-      </ol>
-    </section>
-
-    <section>
-      <h2>About SteveAI's Reasoning Model</h2>
-      <p>
-        SteveAI uses a multi-modal reasoning engine that powers all interactions.  
-        It is designed for superior speed, logic, creativity, and adaptability. Key highlights:
-      </p>
+      <h2>Commands & Shortcuts</h2>
+      <p>Interact with the orchestrator using these slash commands:</p>
       <ul>
-        <li>🧠 Multi-step logical reasoning and problem-solving</li>
-        <li>⚡ Ultra-low latency responses</li>
-        <li>🔍 Superior context retention and memory</li>
-        <li>🎯 Adaptive creativity and advanced AI decision-making</li>
+        <li><code>/mode &lt;type&gt;</code> – Switch between Reasoning, Fast, Coding, etc.</li>
+        <li><code>/image &lt;prompt&gt;</code> – Access 23+ generation models.</li>
+        <li><code>/play</code> – Recap your session using SteveAI Summary Logic.</li>
+        <li><code>/about</code> – View credits for Shawaiz, Saadpie, and Ahmed.</li>
+        <li><code>/export</code> – Download chat history to your device.</li>
+        <li><code>/time</code> – Sync with local server time.</li>
       </ul>
     </section>
 
     <section>
-      <h2>Features</h2>
+      <h2>Mode Reference</h2>
       <ul>
-        <li>💬 Intelligent conversational AI with reasoning</li>
-        <li>💻 AI-assisted coding, debugging, and code generation</li>
-        <li>🖼️ High-quality AI image generation</li>
-        <li>🧠 Context-aware responses and deep understanding</li>
-        <li>🎯 Advanced command system (<code style="color:#00ffcc">/clear</code>, <code style="color:#00ffcc">/theme</code>, <code style="color:#00ffcc">/help</code>, <code style="color:#00ffcc">/image</code>, <code style="color:#00ffcc">/export</code>, <code style="color:#00ffcc">/contact</code>, <code style="color:#00ffcc">/play</code>)</li>
-        <li>🌙 Dark/Light theme toggle</li>
-        <li>🗑️ One-click chat clearing</li>
-        <li>📦 Export chats in .txt or .json format</li>
-        <li>📧 Integrated contact via **saadabdulrehman2010@gmail.com**</li>
-        <li>📝 Markdown & syntax highlighting support</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Commands</h2>
-      <ul>
-        <li><code>/clear</code> – Clears current chat session</li>
-        <li><code>/theme</code> – Toggles dark/light mode</li>
-        <li><code>/help</code> – Lists available commands</li>
-        <li><code>/image &lt;prompt&gt;</code> – Generates an image from text</li>
-        <li><code>/export</code> – Exports your chat as .txt or .json</li>
-        <li><code>/contact</code> – Opens contact form or mailto **saadabdulrehman2010@gmail.com**</li>
-        <li><code>/play</code> – Generates a summary of your conversation</li>
+        <li><strong>Reasoning:</strong> DeepSeek-R1 powered logical chain. Best for math and philosophy.</li>
+        <li><strong>Fast:</strong> Gemini-2.5-Flash integration. Best for quick summaries and general Q&A.</li>
+        <li><strong>Coding:</strong> Specialized for debugging and modern syntax.</li>
+        <li><strong>Arabic/Korean:</strong> Native-tier translation and cultural logic.</li>
       </ul>
     </section>
 
     <section>
       <h2>FAQ</h2>
       <details>
-        <summary>Is SteveAI free?</summary>
-        <p>Yes! SteveAI is completely free on the web with no signup required.</p>
+        <summary>Who owns SteveAI?</summary>
+        <p>SteveAI is owned and powered by <strong>Shawaiz Ali Yasin</strong>, with core development by <strong>Saadpie</strong> and <strong>Ahmed</strong>.</p>
       </details>
       <details>
-        <summary>Does SteveAI store chat history?</summary>
-        <p>No. Chats are temporary and private; your data is not permanently stored.</p>
+        <summary>What is the hardware spec?</summary>
+        <p>SteveAI runs on a custom 16GB RAM environment optimized for neural processing and high-speed multi-modal routing.</p>
       </details>
       <details>
-        <summary>Can I generate images?</summary>
-        <p>Yes! Use the <a href="/image.html">Image Generator</a> page for instant AI image creation.</p>
-      </details>
-      <details>
-        <summary>How does SteveAI’s reasoning model work?</summary>
-        <p>
-          It uses multi-chain reasoning for both logic and creativity, giving fast, accurate, and context-aware AI responses far beyond traditional transformer-only models.
-        </p>
+        <summary>Can I use SteveAI for coding?</summary>
+        <p>Yes. The <code>/mode coding</code> command activates the DeepSeek-V3 engine, specifically tuned for technical excellence.</p>
       </details>
     </section>
-
   </main>
 
   <footer>
-    <p>
-      © 2025 **SteveAI** • Created with ❤️ by 
-      <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/ahmxd15._?igsh=MXAxY2dsa2lzNG9yaw==" target="_blank">Ahmed</a> • Contact: 
-      <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a>
-    </p>
+    <p>© 2025 <strong>SteveAI</strong> • Infrastructure by <strong>Shawaiz Ali Yasin</strong></p>
+    <p>Architected with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> & <a href="https://www.instagram.com/ahmxd15._" target="_blank">Ahmed</a></p>
+    <p>Support: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
   </footer>
 </body>
 </html>
