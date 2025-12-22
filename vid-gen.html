@@ -12,6 +12,7 @@
             --steve-dark: #080808;
             --glass: rgba(255, 255, 255, 0.02);
             --border: rgba(255, 255, 255, 0.08);
+            --error-red: #ff4b4b;
         }
 
         body {
@@ -71,33 +72,36 @@
             font-weight: 600;
         }
 
-        /* --- Precision Masking Area --- */
+        /* --- UPDATED: Precision Masking for Error Visibility --- */
         .engine-viewport {
             width: 100%;
-            height: 680px; /* Screenshots ke mutabiq bottom footer hide karne ke liye */
+            height: 720px; /* Thori height barha di hai error space ke liye */
             position: relative;
             overflow: hidden;
-            background: #000;
+            background: #f9f9f9; /* Match light theme of iframe */
         }
 
         .engine-viewport iframe {
             position: absolute;
-            top: -245px; /* Clean look: Sirf controls dikhenge */
+            /* Pehle -245px tha, ab -180px kiya hai taake Top Warning Bar (Quota/Errors) nazar aaye */
+            top: -180px; 
             left: 0;
             width: 100%;
-            height: 1200px;
+            height: 1250px;
             border: none;
-            filter: contrast(1.05) brightness(0.95);
+            filter: contrast(1.02) brightness(1);
         }
 
         /* --- System Status Bar --- */
         .system-bar {
             padding: 12px 20px;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.8); /* Darker for better contrast with light iframe above */
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 20;
         }
 
         .status-node {
@@ -151,7 +155,7 @@
         <div class="system-bar">
             <div class="status-node">
                 <div class="pulse-core"></div>
-                SHAWAIZ NEURAL ENGINE: OPTIMIZED
+                SHAWAIZ NEURAL ENGINE: ACTIVE
             </div>
             <div class="version-tag">STV-2.5-PRO</div>
         </div>
