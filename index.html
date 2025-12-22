@@ -5,51 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SteveAI – Ultimate AI Assistant</title>
 
-  <meta name="description" content="SteveAI is the ultimate multi-modal AI orchestrator, designed for precision, efficiency, and scale. Chat, reason, code, generate images, and explore features beyond imagination.">
-  <meta name="keywords" content="SteveAI, AI assistant, AI chat, AI image generation, reasoning AI, coding AI, next-generation AI, intelligent assistant, AI 2025, deep learning assistant">
-  <meta name="robots" content="index, follow">
-  <meta name="author" content="Saadpie">
-  <meta name="theme-color" content="#111">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="SteveAI – Ultimate AI Assistant | The Next Chapter">
-  <meta property="og:description" content="SteveAI is the ultimate multi-modal AI orchestrator, designed for unparalleled performance and creativity.">
-  <meta property="og:url" content="https://steve-ai.netlify.app/">
-  <meta property="og:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
-
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="SteveAI – Ultimate AI Assistant | The Next Chapter">
-  <meta property="twitter:description" content="SteveAI is the ultimate multi-modal AI orchestrator. Explore next-gen reasoning, coding, and image generation capabilities.">
-  <meta property="twitter:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
-
-  <link rel="canonical" href="https://steve-ai.netlify.app/">
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "SteveAI",
-    "url": "https://steve-ai.netlify.app/",
-    "image" : "SteveAI-logo.jpg",
-    "applicationCategory": "Artificial Intelligence",
-    "operatingSystem": "Web-based",
-    "description": "SteveAI is the ultimate multi-modal AI orchestrator, featuring advanced reasoning, AI chat, coding, and image generation.",
-    "author": {
-      "@type": "Person",
-      "name": "Saadpie"
-    },
-    "datePublished": "2025-10-19",
-    "version": "1.0",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    }
-  }
-  </script>
-
+  <meta name="description" content="SteveAI is the ultimate multi-modal AI orchestrator, designed for precision, efficiency, and scale.">
   <link rel="stylesheet" href="style.css">
-
   <link rel="icon" href="/assets/favicon.png">
 
   <style>
@@ -95,10 +52,11 @@
     nav a {
       color: #e0e0e0;
       text-decoration: none;
-      margin-left: 1.5rem;
+      margin-left: 1rem;
       padding: 0.5rem 0.8rem;
       border-radius: 4px;
-      transition: background-color 0.2s, color 0.2s;
+      transition: 0.2s;
+      font-size: 0.9rem;
     }
     nav a:hover, nav a.active {
       background-color: #2c2c2c;
@@ -127,11 +85,46 @@
       margin-top: 0;
       font-size: 1.5rem;
     }
-    .emoji-heading {
-        font-size: 1.8rem;
+
+    /* SHAWAIZ VIDEO ENGINE STYLING */
+    .video-engine-section {
+        border: 2px solid #ff00ff;
+        background: linear-gradient(180deg, #151515, #0a0a0a);
+        padding: 0; /* Removing padding for seamless iframe */
+        overflow: hidden;
+    }
+    .engine-header {
+        padding: 1.5rem;
+        background: rgba(255, 0, 255, 0.05);
+        border-bottom: 1px solid #333;
+    }
+    .shawaiz-badge {
+        background: #ff00ff;
+        color: #fff;
+        font-size: 0.7rem;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        float: right;
     }
 
-    /* ENHANCED SHAWAIZ BANNER */
+    /* THE PRECISION MASKING */
+    .iframe-container {
+        width: 100%;
+        height: 700px; /* Adjusting for mobile/desktop */
+        position: relative;
+        overflow: hidden;
+    }
+    .iframe-container iframe {
+        position: absolute;
+        top: -180px; /* Clipping Hugging Face Header */
+        left: 0;
+        width: 100%;
+        height: 1100px;
+        border: none;
+    }
+
+    /* EXISTING STYLES MAINTAINED */
     .update-banner {
       background: linear-gradient(135deg, #1a0b2e, #2d1b4e);
       border: 3px solid #00ffcc;
@@ -142,86 +135,35 @@
     .update-banner::after {
         content: "VIP CONTRIBUTOR";
         position: absolute;
-        top: 10px;
-        right: -30px;
-        background: #ff00ff;
-        color: white;
-        padding: 5px 40px;
-        transform: rotate(45deg);
-        font-size: 0.7rem;
-        font-weight: bold;
-        letter-spacing: 1px;
+        top: 10px; right: -30px;
+        background: #ff00ff; color: white;
+        padding: 5px 40px; transform: rotate(45deg);
+        font-size: 0.7rem; font-weight: bold;
     }
-    .update-banner strong {
-      color: #00ffcc;
-      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
-    }
-
-    .about-steveai {
-        border-left: 5px solid #ff00ff;
-        background: #151515;
-    }
-    .about-steveai h3 {
-        color: #00ffcc;
-        margin-top: 0;
-        margin-bottom: 0.8rem;
-        border-bottom: 1px dashed #333;
-        padding-bottom: 0.4rem;
-    }
+    
+    .about-steveai { border-left: 5px solid #ff00ff; background: #151515; }
     .about-steveai ul {
-        list-style: none;
-        padding-left: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 10px;
-        font-size: 0.9rem;
+        list-style: none; padding-left: 0;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
     }
     .about-steveai ul li {
-        background: #2c2c2c;
-        padding: 0.5rem;
-        border-radius: 4px;
-        border-left: 2px solid #ff00ff;
-    }
-
-    .model-list ul {
-        list-style-type: none;
-        padding-left: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 8px;
-        font-size: 0.9rem;
-    }
-    .model-list ul li {
-        padding: 0.4rem;
-        background: #2c2c2c;
-        border-radius: 4px;
-        border-left: 3px solid #00ffcc;
-    }
-    .model-list ul li.highlight {
-        border-left-color: #ff00ff;
-        font-weight: bold;
+        background: #2c2c2c; padding: 0.5rem; border-radius: 4px; border-left: 2px solid #ff00ff;
     }
 
     footer {
-      background: #1a1a1a;
-      color: #bbb;
-      text-align: center;
-      padding: 2rem 1rem;
-      font-size: 0.9rem;
-      border-top: 1px solid #2c2c2c;
+      background: #1a1a1a; color: #bbb; text-align: center;
+      padding: 2rem 1rem; border-top: 1px solid #2c2c2c;
     }
-    footer a {
-      color: #00ffcc;
-      font-weight: bold;
-    }
+    footer a { color: #00ffcc; font-weight: bold; }
 
     @media (max-width: 768px) {
         header { flex-direction: column; align-items: flex-start; }
         nav { overflow-x: auto; white-space: nowrap; width: 100%; margin-top: 10px; }
-        nav a { margin-left: 0; margin-right: 1rem; }
+        .iframe-container { height: 750px; }
+        .iframe-container iframe { top: -160px; }
     }
   </style>
-  </head>
+</head>
 
 <body>
   <header>
@@ -231,116 +173,68 @@
     </a>
     <nav>
       <a href="/" class="active">Home</a>
-      <a href="/about.html">About</a>
-      <a href="/docs.html">Docs</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html">Image</a>
+      <a href="/video.html" style="border: 1px solid #ff00ff;">Video</a> <a href="/docs.html">Docs</a>
+      <a href="/about.html">About</a>
     </nav>
   </header>
 
   <main>
-
     <section class="update-banner">
-      <h2 class="emoji-heading">👑 The Visionary Arrives: Shawaiz Ali Yasin 🚀</h2>
+      <h2 class="emoji-heading">👑 Infrastructure Chief: Shawaiz Ali Yasin 🚀</h2>
       <p>
-        We are profoundly honored to announce that <strong>Shawaiz Ali Yasin</strong> has officially ascended to the role of <strong>Owner & Infrastructure Chief</strong> of SteveAI. 🤝 
-      </p>
-      <p>
-        Shawaiz is the powerhouse behind our next generation of features. By integrating his elite hardware resources—including his high-performance <strong>16GB RAM Neural Engine</strong>—he has made the impossible, possible. Without his dedication and technological support, the upcoming <strong>SteveAI-Vid-gen</strong> would remain a distant dream. 
+        SteveAI is now powered by the elite hardware resources of <strong>Shawaiz Ali Yasin</strong>. By integrating his <strong>16GB RAM Neural Engine</strong>, we have unlocked the next chapter of AI orchestration.
       </p>
       <p style="font-style: italic; border-left: 2px solid #00ffcc; padding-left: 10px; margin-top: 15px;">
-        "Shawaiz is the heartbeat of this project. His partnership brings the scale and precision that defines the 'Ultimate' in SteveAI." — Saadpie
+        "Shawaiz is the architect of our scale. This system wouldn't exist without his visionary support." — Saadpie
       </p>
+    </section>
+
+    <section id="video-gen" class="video-engine-section">
+        <div class="engine-header">
+            <span class="shawaiz-badge">CORE BY SHAWAIZ</span>
+            <h2 style="border:none; margin:0;">🎥 SteveAI-Vid-Gen (14B Lightning)</h2>
+            <p style="font-size:0.8rem; color:#888;">Cinematic AI Rendering via Shawaiz's Optimized Pipeline</p>
+        </div>
+        <div class="iframe-container">
+            <iframe 
+                src="https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+            </iframe>
+        </div>
     </section>
 
     <section class="about-steveai">
         <h2 class="emoji-heading">🏛️ Executive Leadership</h2>
         <p>
-            Architected by <strong>Saadpie</strong> and <strong>Ahmed</strong>, and powered by the physical infrastructure and strategic leadership of 
-            <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank" style="color: #00ffcc; font-weight: bold; text-decoration: underline;">Shawaiz Ali Yasin</a>.
+            Architected by <strong>Saadpie</strong> and powered by the strategic infrastructure of 
+            <a href="https://www.instagram.com/shawaiz_ali___16" target="_blank" style="color: #00ffcc; font-weight: bold;">Shawaiz Ali Yasin</a>.
         </p>
         
-        <h3>⚙️ Global Operating Modes</h3>
+        <h3>✨ Shawaiz-Enabled Features</h3>
         <ul>
-            <li><span style="color: #00ffcc;">Chat</span></li>
-            <li><span style="color: #00ffcc;">Reasoning</span></li>
-            <li><span style="color: #00ffcc;">Fast</span></li>
-            <li><span style="color: #00ffcc;">Math</span></li>
-            <li><span style="color: #00ffcc;">Korean</span></li>
-            <li><span style="color: #00ffcc;">General</span></li>
-            <li><span style="color: #00ffcc;">Coding</span></li>
-            <li><span style="color: #00ffcc;">Arabic</span></li>
-        </ul>
-
-        <h3>✨ Exclusive Features</h3>
-        <ul>
-            <li><span style="color: #ff00ff;">Context Memory</span></li>
-            <li><span style="color: #ff00ff;">Vid-Gen (Alpha)</span></li>
-            <li><span style="color: #ff00ff;">Advanced Commands</span></li>
-            <li><span style="color: #ff00ff;">Theme Engine</span></li>
-            <li><span style="color: #ff00ff;">Voice Synthesis</span></li>
-            <li><span style="color: #ff00ff;">Data Export</span></li>
-        </ul>
-    </section>
-
-    <section class="model-list">
-        <h2 class="emoji-heading">🗣️ Conversational & Reasoning (10+ Specialized)</h2>
-        <p>Managed by our leadership team for maximum logical precision.</p>
-        <ul>
-            <li>GPT-5-Nano</li>
-            <li>DeepSeek-R1</li>
-            <li class="highlight">Gemini-2.5-Flash</li>
-            <li>Qwen-3</li>
-            <li>Ax-4.0</li>
-            <li>GLM-4.5</li>
-            <li>Deepseek-v3</li>
-            <li>Allam-7b</li>
-            <li>Flux Schnell (Fast)</li>
-            <li>Flux Fast</li>
-        </ul>
-    </section>
-
-    <section class="model-list">
-        <h2 class="emoji-heading">🎨 Visual Arts & Generation (23+ Models)</h2>
-        <p>Unmatched creativity, style, and photorealistic rendering.</p>
-        <ul>
-            <li>Imagen 3.5</li>
-            <li>Imagen 4 (Original)</li>
-            <li>Imagen 4 Fast</li>
-            <li>DALL-E 2</li>
-            <li class="highlight">RealVis XL</li>
-            <li>Juggernaut X Hyper</li>
-            <li>Animagine XL 2.0</li>
-            <li>Dreamshaper</li>
-            <li>Playground V2.5</li>
-            <li class="highlight">NSFW Gen</li>
+            <li><span style="color: #ff00ff;">Wan 2.2 Vid-Gen</span></li>
+            <li><span style="color: #ff00ff;">16GB Neural Processing</span></li>
+            <li><span style="color: #ff00ff;">Lightning Rendering</span></li>
+            <li><span style="color: #ff00ff;">Zero-Queue Orchestration</span></li>
         </ul>
     </section>
 
     <section>
-      <h2 class="emoji-heading">💡 Core Capabilities: Your AI Superpowers</h2>
+      <h2 class="emoji-heading">💡 Your AI Superpowers</h2>
       <ul>
         <li>💬 <strong>Advanced AI Chat</strong> with lightning-fast logical reasoning ⚡</li>
-        <li>🖼️ <strong>Image Generation</strong> with unprecedented creativity 🎨</li>
-        <li>💻 <strong>Code Generation</strong>, debugging, and intelligent suggestions 💾</li>
-        <li>🧠 <strong>Deep Context Awareness</strong> powered by Shawaiz's Infrastructure 🧐</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2 class="emoji-heading">🔗 Jump Into Action</h2>
-      <ul>
-        <li>💬 <a href="/chat.html">Start Chatting</a></li>
-        <li>🖼️ <a href="/image.html">Generate Art</a></li>
-        <li>ℹ️ <a href="/about.html">Meet the Team</a></li>
+        <li>🖼️ <strong>Image Generation</strong> via Flux & RealVis XL 🎨</li>
+        <li>🎥 <strong>Video Generation</strong> powered by Shawaiz's Infrastructure 🎬</li>
       </ul>
     </section>
   </main>
 
   <footer>
-    <p>© 2025 <strong>SteveAI</strong> • Orchestrated by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> & <a href="#">Ahmed</a></p>
-    <p style="margin-top: 10px; color: #00ffcc; font-weight: bold; font-size: 1rem;">
-      Empowered & Maintained by <a href="https://www.instagram.com/shawaiz_ali___16?igsh=MWtyc293ZHI2NGFwOQ==" target="_blank">Shawaiz Ali Yasin</a>
+    <p>© 2025 <strong>SteveAI</strong> • Project by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a></p>
+    <p style="margin-top: 10px; color: #00ffcc; font-weight: bold;">
+      Empowered & Maintained by <a href="https://www.instagram.com/shawaiz_ali___16" target="_blank">Shawaiz Ali Yasin</a>
     </p>
   </footer>
 </body>
