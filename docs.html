@@ -119,6 +119,17 @@
       break-inside: avoid;
     }
 
+    /* Video Gen Info Section Styling */
+    .video-docs-badge {
+        background: #ff00ff;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        vertical-align: middle;
+        margin-left: 10px;
+    }
+
     code {
       background-color: #2c2c2c;
       color: #ffae00; 
@@ -172,7 +183,7 @@
     <nav>
       <a href="/">Home</a>
       <a href="/about.html">About</a>
-      <a href="/docs.html" class="active">Docs</a>
+      <a href="/vid-gen">Video</a> <a href="/docs.html" class="active">Docs</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html">Image</a>
     </nav>
@@ -200,11 +211,24 @@
     </section>
 
     <section>
+      <h2>Video Generation (Vid-gen) <span class="video-docs-badge">NEW</span></h2>
+      <p>
+        Powered by the <strong>Wan 2.2 Lightning 14B</strong> architecture, SteveAI now supports cinematic video synthesis. This module is exclusively sustained by <strong>Shawaiz Ali Yasin's</strong> 16GB VRAM allocation.
+      </p>
+      <ul>
+        <li><strong>Sampling Steps:</strong> Optimized at 4-steps for 50x faster delivery.</li>
+        <li><strong>Resolution:</strong> Native 720p HD rendering.</li>
+        <li><strong>Engine:</strong> Distributed via Shawaiz's private LoRA pipeline.</li>
+      </ul>
+    </section>
+
+    <section>
       <h2>Commands & Shortcuts</h2>
       <p>Interact with the orchestrator using these slash commands:</p>
       <ul>
         <li><code>/mode &lt;type&gt;</code> – Switch between Reasoning, Fast, Coding, etc.</li>
         <li><code>/image &lt;prompt&gt;</code> – Access 23+ generation models.</li>
+        <li><code>/video &lt;prompt&gt;</code> – Trigger the Shawaiz-Powered Vid-gen engine.</li>
         <li><code>/play</code> – Recap your session using SteveAI Summary Logic.</li>
         <li><code>/about</code> – View credits for Shawaiz, Saadpie, and Ahmed.</li>
         <li><code>/export</code> – Download chat history to your device.</li>
@@ -219,6 +243,7 @@
         <li><strong>Fast:</strong> Gemini-2.5-Flash integration. Best for quick summaries and general Q&A.</li>
         <li><strong>Coding:</strong> Specialized for debugging and modern syntax.</li>
         <li><strong>Arabic/Korean:</strong> Native-tier translation and cultural logic.</li>
+        <li><strong>Video:</strong> Activates the High-Performance Video Synthesis mode.</li>
       </ul>
     </section>
 
@@ -230,7 +255,11 @@
       </details>
       <details>
         <summary>What is the hardware spec?</summary>
-        <p>SteveAI runs on a custom 16GB RAM environment optimized for neural processing and high-speed multi-modal routing.</p>
+        <p>SteveAI runs on a custom 16GB RAM environment optimized for neural processing and high-speed multi-modal routing, managed by <strong>Shawaiz</strong>.</p>
+      </details>
+      <details>
+        <summary>How fast is Vid-gen?</summary>
+        <p>Thanks to the 16GB Neural Engine, videos are synthesized in under 30 seconds compared to the industry average of 3-5 minutes.</p>
       </details>
       <details>
         <summary>Can I use SteveAI for coding?</summary>
