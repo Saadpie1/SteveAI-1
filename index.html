@@ -4,163 +4,63 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SteveAI – Ultimate AI Assistant</title>
-
-  <meta name="description" content="SteveAI is the ultimate multi-modal AI orchestrator, designed for precision, efficiency, and scale.">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="/assets/favicon.png">
 
   <style>
-    /* Global Reset & Base Styling */
+    /* Global Reset & Base Styling (Keeping your original CSS) */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #0c0c0c; 
-      color: #e0e0e0; 
-      line-height: 1.6;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      margin: 0; padding: 0; background-color: #0c0c0c; color: #e0e0e0; line-height: 1.6;
+      display: flex; flex-direction: column; min-height: 100vh;
     }
-    
     header {
-      background: #1a1a1a;
-      color: #fff;
-      padding: 1rem 2rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #00ffcc;
+      background: #1a1a1a; color: #fff; padding: 1rem 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ffcc;
     }
-    .logo-link {
-        text-decoration: none; 
-        color: inherit;
-        display: flex;
-        align-items: center;
-    }
-    .logo {
-        height: 30px; 
-        margin-right: 10px;
-        border-radius: 4px; 
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.8rem;
-      color: #00ffcc;
-    }
+    .logo-link { text-decoration: none; color: inherit; display: flex; align-items: center; }
+    .logo { height: 30px; margin-right: 10px; border-radius: 4px; }
+    header h1 { margin: 0; font-size: 1.8rem; color: #00ffcc; }
+    
     nav a {
-      color: #e0e0e0;
-      text-decoration: none;
-      margin-left: 1rem;
-      padding: 0.5rem 0.8rem;
-      border-radius: 4px;
-      transition: 0.2s;
-      font-size: 0.9rem;
+      color: #e0e0e0; text-decoration: none; margin-left: 1.2rem; padding: 0.5rem 0.8rem;
+      border-radius: 4px; transition: 0.2s; font-size: 0.9rem;
     }
-    nav a:hover, nav a.active {
-      background-color: #2c2c2c;
-      color: #00ffcc;
-    }
+    nav a:hover, nav a.active { background-color: #2c2c2c; color: #00ffcc; }
+    /* Video Tab Glow for Shawaiz */
+    .vid-tab { border: 1px solid #ff00ff; color: #ff00ff !important; }
 
-    main {
-      flex-grow: 1;
-      max-width: 1000px;
-      width: 90%;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    section {
-      background: #1a1a1a;
-      padding: 2rem;
-      border-radius: 12px;
-      margin-bottom: 2rem;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-    }
-    section h2 {
-      color: #00ffcc;
-      border-bottom: 1px solid #333;
-      padding-bottom: 0.5rem;
-      margin-top: 0;
-      font-size: 1.5rem;
-    }
-
-    /* SHAWAIZ VIDEO ENGINE STYLING */
-    .video-engine-section {
-        border: 2px solid #ff00ff;
-        background: linear-gradient(180deg, #151515, #0a0a0a);
-        padding: 0; /* Removing padding for seamless iframe */
-        overflow: hidden;
-    }
-    .engine-header {
-        padding: 1.5rem;
-        background: rgba(255, 0, 255, 0.05);
-        border-bottom: 1px solid #333;
-    }
-    .shawaiz-badge {
-        background: #ff00ff;
-        color: #fff;
-        font-size: 0.7rem;
-        padding: 2px 10px;
-        border-radius: 20px;
-        font-weight: bold;
-        float: right;
-    }
-
-    /* THE PRECISION MASKING */
-    .iframe-container {
-        width: 100%;
-        height: 700px; /* Adjusting for mobile/desktop */
-        position: relative;
-        overflow: hidden;
-    }
-    .iframe-container iframe {
-        position: absolute;
-        top: -180px; /* Clipping Hugging Face Header */
-        left: 0;
-        width: 100%;
-        height: 1100px;
-        border: none;
-    }
-
-    /* EXISTING STYLES MAINTAINED */
+    main { flex-grow: 1; max-width: 1000px; width: 90%; margin: 2rem auto; padding: 0 1rem; }
+    section { background: #1a1a1a; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); }
+    section h2 { color: #00ffcc; border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-top: 0; font-size: 1.5rem; }
+    
     .update-banner {
       background: linear-gradient(135deg, #1a0b2e, #2d1b4e);
-      border: 3px solid #00ffcc;
-      box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
-      position: relative;
-      overflow: hidden;
+      border: 3px solid #00ffcc; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+      position: relative; overflow: hidden;
     }
     .update-banner::after {
-        content: "VIP CONTRIBUTOR";
-        position: absolute;
-        top: 10px; right: -30px;
-        background: #ff00ff; color: white;
-        padding: 5px 40px; transform: rotate(45deg);
+        content: "VIP CONTRIBUTOR"; position: absolute; top: 10px; right: -30px;
+        background: #ff00ff; color: white; padding: 5px 40px; transform: rotate(45deg);
         font-size: 0.7rem; font-weight: bold;
     }
-    
     .about-steveai { border-left: 5px solid #ff00ff; background: #151515; }
-    .about-steveai ul {
-        list-style: none; padding-left: 0;
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
+    .about-steveai ul, .model-list ul {
+        list-style: none; padding-left: 0; display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
     }
-    .about-steveai ul li {
-        background: #2c2c2c; padding: 0.5rem; border-radius: 4px; border-left: 2px solid #ff00ff;
+    .about-steveai ul li, .model-list ul li {
+        background: #2c2c2c; padding: 0.5rem; border-radius: 4px; border-left: 3px solid #00ffcc;
     }
+    .highlight { border-left-color: #ff00ff !important; font-weight: bold; }
 
-    footer {
-      background: #1a1a1a; color: #bbb; text-align: center;
-      padding: 2rem 1rem; border-top: 1px solid #2c2c2c;
-    }
+    footer { background: #1a1a1a; color: #bbb; text-align: center; padding: 2rem 1rem; border-top: 1px solid #2c2c2c; }
     footer a { color: #00ffcc; font-weight: bold; }
 
     @media (max-width: 768px) {
         header { flex-direction: column; align-items: flex-start; }
         nav { overflow-x: auto; white-space: nowrap; width: 100%; margin-top: 10px; }
-        .iframe-container { height: 750px; }
-        .iframe-container iframe { top: -160px; }
+        nav a { margin-left: 0; margin-right: 0.5rem; }
     }
   </style>
 </head>
@@ -175,66 +75,77 @@
       <a href="/" class="active">Home</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html">Image</a>
-      <a href="/video.html" style="border: 1px solid #ff00ff;">Video</a> <a href="/docs.html">Docs</a>
+      <a href="/vid-gen" class="vid-tab">Video</a> <a href="/docs.html">Docs</a>
       <a href="/about.html">About</a>
     </nav>
   </header>
 
   <main>
     <section class="update-banner">
-      <h2 class="emoji-heading">👑 Infrastructure Chief: Shawaiz Ali Yasin 🚀</h2>
+      <h2 class="emoji-heading">👑 The Visionary Arrives: Shawaiz Ali Yasin 🚀</h2>
       <p>
-        SteveAI is now powered by the elite hardware resources of <strong>Shawaiz Ali Yasin</strong>. By integrating his <strong>16GB RAM Neural Engine</strong>, we have unlocked the next chapter of AI orchestration.
+        We are profoundly honored to announce that <strong>Shawaiz Ali Yasin</strong> has officially ascended to the role of <strong>Owner & Infrastructure Chief</strong>. 🤝 
       </p>
-      <p style="font-style: italic; border-left: 2px solid #00ffcc; padding-left: 10px; margin-top: 15px;">
-        "Shawaiz is the architect of our scale. This system wouldn't exist without his visionary support." — Saadpie
+      <p>
+        By integrating his elite <strong>16GB RAM Neural Engine</strong>, Shawaiz has powered the upcoming <strong>SteveAI-Vid-gen</strong>, turning a dream into reality.
       </p>
-    </section>
-
-    <section id="video-gen" class="video-engine-section">
-        <div class="engine-header">
-            <span class="shawaiz-badge">CORE BY SHAWAIZ</span>
-            <h2 style="border:none; margin:0;">🎥 SteveAI-Vid-Gen (14B Lightning)</h2>
-            <p style="font-size:0.8rem; color:#888;">Cinematic AI Rendering via Shawaiz's Optimized Pipeline</p>
-        </div>
-        <div class="iframe-container">
-            <iframe 
-                src="https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-            </iframe>
-        </div>
     </section>
 
     <section class="about-steveai">
         <h2 class="emoji-heading">🏛️ Executive Leadership</h2>
-        <p>
-            Architected by <strong>Saadpie</strong> and powered by the strategic infrastructure of 
-            <a href="https://www.instagram.com/shawaiz_ali___16" target="_blank" style="color: #00ffcc; font-weight: bold;">Shawaiz Ali Yasin</a>.
-        </p>
+        <p>Architected by <strong>Saadpie</strong> & <strong>Ahmed</strong>, powered by <strong>Shawaiz Ali Yasin</strong>.</p>
         
-        <h3>✨ Shawaiz-Enabled Features</h3>
+        <h3>⚙️ Global Operating Modes</h3>
         <ul>
-            <li><span style="color: #ff00ff;">Wan 2.2 Vid-Gen</span></li>
-            <li><span style="color: #ff00ff;">16GB Neural Processing</span></li>
-            <li><span style="color: #ff00ff;">Lightning Rendering</span></li>
-            <li><span style="color: #ff00ff;">Zero-Queue Orchestration</span></li>
+            <li><span style="color: #00ffcc;">Chat / Reasoning</span></li>
+            <li><span style="color: #00ffcc;">Coding / Math</span></li>
+            <li><span style="color: #00ffcc;">Arabic / Korean</span></li>
+        </ul>
+
+        <h3>✨ Exclusive Features</h3>
+        <ul>
+            <li class="highlight">Vid-Gen (Alpha)</li>
+            <li>Context Memory</li>
+            <li>Voice Synthesis</li>
+        </ul>
+    </section>
+
+    <section class="model-list">
+        <h2>🗣️ Conversational (10+ Specialized)</h2>
+        <ul>
+            <li>GPT-5-Nano</li>
+            <li class="highlight">Gemini-2.5-Flash</li>
+            <li>DeepSeek-R1</li>
+            <li>Qwen-3</li>
+            <li>GLM-4.5</li>
+        </ul>
+    </section>
+
+    <section class="model-list">
+        <h2>🎨 Visual Arts (23+ Models)</h2>
+        <ul>
+            <li>Imagen 4 (Original)</li>
+            <li class="highlight">RealVis XL</li>
+            <li>Juggernaut X</li>
+            <li>Playground V2.5</li>
+            <li class="highlight">NSFW Gen</li>
         </ul>
     </section>
 
     <section>
-      <h2 class="emoji-heading">💡 Your AI Superpowers</h2>
+      <h2>💡 AI Superpowers</h2>
       <ul>
-        <li>💬 <strong>Advanced AI Chat</strong> with lightning-fast logical reasoning ⚡</li>
-        <li>🖼️ <strong>Image Generation</strong> via Flux & RealVis XL 🎨</li>
-        <li>🎥 <strong>Video Generation</strong> powered by Shawaiz's Infrastructure 🎬</li>
+        <li>💬 <strong>AI Chat</strong> with logical reasoning ⚡</li>
+        <li>🖼️ <strong>Image Generation</strong> with creativity 🎨</li>
+        <li>🧠 <strong>Context Awareness</strong> by Shawaiz's Infra 🧐</li>
       </ul>
     </section>
   </main>
 
   <footer>
-    <p>© 2025 <strong>SteveAI</strong> • Project by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a></p>
-    <p style="margin-top: 10px; color: #00ffcc; font-weight: bold;">
-      Empowered & Maintained by <a href="https://www.instagram.com/shawaiz_ali___16" target="_blank">Shawaiz Ali Yasin</a>
+    <p>© 2025 <strong>SteveAI</strong> • Orchestrated by <a href="#">Saadpie</a> & <a href="#">Ahmed</a></p>
+    <p style="margin-top: 10px; color: #00ffcc;">
+      Empowered by <a href="https://www.instagram.com/shawaiz_ali___16" target="_blank">Shawaiz Ali Yasin</a>
     </p>
   </footer>
 </body>
