@@ -3,153 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteveAI - Ultimate Video Studio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>SteveAI - Powered by Shawaiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- SteveAI Signature CSS --- */
         :root {
-            --accent: #00ff88;
-            --bg: #050505;
-            --glass: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
+            --shawaiz-glow: #00ff88;
+            --steve-dark: #080808;
+            --glass: rgba(255, 255, 255, 0.02);
+            --border: rgba(255, 255, 255, 0.08);
         }
 
         body {
-            background-color: var(--bg);
-            color: white;
+            background-color: var(--steve-dark);
+            color: #fff;
             font-family: 'Inter', sans-serif;
             margin: 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            justify-content: center;
+            padding: 20px 10px;
         }
 
-        .studio-card {
+        .main-orchestrator {
             width: 100%;
-            max-width: 480px;
+            max-width: 450px;
             background: var(--glass);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(30px);
             border: 1px solid var(--border);
-            border-radius: 30px;
+            border-radius: 35px;
             overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-            position: relative;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
         }
 
-        /* --- Custom Header --- */
-        .header {
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
+        /* --- Shawaiz Infrastructure Branding --- */
+        .chief-header {
+            padding: 25px 20px;
+            background: linear-gradient(180deg, rgba(0,255,136,0.05) 0%, transparent 100%);
             border-bottom: 1px solid var(--border);
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 1.2rem;
-            margin: 0;
-            letter-spacing: 1px;
+        .chief-header h2 {
+            font-size: 0.8rem;
+            color: var(--shawaiz-glow);
             text-transform: uppercase;
-            color: var(--accent);
+            letter-spacing: 3px;
+            margin: 0;
+            font-weight: 700;
         }
 
-        .header p {
-            font-size: 0.7rem;
-            margin: 5px 0 0;
-            opacity: 0.6;
+        .chief-header h1 {
+            font-size: 1.5rem;
+            margin: 8px 0;
+            background: linear-gradient(to right, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* --- The Masking Logic (Precision Clipping) --- */
-        .engine-container {
+        .infra-credit {
+            font-size: 0.65rem;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .infra-credit span {
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        /* --- Precision Masking Area --- */
+        .engine-viewport {
             width: 100%;
-            height: 720px; /* Adjusting based on Screenshot 1000029418.jpg */
-            overflow: hidden;
+            height: 680px; /* Screenshots ke mutabiq bottom footer hide karne ke liye */
             position: relative;
+            overflow: hidden;
             background: #000;
         }
 
-        /* Focusing exactly on the prompt and video output */
-        .engine-container iframe {
+        .engine-viewport iframe {
             position: absolute;
-            top: -240px; /* Moves HF title out of view */
-            left: -5px;
-            width: calc(100% + 10px);
+            top: -245px; /* Clean look: Sirf controls dikhenge */
+            left: 0;
+            width: 100%;
             height: 1200px;
             border: none;
+            filter: contrast(1.05) brightness(0.95);
         }
 
-        /* --- UI Overlay for Professionalism --- */
-        .footer-credit {
-            padding: 15px;
-            font-size: 0.65rem;
-            text-align: center;
-            background: rgba(0,0,0,0.3);
+        /* --- System Status Bar --- */
+        .system-bar {
+            padding: 12px 20px;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-top: 1px solid var(--border);
-            color: #666;
-            letter-spacing: 0.5px;
         }
 
-        .live-tag {
-            position: absolute;
-            top: 22px;
-            right: 20px;
-            background: rgba(0, 255, 136, 0.15);
-            color: var(--accent);
-            font-size: 0.6rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            border: 1px solid rgba(0, 255, 136, 0.3);
+        .status-node {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            font-size: 0.6rem;
+            color: #888;
         }
 
-        .dot {
-            width: 5px;
-            height: 5px;
-            background: var(--accent);
+        .pulse-core {
+            width: 6px;
+            height: 6px;
+            background: var(--shawaiz-glow);
             border-radius: 50%;
-            box-shadow: 0 0 5px var(--accent);
-            animation: blink 1.5s infinite;
+            box-shadow: 0 0 10px var(--shawaiz-glow);
+            animation: core-pulse 2s infinite;
         }
 
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes core-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
-        /* Mobile Viewport Fix */
-        @media (max-width: 400px) {
-            .engine-container { height: 780px; }
-            .engine-container iframe { top: -210px; }
+        .version-tag {
+            font-size: 0.6rem;
+            color: #444;
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
 
-    <div class="studio-card">
-        <div class="live-tag"><div class="dot"></div> LIGHTNING 14B</div>
-        
-        <div class="header">
-            <h1>SteveAI Vid-Gen</h1>
-            <p>Orchestrated by Saadpie &bull; Multi-Modal AI</p>
+    <div class="main-orchestrator">
+        <div class="chief-header">
+            <h2>System Orchestrator</h2>
+            <h1>STEVEAI VID-GEN</h1>
+            <div class="infra-credit">
+                Infrastructure Chief: <span>SHAWAIZ</span> &bull; Architect: <span>SAADPIE</span>
+            </div>
         </div>
 
-        <div class="engine-container">
+        <div class="engine-viewport">
             <iframe 
                 src="https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture">
             </iframe>
         </div>
 
-        <div class="footer-credit">
-            STEVEAI ULTIMATE ASSISTANT SYSTEM v2.5
+        <div class="system-bar">
+            <div class="status-node">
+                <div class="pulse-core"></div>
+                SHAWAIZ NEURAL ENGINE: OPTIMIZED
+            </div>
+            <div class="version-tag">STV-2.5-PRO</div>
         </div>
     </div>
-
-    <script>
-        console.log("SteveAI: Wan 2.2 Cinematic Engine Loaded.");
-        // Netlify Deployment Ready Logic
-    </script>
 
 </body>
 </html>
