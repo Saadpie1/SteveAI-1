@@ -3,53 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="AI Image Generator - SteveAI" />
-  <meta name="author" content="SteveAI by Saadpie" />
+  <meta name="description" content="SteveAI Image Generator - Powered by Shawaiz Ali Yasin's 16GB RAM Infrastructure" />
+  <meta name="author" content="Saadpie, Ahmed & Shawaiz Ali Yasin" />
   <meta name="theme-color" content="#111" />
-  <title>SteveAI – Image Generator</title>
+  <title>SteveAI – Image Generator | Powered by Shawaiz Ali Yasin</title>
   
   <link rel="icon" href="/assets/favicon.png" />
 
   <style>
-    /* 1. Global Reset & Base Styling (Consistent Dark Theme) */
+    /* 1. Global Reset & Base Styling */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0c0c0c; /* Deep Dark Background */
-      color: #e0e0e0; /* Light Gray Text */
+      background: #0c0c0c; 
+      color: #e0e0e0; 
       margin: 0;
       padding: 0;
       text-align: center;
       min-height: 100vh;
-      display: flex; /* Added for footer consistency */
-      flex-direction: column; /* Added for footer consistency */
+      display: flex;
+      flex-direction: column;
     }
 
-    /* 2. Header Styling (Consistent Accent) */
+    /* 2. Header Styling */
     header {
       background: #1a1a1a;
       padding: 1rem 2rem;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       display: flex;
-      justify-content: space-between; /* Changed to space-between for logo */
-      align-items: center; /* Added for logo alignment */
-      gap: 1.5em; /* Maintained gap for nav links */
-      font-weight: 600;
-      border-bottom: 2px solid #00ffcc; /* Matching accent line */
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5em;
+      border-bottom: 2px solid #00ffcc;
     }
-    /* ADDED Logo Link and Logo styles from index.html */
     .logo-link { 
         text-decoration: none; 
         color: inherit;
         display: flex;
         align-items: center;
-        margin-right: auto; /* Push nav to the side */
+        margin-right: auto;
     }
     .logo {
         height: 30px; 
         margin-right: 10px;
         border-radius: 4px; 
     }
-    .logo-link h1 { /* Style for the title inside the header */
+    .logo-link h1 {
         margin: 0;
         font-size: 1.8rem;
         color: #00ffcc; 
@@ -63,24 +61,29 @@
     }
     header a:hover, header a.active {
       background-color: #2c2c2c;
-      color: #00ffcc; /* Accent color */
+      color: #00ffcc;
     }
 
     main {
-      flex-grow: 1; /* Added for footer consistency */
+      flex-grow: 1;
       max-width: 1200px;
       width: 90%;
       margin: 2rem auto;
       padding: 0 1rem;
     }
     main h1 {
-        color: #00ffcc; /* Accent color for title */
-        font-size: 2rem;
+        color: #00ffcc;
+        font-size: 2.2rem;
         margin-bottom: 0.5rem;
     }
-    main p {
-        color: #aaa;
+    .infra-tag {
+        color: #ff00ff;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
         margin-bottom: 2rem;
+        display: block;
     }
 
     /* 3. Controls Styling */
@@ -89,169 +92,99 @@
         flex-direction: column;
         align-items: center;
         gap: 1em;
-        padding: 1.5em;
-        background: #1a1a1a;
+        padding: 2em;
+        background: #151515;
         border-radius: 12px;
+        border: 1px solid #333;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
     }
     
     input, button, select {
       border: none;
-      padding: 0.8em 1.2em;
-      border-radius: 8px; /* Slightly larger radius */
+      padding: 1em;
+      border-radius: 8px;
       font-size: 1em;
       transition: all 0.2s;
     }
     input {
       width: 100%;
-      background: #2c2c2c;
+      background: #222;
       color: #fff;
       border: 1px solid #3a3a3a;
       box-sizing: border-box;
     }
+    input:focus {
+        border-color: #00ffcc;
+        outline: none;
+    }
     select {
         width: 100%;
         max-width: 300px;
-        background: #2c2c2c;
+        background: #222;
         color: #fff;
-        text-align: left;
-        appearance: none;
         border: 1px solid #3a3a3a;
-        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300ffcc%22%20d%3D%22M287%2C114.7L154.7%2C247.1c-2.4%2C2.4-5.8%2C3.7-9.3%2C3.7s-6.9-1.3-9.3-3.7L5.4%2C114.7c-4.9-4.9-4.9-12.8%2C0-17.7s12.8-4.9%2C17.7%2C0L145.4%2C208.7c2.4%2C2.4%2C6.2%2C2.4%2C8.6%2C0l122.4-111.7c4.9-4.9%2C12.8-4.9%2C17.7%2C0S291.9%2C109.8%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E");
-        background-repeat: no-repeat;
-        background-position: right 0.7em center;
-        background-size: 0.65em auto;
-        padding-right: 2.5em; /* Make space for the arrow */
+        cursor: pointer;
     }
     button {
-      background: #00ffcc; /* Main accent color */
+      background: #00ffcc;
       color: #0c0c0c;
       cursor: pointer;
-      font-weight: 700;
+      font-weight: 800;
       width: 100%;
       max-width: 300px;
-      box-shadow: 0 4px 10px rgba(0, 255, 204, 0.4);
+      box-shadow: 0 4px 10px rgba(0, 255, 204, 0.3);
     }
     button:hover {
-      background: #00e6b8;
-      box-shadow: 0 6px 15px rgba(0, 255, 204, 0.6);
+      background: #ff00ff;
+      color: #fff;
       transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(255, 0, 255, 0.4);
     }
     
     /* 4. Result Grid Styling */
     #result {
         margin-top: 3em;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
         gap: 2em;
         justify-items: center;
     }
     #result div {
         background: #1a1a1a;
-        padding: 1.5em;
+        padding: 1rem;
         border-radius: 12px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 0 5px rgba(0, 255, 204, 0.1);
+        border: 1px solid #333;
         width: 100%;
-        box-sizing: border-box;
-        max-width: 400px;
+        max-width: 450px;
+        transition: transform 0.3s ease;
+    }
+    #result div:hover {
+        transform: scale(1.02);
+        border-color: #00ffcc;
     }
     #result img {
       width: 100%;
-      height: auto;
       border-radius: 8px;
-      margin-bottom: 0.8em;
-      border: 1px solid #3a3a3a;
-    }
-    #result p a {
-        color: #00ffcc; /* Use the main accent color for links */
-        font-weight: 500;
+      margin-bottom: 1rem;
     }
     
-    /* 5. Footer Styling (Consistent with other pages) */
+    /* 5. Footer Styling */
     footer {
       background: #1a1a1a;
       color: #777;
       text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
+      padding: 2rem;
       border-top: 1px solid #2c2c2c;
-      width: 100%;
-      box-sizing: border-box;
-      margin-top: auto; /* Push footer to the bottom */
+      margin-top: auto;
     }
-    footer a {
-      color: #00ffcc;
-      font-weight: bold;
-    }
+    footer a { color: #00ffcc; font-weight: bold; }
 
-    /* 6. Media Queries for Responsiveness */
-    @media (min-width: 800px) {
-        .controls {
-            flex-direction: row;
-            justify-content: center;
-            gap: 1.5em;
-        }
-        input {
-            width: 40%; 
-            max-width: 500px;
-        }
-        select, button {
-            width: 150px; /* Fixed width for better alignment */
-            max-width: none;
-        }
-        #result {
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        }
-    }
-
-    /* --- Responsive Design for Mobile and Smaller Screens (From index.html fix) --- */
+    /* Mobile Fixes */
     @media (max-width: 768px) {
-        header {
-            flex-direction: column; /* Stack logo/title on top of nav */
-            padding: 0.5rem 0.5rem; /* Reduced overall padding for compactness */
-            align-items: flex-start; /* Align everything to the left */
-            gap: 0;
-        }
-        .logo-link {
-            margin-bottom: 0.5rem; /* Space between logo/title and nav */
-            width: 100%; /* Ensure logo/title takes full width for alignment */
-            margin-right: 0;
-        }
-        .logo-link h1 {
-            font-size: 1.5rem; /* Smaller title font */
-        }
-        .logo {
-             height: 24px; /* Smaller logo */
-        }
-        nav {
-            display: flex;
-            flex-wrap: nowrap; /* FORCES horizontal layout - FIXES wrapping issue */
-            overflow-x: auto; /* Enables HORIZONTAL SCROLLING - FIXES hidden links */
-            width: 100%; /* Defines the scrollable area */
-            justify-content: flex-start; 
-            padding: 0 0.5rem; /* Small horizontal padding */
-            margin-top: 0;
-            padding-bottom: 0.5rem; /* Small bottom padding for scroll visibility */
-        }
-        nav a {
-            flex-shrink: 0; /* Ensures links don't shrink */
-            margin: 0 0.75rem 0 0; /* Tightened link spacing */
-            padding: 0.3rem 0.6rem;
-            font-size: 0.85rem;
-        }
-        main {
-            width: 95%;
-            padding: 0 0.5rem;
-            margin: 1rem auto;
-        }
-        section {
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        footer {
-            padding: 1rem 0.5rem;
-            font-size: 0.8rem;
-        }
+        header { flex-direction: column; align-items: flex-start; }
+        nav { display: flex; overflow-x: auto; width: 100%; padding-bottom: 0.5rem; }
+        nav a { flex-shrink: 0; }
+        .controls { padding: 1rem; }
     }
   </style>
 </head>
@@ -259,7 +192,7 @@
   <header>
     <a href="/" class="logo-link">
         <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo" loading="lazy"/> 
-        <h1>SteveAI <span style="font-size: 0.8em; color: #ff00ff;">(Ultimate AI Assistant)</span></h1>
+        <h1>SteveAI <span style="font-size: 0.6em; color: #ff00ff;">IMAGE STUDIO</span></h1>
     </a>
     <nav>
       <a href="/">Home</a>
@@ -271,30 +204,34 @@
   </header>
 
   <main>
-    <h1>🖼️ SteveAI Image Generator</h1>
-    <p>Enter a prompt, select your AI model, and choose how many images to generate.</p>
+    <h1>🎨 Ultra-HD Generation</h1>
+    <span class="infra-tag">⚡ Powered by Shawaiz Ali Yasin (16GB RAM Neural Engine)</span>
     
     <div class="controls">
-        <input type="text" id="prompt" placeholder="e.g. A cute baby sea otter, digital art" />
-        <select id="modelSelect"></select>
-        <select id="numImagesSelect">
-            <option value="1">1 Image</option>
-            <option value="2">2 Images</option>
-            <option value="3">3 Images</option>
-            <option value="4">4 Images</option>
-        </select>
-        <button id="generateBtn">Generate</button>
+        <input type="text" id="prompt" placeholder="Describe your masterpiece (e.g., A futuristic cyberpunk city in 8k)..." />
+        
+        <div style="display: flex; gap: 10px; width: 100%; justify-content: center; flex-wrap: wrap;">
+            <select id="modelSelect"></select>
+            <select id="numImagesSelect">
+                <option value="1">1 Image</option>
+                <option value="2">2 Images</option>
+                <option value="3">3 Images</option>
+                <option value="4">4 Images (Max Power)</option>
+            </select>
+        </div>
+        
+        <button id="generateBtn">GENERATE MASTERPIECE</button>
     </div>
     
     <div id="result"></div>
   </main>
 
   <footer>
-    <p>© 2025 **SteveAI** • Created with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> and <a href="https://www.instagram.com/ahmxd15._?igsh=MXAxY2dsa2lzNG9yaw==" target="_blank">Ahmed</a> • Contact: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
+    <p>© 2025 <strong>SteveAI</strong> • Built by <strong>Saadpie & Ahmed</strong> • Powered by <strong>Shawaiz Ali Yasin</strong></p>
+    <p><a href="mailto:saadabdulrehman2010@gmail.com">Contact Support</a></p>
   </footer>
 
   <script type="module">
-    // NOTE: This script assumes the presence of 'image.js' with the required exports.
     import { generateImage, IMAGE_MODELS } from './image.js'; 
     
     const generateBtn = document.getElementById("generateBtn");
@@ -303,92 +240,40 @@
     const modelSelect = document.getElementById("modelSelect");
     const numImagesSelect = document.getElementById("numImagesSelect");
 
-    // Helper map to translate general provider IDs to display names
     const PROVIDER_NAMES = {
-        'provider-4': '🌟 Provider 4 (Official/Proprietary)',
-        'provider-5': '🌟 Provider 5 (Official/Proprietary)',
-        // Provider 2 models will be grouped by style (e.g., Photorealism, Anime)
-        'provider-2': '🛠️ Provider 2 Models' 
+        'provider-4': '💎 Premium (Google/Proprietary)',
+        'provider-5': '🔥 Fast-Track (Flash Models)',
+        'provider-2': '🎨 Community Creative Hub' 
     };
 
-    /**
-     * Determines the specific group name for a Provider 2 community model based on its display name.
-     * This provides finer-grained grouping for community models.
-     */
     function getProvider2GroupName(modelName) {
         const lowerName = modelName.toLowerCase();
-        
-        if (lowerName.includes('realism') || lowerName.includes('photoreal')) {
-            return 'Photorealism / Hyper-Realism';
-        }
-        if (lowerName.includes('animagine') || lowerName.includes('kivotos') || lowerName.includes('illustration')) {
-            return 'Anime / Illustration';
-        }
-        if (lowerName.includes('babes') || lowerName.includes('nsfw')) {
-            return 'Specialized / NSFW';
-        }
-        // Default group for remaining P2 models (Dreamshaper, Playground, Flash, Opencole, etc.)
-        return 'Versatile / Speed / Base';
+        if (lowerName.includes('realism') || lowerName.includes('photoreal')) return 'Hyper-Realism';
+        if (lowerName.includes('animagine') || lowerName.includes('anime')) return 'Anime & Illustration';
+        if (lowerName.includes('nsfw')) return 'Specialized (Unfiltered)';
+        return 'Standard Artistic';
     }
 
-
     function populateModelSelect() {
-        if (typeof IMAGE_MODELS === 'undefined' || !Array.isArray(IMAGE_MODELS)) {
-            console.error("IMAGE_MODELS is not correctly defined in image.js");
-            return;
-        }
-
-        // 1. Group models by specific display group (Provider 4/5 groups are provider ID, Provider 2 uses style groups)
         const groupedModels = {};
-
         IMAGE_MODELS.forEach((model) => {
             const providerId = model.id.split('/')[0];
-
-            let groupKey;
-            if (providerId === 'provider-2') {
-                // Use a finer-grained style group for Provider 2
-                groupKey = getProvider2GroupName(model.name);
-            } else {
-                // Use the main provider ID for other models
-                groupKey = providerId;
-            }
-
-            if (!groupedModels[groupKey]) {
-                groupedModels[groupKey] = [];
-            }
+            let groupKey = providerId === 'provider-2' ? getProvider2GroupName(model.name) : providerId;
+            if (!groupedModels[groupKey]) groupedModels[groupKey] = [];
             groupedModels[groupKey].push(model);
         });
 
-        // 2. Iterate through groups and create <optgroup> elements
-        let isFirst = true;
-        // Sort keys to maintain a logical order: P4, P5, then P2 style groups
-        const sortedKeys = Object.keys(groupedModels).sort((a, b) => {
-            if (a.startsWith('provider-4')) return -1;
-            if (b.startsWith('provider-4')) return 1;
-            if (a.startsWith('provider-5')) return -1;
-            if (b.startsWith('provider-5')) return 1;
-            return 0; // Maintain order for P2 sub-groups
-        });
-        
-        for (const groupKey of sortedKeys) {
+        Object.keys(groupedModels).forEach(groupKey => {
             const optgroup = document.createElement('optgroup');
-            // Use the groupKey directly for P2 style groups, and the map for P4/P5
             optgroup.label = PROVIDER_NAMES[groupKey] || groupKey; 
-            
-            groupedModels[groupKey].forEach((model) => {
+            groupedModels[groupKey].forEach(model => {
                 const option = document.createElement('option');
                 option.value = model.id;
                 option.textContent = model.name;
-
-                // Set a sensible default (e.g., the first model in the list)
-                if (isFirst) { 
-                    option.selected = true; 
-                    isFirst = false;
-                }
                 optgroup.appendChild(option);
             });
             modelSelect.appendChild(optgroup);
-        }
+        });
     }
 
     populateModelSelect();
@@ -398,37 +283,30 @@
       const selectedModel = modelSelect.value; 
       const numImages = parseInt(numImagesSelect.value, 10); 
 
-      if (!prompt) return alert("Please enter a prompt!");
+      if (!prompt) return alert("Please enter a creative prompt!");
 
-      // Update button state and status
       generateBtn.disabled = true;
-      const selectedModelName = modelSelect.options[modelSelect.selectedIndex].textContent;
-      resultDiv.innerHTML = `<p style="color:#00ffcc;">Generating **${numImages}** image(s) with **${selectedModelName}**. Please wait...</p>`;
+      generateBtn.textContent = "ORCHESTRATING...";
+      resultDiv.innerHTML = `<p style="color:#00ffcc;">Utilizing 16GB RAM Cluster for **${numImages}** generations...</p>`;
 
       try {
         const imageUrls = await generateImage(prompt, selectedModel, numImages); 
-        
-        if (!imageUrls || imageUrls.length === 0) {
-          resultDiv.innerHTML = `<p style="color:red;">Error: No images returned. Check the API response and quotas.</p>`;
-          return;
-        }
-
         resultDiv.innerHTML = ''; 
 
         imageUrls.forEach((url, index) => {
-            const imageContainer = document.createElement('div');
-            imageContainer.innerHTML = `
-                <img src="${url}" alt="Generated Image ${index + 1}">
-                <p><a href="${url}" target="_blank" style="color:#00ffcc;">Open full size (Image ${index + 1})</a></p>
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <img src="${url}" alt="Generated Image">
+                <p><a href="${url}" download="SteveAI_${index}.png" target="_blank">SAVE HIGH-RES</a></p>
             `;
             resultDiv.appendChild(imageContainer);
         });
 
       } catch (err) {
-        console.error(err);
-        resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}. Ensure image.js is correctly configured with a secure proxy/endpoint and API key.</p>`;
+        resultDiv.innerHTML = `<p style="color:red;">Engine Error: ${err.message}</p>`;
       } finally {
         generateBtn.disabled = false;
+        generateBtn.textContent = "GENERATE MASTERPIECE";
       }
     });
   </script>
