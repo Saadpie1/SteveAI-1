@@ -36,7 +36,6 @@
             box-shadow: 0 40px 100px rgba(0,0,0,0.8);
         }
 
-        /* --- Shawaiz Infrastructure Branding --- */
         .chief-header {
             padding: 25px 20px;
             background: linear-gradient(180deg, rgba(0,255,136,0.05) 0%, transparent 100%);
@@ -67,40 +66,33 @@
             margin-top: 5px;
         }
 
-        .infra-credit span {
-            color: #aaa;
-            font-weight: 600;
-        }
+        .infra-credit span { color: #aaa; font-weight: 600; }
 
-        /* --- UPDATED: Precision Masking for Error Visibility --- */
         .engine-viewport {
             width: 100%;
-            height: 720px; /* Thori height barha di hai error space ke liye */
+            height: 720px;
             position: relative;
             overflow: hidden;
-            background: #f9f9f9; /* Match light theme of iframe */
+            background: #f9f9f9; 
         }
 
         .engine-viewport iframe {
             position: absolute;
-            /* Pehle -245px tha, ab -180px kiya hai taake Top Warning Bar (Quota/Errors) nazar aaye */
             top: -180px; 
             left: 0;
             width: 100%;
             height: 1250px;
             border: none;
-            filter: contrast(1.02) brightness(1);
+            transition: opacity 0.3s ease;
         }
 
-        /* --- System Status Bar --- */
         .system-bar {
             padding: 12px 20px;
-            background: rgba(0,0,0,0.8); /* Darker for better contrast with light iframe above */
+            background: rgba(0,0,0,0.9);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid var(--border);
-            position: relative;
             z-index: 20;
         }
 
@@ -112,9 +104,27 @@
             color: #888;
         }
 
+        /* --- New Mirror Toggle Button --- */
+        .mirror-btn {
+            background: transparent;
+            border: 1px solid var(--shawaiz-glow);
+            color: var(--shawaiz-glow);
+            font-size: 0.55rem;
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+
+        .mirror-btn:hover {
+            background: var(--shawaiz-glow);
+            color: #000;
+        }
+
         .pulse-core {
-            width: 6px;
-            height: 6px;
+            width: 6px; height: 6px;
             background: var(--shawaiz-glow);
             border-radius: 50%;
             box-shadow: 0 0 10px var(--shawaiz-glow);
@@ -125,12 +135,6 @@
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.5; }
             100% { transform: scale(1); opacity: 1; }
-        }
-
-        .version-tag {
-            font-size: 0.6rem;
-            color: #444;
-            font-weight: 700;
         }
     </style>
 </head>
@@ -147,6 +151,7 @@
 
         <div class="engine-viewport">
             <iframe 
+                id="engineFrame"
                 src="https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light" 
                 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture">
             </iframe>
@@ -155,11 +160,32 @@
         <div class="system-bar">
             <div class="status-node">
                 <div class="pulse-core"></div>
-                SHAWAIZ NEURAL ENGINE: ACTIVE
+                <span id="statusLabel">MIRROR 1: ACTIVE</span>
             </div>
-            <div class="version-tag">STV-2.5-PRO</div>
+            <button class="mirror-btn" onclick="toggleMirror()">Switch Mirror</button>
         </div>
     </div>
 
+    <script>
+        const urls = [
+            "https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light",
+            "https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti/embed?__theme=light"
+        ];
+        let currentIdx = 0;
+
+        function toggleMirror() {
+            currentIdx = (currentIdx === 0) ? 1 : 0;
+            const frame = document.getElementById('engineFrame');
+            const label = document.getElementById('statusLabel');
+            
+            frame.style.opacity = '0';
+            
+            setTimeout(() => {
+                frame.src = urls[currentIdx];
+                label.innerText = `MIRROR ${currentIdx + 1}: ACTIVE`;
+                frame.style.opacity = '1';
+            }, 300);
+        }
+    </script>
 </body>
 </html>
