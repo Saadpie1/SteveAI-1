@@ -58,11 +58,14 @@
       padding: 0.5rem 0.8rem;
       border-radius: 4px;
       transition: background-color 0.2s, color 0.2s;
+      font-size: 0.9rem;
     }
     header a:hover, header a.active {
       background-color: #2c2c2c;
       color: #00ffcc;
     }
+    /* Video Tab Accent */
+    .vid-tab { border: 1px solid #ff00ff; color: #ff00ff !important; margin-left: 5px; }
 
     main {
       flex-grow: 1;
@@ -92,7 +95,7 @@
         flex-direction: column;
         align-items: center;
         gap: 1em;
-        padding: 2em;
+        padding: 2.5em;
         background: #151515;
         border-radius: 12px;
         border: 1px solid #333;
@@ -113,10 +116,7 @@
       border: 1px solid #3a3a3a;
       box-sizing: border-box;
     }
-    input:focus {
-        border-color: #00ffcc;
-        outline: none;
-    }
+    input:focus { border-color: #00ffcc; outline: none; }
     select {
         width: 100%;
         max-width: 300px;
@@ -149,7 +149,7 @@
         gap: 2em;
         justify-items: center;
     }
-    #result div {
+    .img-container {
         background: #1a1a1a;
         padding: 1rem;
         border-radius: 12px;
@@ -158,15 +158,16 @@
         max-width: 450px;
         transition: transform 0.3s ease;
     }
-    #result div:hover {
+    .img-container:hover {
         transform: scale(1.02);
         border-color: #00ffcc;
     }
-    #result img {
+    .img-container img {
       width: 100%;
       border-radius: 8px;
       margin-bottom: 1rem;
     }
+    .img-container a { color: #00ffcc; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
     
     /* 5. Footer Styling */
     footer {
@@ -184,7 +185,7 @@
         header { flex-direction: column; align-items: flex-start; }
         nav { display: flex; overflow-x: auto; width: 100%; padding-bottom: 0.5rem; }
         nav a { flex-shrink: 0; }
-        .controls { padding: 1rem; }
+        .controls { padding: 1.5rem; }
     }
   </style>
 </head>
@@ -196,10 +197,10 @@
     </a>
     <nav>
       <a href="/">Home</a>
-      <a href="/about.html">About</a>
-      <a href="/docs.html">Docs</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html" class="active">Image</a>
+      <a href="/vid-gen" class="vid-tab">Video</a> <a href="/docs.html">Docs</a>
+      <a href="/about.html">About</a>
     </nav>
   </header>
 
@@ -287,7 +288,7 @@
 
       generateBtn.disabled = true;
       generateBtn.textContent = "ORCHESTRATING...";
-      resultDiv.innerHTML = `<p style="color:#00ffcc;">Utilizing 16GB RAM Cluster for **${numImages}** generations...</p>`;
+      resultDiv.innerHTML = `<p style="color:#00ffcc; width: 100%;">Utilizing 16GB RAM Cluster for **${numImages}** generations...</p>`;
 
       try {
         const imageUrls = await generateImage(prompt, selectedModel, numImages); 
@@ -295,15 +296,16 @@
 
         imageUrls.forEach((url, index) => {
             const container = document.createElement('div');
+            container.className = 'img-container';
             container.innerHTML = `
-                <img src="${url}" alt="Generated Image">
-                <p><a href="${url}" download="SteveAI_${index}.png" target="_blank">SAVE HIGH-RES</a></p>
+                <img src="${url}" alt="Generated Image" onerror="this.src='/assets/placeholder.png'">
+                <p><a href="${url}" download="SteveAI_${index}.png" target="_blank">💾 SAVE HIGH-RES</a></p>
             `;
-            resultDiv.appendChild(imageContainer);
+            resultDiv.appendChild(container);
         });
 
       } catch (err) {
-        resultDiv.innerHTML = `<p style="color:red;">Engine Error: ${err.message}</p>`;
+        resultDiv.innerHTML = `<p style="color:red; width: 100%;">Engine Error: ${err.message}</p>`;
       } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = "GENERATE MASTERPIECE";
