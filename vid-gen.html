@@ -3,167 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteveAI - Video Studio</title>
+    <title>SteveAI - Ultimate Video Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
+        /* --- SteveAI Signature CSS --- */
         :root {
-            --steve-glow: #00ff88;
-            --steve-bg: #0a0a0a;
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #00ff88;
+            --bg: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            background: var(--steve-bg);
+            background-color: var(--bg);
             color: white;
             font-family: 'Inter', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
         }
 
-        /* --- Main Container --- */
-        .steve-studio-card {
-            width: 95%;
-            max-width: 500px;
-            background: rgba(255, 255, 255, 0.03);
+        .studio-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--glass);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
+            border: 1px solid var(--border);
+            border-radius: 30px;
             overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            position: relative;
         }
 
-        /* --- Header Section --- */
-        .studio-header {
+        /* --- Custom Header --- */
+        .header {
             padding: 20px;
             background: rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
         }
 
-        .studio-info h3 {
+        .header h1 {
+            font-size: 1.2rem;
             margin: 0;
-            font-size: 1.1rem;
-            letter-spacing: 0.5px;
-            color: #fff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--accent);
         }
 
-        .studio-info p {
-            margin: 4px 0 0;
-            font-size: 0.75rem;
-            color: #888;
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0, 255, 136, 0.1);
-            padding: 5px 12px;
-            border-radius: 20px;
+        .header p {
             font-size: 0.7rem;
-            color: var(--steve-glow);
-            font-weight: 600;
+            margin: 5px 0 0;
+            opacity: 0.6;
         }
 
-        .pulse {
-            width: 6px;
-            height: 6px;
-            background: var(--steve-glow);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--steve-glow);
-            animation: pulse-glow 2s infinite;
-        }
-
-        /* --- The Iframe Mask (Crucial Part) --- */
-        .viewport-mask {
+        /* --- The Masking Logic (Precision Clipping) --- */
+        .engine-container {
             width: 100%;
-            height: 680px; /* Adjust this to hide HF footer */
-            position: relative;
+            height: 720px; /* Adjusting based on Screenshot 1000029418.jpg */
             overflow: hidden;
+            position: relative;
             background: #000;
         }
 
-        .viewport-mask iframe {
+        /* Focusing exactly on the prompt and video output */
+        .engine-container iframe {
             position: absolute;
-            top: -190px; /* Hides Hugging Face Header */
-            left: -10px;
-            width: calc(100% + 20px);
-            height: 1100px; /* Covers the generation area */
+            top: -240px; /* Moves HF title out of view */
+            left: -5px;
+            width: calc(100% + 10px);
+            height: 1200px;
             border: none;
-            /* Scale for cleaner fit if needed */
-            transform: scale(1.01);
         }
 
-        /* --- Overlay Controls --- */
-        .studio-footer {
+        /* --- UI Overlay for Professionalism --- */
+        .footer-credit {
             padding: 15px;
+            font-size: 0.65rem;
             text-align: center;
-            font-size: 0.7rem;
-            color: #555;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--border);
+            color: #666;
+            letter-spacing: 0.5px;
         }
 
-        @keyframes pulse-glow {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
+        .live-tag {
+            position: absolute;
+            top: 22px;
+            right: 20px;
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent);
+            font-size: 0.6rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        /* Responsive Fix for Mobile */
-        @media (max-width: 480px) {
-            .viewport-mask { height: 720px; }
-            .viewport-mask iframe { top: -160px; }
+        .dot {
+            width: 5px;
+            height: 5px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--accent);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Mobile Viewport Fix */
+        @media (max-width: 400px) {
+            .engine-container { height: 780px; }
+            .engine-container iframe { top: -210px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="steve-studio-card">
-        <div class="studio-header">
-            <div class="studio-info">
-                <h3>Wan 2.2 Orchestrator</h3>
-                <p>Multi-Modal AI Engine v2.1</p>
-            </div>
-            <div class="status-badge">
-                <div class="pulse"></div>
-                ZERO-GPU ACTIVE
-            </div>
+    <div class="studio-card">
+        <div class="live-tag"><div class="dot"></div> LIGHTNING 14B</div>
+        
+        <div class="header">
+            <h1>SteveAI Vid-Gen</h1>
+            <p>Orchestrated by Saadpie &bull; Multi-Modal AI</p>
         </div>
 
-        <div class="viewport-mask">
+        <div class="engine-container">
             <iframe 
-                id="wan-engine"
                 src="https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                loading="lazy">
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
             </iframe>
         </div>
 
-        <div class="studio-footer">
-            Orchestrated by SteveAI &bull; Saadpie Original Project
+        <div class="footer-credit">
+            STEVEAI ULTIMATE ASSISTANT SYSTEM v2.5
         </div>
     </div>
 
     <script>
-        // JS for SteveAI Precision Control
-        const iframe = document.getElementById('wan-engine');
-
-        // Optional: Listen for iframe load to show a custom loader
-        iframe.onload = function() {
-            console.log("SteveAI Video Engine Connected.");
-            // Aap yahan koi custom startup sound ya animation trigger kar sakte hain
-        };
-
-        // Anti-Scroll Logic: Iframe ko container ke andar fix rakhne ke liye
-        window.addEventListener('message', function(event) {
-            // Agar owner koi message bhejta hai, hum yahan handle kar sakte hain
-        });
+        console.log("SteveAI: Wan 2.2 Cinematic Engine Loaded.");
+        // Netlify Deployment Ready Logic
     </script>
 
 </body>
