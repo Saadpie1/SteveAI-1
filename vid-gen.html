@@ -3,77 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SteveAI - Ultimate Orchestrator</title>
+    <title>SteveAI - Powered by Shawaiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <style>
-        /* [Keeping your original CSS here for the Saadpie styling] */
-        :root { --shawaiz-glow: #00ff88; --steve-dark: #080808; --glass: rgba(255, 255, 255, 0.02); --border: rgba(255, 255, 255, 0.08); }
-        body { background-color: var(--steve-dark); color: #fff; font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; padding: 20px 10px; }
-        .main-orchestrator { width: 100%; max-width: 450px; background: var(--glass); backdrop-filter: blur(30px); border: 1px solid var(--border); border-radius: 35px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
-        .chief-header { padding: 25px 20px; background: linear-gradient(180deg, rgba(0,255,136,0.05) 0%, transparent 100%); border-bottom: 1px solid var(--border); text-align: center; }
-        .chief-header h2 { font-size: 0.8rem; color: var(--shawaiz-glow); text-transform: uppercase; letter-spacing: 3px; margin: 0; font-weight: 700; }
-        .chief-header h1 { font-size: 1.5rem; margin: 8px 0; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .engine-viewport { width: 100%; height: 720px; position: relative; overflow: hidden; background: #000; }
-        .engine-viewport iframe { position: absolute; top: -18px; left: 0; width: 100%; height: 800px; border: none; transition: opacity 0.5s ease; }
-        .system-bar { padding: 12px 20px; background: rgba(0,0,0,0.9); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); }
-        .status-node { display: flex; align-items: center; gap: 8px; font-size: 0.6rem; color: #888; }
-        .pulse-core { width: 6px; height: 6px; background: var(--shawaiz-glow); border-radius: 50%; box-shadow: 0 0 10px var(--shawaiz-glow); animation: core-pulse 2s infinite; }
-        @keyframes core-pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
-        .mirror-btn { background: transparent; border: 1px solid #333; color: #666; font-size: 0.55rem; padding: 5px 10px; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .mirror-btn:hover { border-color: var(--shawaiz-glow); color: var(--shawaiz-glow); }
+        :root {
+            --shawaiz-glow: #00ff88;
+            --steve-dark: #080808;
+            --glass: rgba(255, 255, 255, 0.02);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--steve-dark);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px 10px;
+        }
+
+        .main-orchestrator {
+            width: 100%;
+            max-width: 450px;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--border);
+            border-radius: 35px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        }
+
+        /* Branding Layer */
+        .chief-header {
+            padding: 25px 20px;
+            background: linear-gradient(180deg, rgba(0,255,136,0.05) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .chief-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            background: linear-gradient(to right, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Viewport Masking for Direct Subdomain */
+        .engine-viewport {
+            width: 100%;
+            height: 720px;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .engine-viewport iframe {
+            position: absolute;
+            /* Using direct subdomain requires slightly different offset */
+            top: -140px; 
+            left: 0;
+            width: 100%;
+            height: 1200px;
+            border: none;
+            transition: opacity 0.6s ease;
+        }
+
+        .system-bar {
+            padding: 12px 20px;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-node {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.6rem;
+            color: #888;
+        }
+
+        .pulse-core {
+            width: 6px; height: 6px;
+            background: var(--shawaiz-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--shawaiz-glow);
+            animation: core-pulse 2s infinite;
+        }
+
+        @keyframes core-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
     <div class="main-orchestrator">
         <div class="chief-header">
-            <h2>System Orchestrator</h2>
             <h1>STEVEAI VID-GEN</h1>
         </div>
 
         <div class="engine-viewport">
-            <iframe id="mainEngine" src="" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <iframe 
+                id="stveEngine"
+                src="" 
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture">
+            </iframe>
         </div>
 
         <div class="system-bar">
             <div class="status-node">
                 <div class="pulse-core"></div>
-                <span id="syncStatus">UPLINK STABLE</span>
+                <span id="label">INITIALIZING UPLINK...</span>
             </div>
-            <button class="mirror-btn" onclick="hardReset()">Manual Re-Sync</button>
+            <div style="font-size: 0.6rem; color: #444;">ENGINE: WAN-2.1</div>
         </div>
     </div>
 
     <script>
-        // The "Secret Sauce": Using the Subdomain directly
-        const ENGINE_PATH = "https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light";
+        // AS PER YOUR SUGGESTION: Removed /embed and used direct subdomain
+        const BASE_URL = "https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/";
 
-        function syncEngine() {
-            const frame = document.getElementById('mainEngine');
-            const status = document.getElementById('syncStatus');
+        function refreshEngine() {
+            const frame = document.getElementById('stveEngine');
+            const label = document.getElementById('label');
             
-            // Add a cache-buster timestamp to ensure a fresh ZeroGPU session
-            const freshUrl = `${ENGINE_PATH}&session_id=${new Date().getTime()}`;
+            // Force a fresh session with timestamp
+            const freshUrl = `${BASE_URL}?__theme=light&t=${new Date().getTime()}`;
             
             frame.style.opacity = '0';
             frame.src = freshUrl;
             
             frame.onload = () => {
                 frame.style.opacity = '1';
-                status.innerText = "UPLINK STABLE // " + new Date().toLocaleTimeString();
+                label.innerText = "UPLINK STABLE";
             };
         }
 
-        function hardReset() {
-            document.getElementById('syncStatus').innerText = "FORCING NEURAL REBOOT...";
-            syncEngine();
-        }
-
         // Initial Boot
-        syncEngine();
+        refreshEngine();
 
-        // Watchdog: Refresh every 6 hours to prevent the "24-hour death"
-        setInterval(syncEngine, 21600000);
+        // Heartbeat: Re-sync every 8 hours to stay immortal
+        setInterval(refreshEngine, 28800000);
     </script>
 </body>
 </html>
