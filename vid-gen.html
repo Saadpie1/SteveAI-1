@@ -12,7 +12,6 @@
             --steve-dark: #080808;
             --glass: rgba(255, 255, 255, 0.02);
             --border: rgba(255, 255, 255, 0.08);
-            --error-red: #ff4b4b;
         }
 
         body {
@@ -23,7 +22,6 @@
             display: flex;
             justify-content: center;
             padding: 20px 10px;
-            overflow-x: hidden;
         }
 
         .main-orchestrator {
@@ -35,10 +33,8 @@
             border-radius: 35px;
             overflow: hidden;
             box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-            position: relative;
         }
 
-        /* --- Shawaiz Infrastructure Branding --- */
         .chief-header {
             padding: 25px 20px;
             background: linear-gradient(180deg, rgba(0,255,136,0.05) 0%, transparent 100%);
@@ -46,80 +42,30 @@
             text-align: center;
         }
 
-        .chief-header h2 {
-            font-size: 0.8rem;
-            color: var(--shawaiz-glow);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin: 0;
-            font-weight: 700;
-        }
+        .chief-header h2 { font-size: 0.8rem; color: var(--shawaiz-glow); text-transform: uppercase; letter-spacing: 3px; margin: 0; font-weight: 700; }
+        .chief-header h1 { font-size: 1.5rem; margin: 8px 0; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .chief-header h1 {
-            font-size: 1.5rem;
-            margin: 8px 0;
-            background: linear-gradient(to right, #fff, #888);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .infra-credit {
-            font-size: 0.65rem;
-            color: #555;
-            margin-top: 5px;
-        }
-
+        .infra-credit { font-size: 0.65rem; color: #555; margin-top: 5px; }
         .infra-credit span { color: #aaa; font-weight: 600; }
 
-        /* --- Engine Viewport & UI Masking --- */
         .engine-viewport {
             width: 100%;
             height: 720px;
             position: relative;
             overflow: hidden;
-            background: #f9f9f9; 
-        }
-
-        /* Hides the Hugging Face Header */
-        .viewport-mask {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 48px;
-            background: var(--steve-dark);
-            z-index: 10;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding-left: 20px;
-            font-size: 0.6rem;
-            color: #444;
-            letter-spacing: 2px;
+            background: #111; /* Changed to dark to hide flicker during reload */
         }
 
         .engine-viewport iframe {
             position: absolute;
-            top: -168px; /* Precision offset to hide HF nav */
+            top: -180px; 
             left: 0;
             width: 100%;
             height: 1250px;
             border: none;
-            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.5s ease;
         }
 
-        /* Hides the Gradio Footer */
-        .bottom-guard {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 45px;
-            background: #f9f9f9;
-            z-index: 10;
-        }
-
-        /* --- System Status Bar --- */
         .system-bar {
             padding: 12px 20px;
             background: rgba(0,0,0,0.9);
@@ -131,46 +77,16 @@
             z-index: 20;
         }
 
-        .status-node {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.6rem;
-            color: #888;
-        }
-
-        .mirror-btn {
-            background: transparent;
-            border: 1px solid var(--shawaiz-glow);
-            color: var(--shawaiz-glow);
-            font-size: 0.55rem;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: 700;
-            transition: 0.3s;
-        }
-
-        .mirror-btn:hover {
-            background: var(--shawaiz-glow);
-            color: #000;
-            box-shadow: 0 0 15px rgba(0,255,136,0.3);
-        }
-
-        .pulse-core {
-            width: 6px; height: 6px;
-            background: var(--shawaiz-glow);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--shawaiz-glow);
-            animation: core-pulse 2s infinite;
-        }
+        .status-node { display: flex; align-items: center; gap: 8px; font-size: 0.6rem; color: #888; }
+        .pulse-core { width: 6px; height: 6px; background: var(--shawaiz-glow); border-radius: 50%; box-shadow: 0 0 10px var(--shawaiz-glow); animation: core-pulse 2s infinite; }
 
         @keyframes core-pulse {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.4; }
+            50% { transform: scale(1.5); opacity: 0.5; }
             100% { transform: scale(1); opacity: 1; }
         }
+
+        .version-tag { font-size: 0.6rem; color: #444; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -185,61 +101,46 @@
         </div>
 
         <div class="engine-viewport">
-            <div class="viewport-mask">ENCRYPTED NEURAL UPLINK // SHA-256</div>
-            
             <iframe 
                 id="engineFrame"
-                src="https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light" 
+                src="" 
                 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture">
             </iframe>
-
-            <div class="bottom-guard"></div>
         </div>
 
         <div class="system-bar">
             <div class="status-node">
                 <div class="pulse-core"></div>
-                <span id="statusLabel">ENGINE 1: PRIMARY</span>
+                <span id="statusText">SHAWAIZ NEURAL ENGINE: INITIALIZING...</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button class="mirror-btn" style="border-color: #333; color: #666;" onclick="refreshEngine()">Reset</button>
-                <button class="mirror-btn" onclick="toggleMirror()">Switch Engine</button>
-            </div>
+            <div class="version-tag">STV-2.5-PRO</div>
         </div>
     </div>
 
     <script>
-        const urls = [
-            "https://zerogpu-aoti-wan2-2-fp8da-aoti.hf.space/?__theme=light",
-            "https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti/embed?__theme=light",
-            "https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster/embed?__theme=light",
-            "https://huggingface.co/spaces/fffiloni/Wan2.1/embed?__theme=light"
-        ];
+        const ENGINE_URL = "https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti/embed?__theme=light";
         
-        const names = ["PRIMARY", "SECURE", "TURBO", "REDUNDANT"];
-        let currentIdx = 0;
-
-        function toggleMirror() {
-            currentIdx = (currentIdx + 1) % urls.length;
+        function bootEngine() {
             const frame = document.getElementById('engineFrame');
-            const label = document.getElementById('statusLabel');
+            const status = document.getElementById('statusText');
+            
+            // Step 1: Add timestamp to bypass cache and refresh session
+            const freshUrl = `${ENGINE_URL}&t=${new Date().getTime()}`;
             
             frame.style.opacity = '0';
-            label.innerText = "SYNCHRONIZING...";
+            frame.src = freshUrl;
             
-            setTimeout(() => {
-                frame.src = urls[currentIdx];
-                label.innerText = `ENGINE ${currentIdx + 1}: ${names[currentIdx]}`;
+            frame.onload = () => {
                 frame.style.opacity = '1';
-            }, 400);
+                status.innerText = "SHAWAIZ NEURAL ENGINE: ACTIVE";
+            };
         }
 
-        function refreshEngine() {
-            const frame = document.getElementById('engineFrame');
-            const currentSrc = frame.src;
-            frame.src = '';
-            setTimeout(() => { frame.src = currentSrc; }, 50);
-        }
+        // Boot on start
+        bootEngine();
+
+        // Step 2: Auto-Refresh every 12 hours (43200000 ms) to keep session alive
+        setInterval(bootEngine, 43200000);
     </script>
 </body>
 </html>
