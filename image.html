@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="SteveAI Image Generator - Powered by Shawaiz Ali Yasin's 16GB RAM Infrastructure" />
-  <meta name="author" content="Saadpie, Ahmed & Shawaiz Ali Yasin" />
+  <meta name="description" content="SteveAI Image Generator - Professional Multi-Modal Visual Studio" />
+  <meta name="author" content="Saadpie & Ahmed" />
   <meta name="theme-color" content="#111" />
-  <title>SteveAI – Image Generator | Powered by Shawaiz Ali Yasin</title>
+  <title>SteveAI – Image Generator | Built by Ahmed & Saadpie</title>
   
   <link rel="icon" href="/assets/favicon.png" />
 
@@ -64,8 +64,9 @@
       background-color: #2c2c2c;
       color: #00ffcc;
     }
-    /* Video Tab Accent */
-    .vid-tab { border: 1px solid #ff00ff; color: #ff00ff !important; margin-left: 5px; }
+    
+    /* Navigation Accents */
+    .threed-tab { border: 1px solid #ff00ff; color: #ff00ff !important; margin-left: 5px; }
 
     main {
       flex-grow: 1;
@@ -79,7 +80,7 @@
         font-size: 2.2rem;
         margin-bottom: 0.5rem;
     }
-    .infra-tag {
+    .collab-tag {
         color: #ff00ff;
         font-weight: bold;
         text-transform: uppercase;
@@ -199,14 +200,16 @@
       <a href="/">Home</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html" class="active">Image</a>
-      <a href="/vid-gen" class="vid-tab">Video</a> <a href="/docs.html">Docs</a>
+      <a href="/vid-gen">Video</a> 
+      <a href="/3d" class="threed-tab">3D</a>
+      <a href="/docs.html">Docs</a>
       <a href="/about.html">About</a>
     </nav>
   </header>
 
   <main>
-    <h1>🎨 Ultra-HD Generation</h1>
-    <span class="infra-tag">⚡ Powered by Shawaiz Ali Yasin (16GB RAM Neural Engine)</span>
+    <h1>🎨 Ultra-HD Visual Arts</h1>
+    <span class="collab-tag">Orchestrated by Ahmed & Saadpie</span>
     
     <div class="controls">
         <input type="text" id="prompt" placeholder="Describe your masterpiece (e.g., A futuristic cyberpunk city in 8k)..." />
@@ -217,7 +220,7 @@
                 <option value="1">1 Image</option>
                 <option value="2">2 Images</option>
                 <option value="3">3 Images</option>
-                <option value="4">4 Images (Max Power)</option>
+                <option value="4">4 Images (Multi-Orchestration)</option>
             </select>
         </div>
         
@@ -228,7 +231,7 @@
   </main>
 
   <footer>
-    <p>© 2025 <strong>SteveAI</strong> • Built by <strong>Saadpie & Ahmed</strong> • Powered by <strong>Shawaiz Ali Yasin</strong></p>
+    <p>© 2025 <strong>SteveAI</strong> • Built by <a href="#">Saadpie & Ahmed</a></p>
     <p><a href="mailto:saadabdulrehman2010@gmail.com">Contact Support</a></p>
   </footer>
 
@@ -288,7 +291,7 @@
 
       generateBtn.disabled = true;
       generateBtn.textContent = "ORCHESTRATING...";
-      resultDiv.innerHTML = `<p style="color:#00ffcc; width: 100%;">Utilizing 16GB RAM Cluster for **${numImages}** generations...</p>`;
+      resultDiv.innerHTML = `<p style="color:#00ffcc; width: 100%;">Generating **${numImages}** specialized visuals...</p>`;
 
       try {
         const imageUrls = await generateImage(prompt, selectedModel, numImages); 
