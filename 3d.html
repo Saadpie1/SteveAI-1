@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SteveAI | 3D Sculptor by Ahmed & Saadpie</title>
-    <script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/4.12.0/gradio.js"></script>
     <style>
         :root {
             --bg: #09090b;
@@ -16,17 +15,14 @@
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 2rem;
             margin: 0;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+        .header { text-align: center; margin-bottom: 2rem; }
         .title {
             font-size: 2.5rem;
             background: linear-gradient(to right, #3b82f6, #9333ea);
@@ -34,29 +30,43 @@
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
         }
-        .credits {
-            font-size: 1.1rem;
-            color: var(--muted);
-            letter-spacing: 1px;
-        }
+        .credits { font-size: 1.1rem; color: var(--muted); }
+        
         .container {
             width: 100%;
             max-width: 1000px;
             background: var(--card);
             border: 1px solid #27272a;
             border-radius: 20px;
-            padding: 20px;
+            overflow: hidden; /* Keeps the iframe corners rounded */
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .badge {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent);
-            padding: 4px 12px;
-            border-radius: 99px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
+
+        /* The Iframe is much faster than the gradio-app component */
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            background: white; /* Some models look better with a white load screen */
         }
+
+        .action-bar {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -67,15 +77,16 @@
     </div>
 
     <div class="container">
-        <span class="badge">Multi-Modal Orchestrator v2.0</span>
-        <h2 style="margin-top:0;">3D Sculptor Engine</h2>
-        <p style="color: var(--muted);">Generate high-poly rigged avatars using the Hunyuan3D-2 pipeline.</p>
-        
-        <gradio-app 
-            src="https://tencent-hunyuan3d-2.hf.space" 
-            theme_mode="dark" 
-            control_page_title="false">
-        </gradio-app>
+        <iframe 
+            src="https://tencent-hunyuan3d-2.hf.space?__theme=dark" 
+            allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+            sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-downloads">
+        </iframe>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-primary" onclick="window.location.reload();">🔄 Refresh Engine</button>
+        <button class="btn" style="background: #27272a; color: white;" onclick="window.open('https://huggingface.co/spaces/tencent/Hunyuan3D-2', '_blank')">🚀 External Wake Up</button>
     </div>
 
 </body>
