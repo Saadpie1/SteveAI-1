@@ -52,6 +52,7 @@
         font-size: 1.8rem;
         color: #00ffcc; 
     }
+    header nav { display: flex; gap: 10px; }
     header a {
       color: #e0e0e0;
       text-decoration: none;
@@ -134,18 +135,19 @@
       max-width: 300px;
       box-shadow: 0 4px 10px rgba(0, 255, 204, 0.3);
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background: #ff00ff;
       color: #fff;
       transform: translateY(-2px);
       box-shadow: 0 6px 15px rgba(255, 0, 255, 0.4);
     }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     
     /* 4. Result Grid Styling */
     #result {
         margin-top: 3em;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
         gap: 2em;
         justify-items: center;
     }
@@ -155,21 +157,31 @@
         border-radius: 12px;
         border: 1px solid #333;
         width: 100%;
-        max-width: 450px;
-        transition: transform 0.3s ease;
+        max-width: 400px;
+        transition: transform 0.3s ease, border-color 0.3s ease;
     }
     .img-container:hover {
-        transform: scale(1.02);
+        transform: translateY(-5px);
         border-color: #00ffcc;
     }
     .img-container img {
       width: 100%;
       border-radius: 8px;
       margin-bottom: 1rem;
+      display: block;
     }
-    .img-container a { color: #00ffcc; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
+    .img-container a { 
+        display: inline-block;
+        padding: 8px 16px;
+        background: #222;
+        color: #00ffcc; 
+        text-decoration: none; 
+        font-weight: bold; 
+        font-size: 0.85rem; 
+        border-radius: 5px;
+        border: 1px solid #00ffcc;
+    }
     
-    /* 5. Footer Styling */
     footer {
       background: #1a1a1a;
       color: #777;
@@ -178,21 +190,13 @@
       border-top: 1px solid #2c2c2c;
       margin-top: auto;
     }
-    footer a { color: #00ffcc; font-weight: bold; }
-
-    /* Mobile Fixes */
-    @media (max-width: 768px) {
-        header { flex-direction: column; align-items: flex-start; }
-        nav { display: flex; overflow-x: auto; width: 100%; padding-bottom: 0.5rem; }
-        nav a { flex-shrink: 0; }
-        .controls { padding: 1.5rem; }
-    }
+    footer a { color: #00ffcc; font-weight: bold; text-decoration: none; }
   </style>
 </head>
 <body>
   <header>
     <a href="/" class="logo-link">
-        <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo" loading="lazy"/> 
+        <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo" /> 
         <h1>SteveAI <span style="font-size: 0.6em; color: #ff00ff;">IMAGE STUDIO</span></h1>
     </a>
     <nav>
@@ -219,7 +223,7 @@
                 <option value="1">1 Image</option>
                 <option value="2">2 Images</option>
                 <option value="3">3 Images</option>
-                <option value="4">4 Images (Batch Mode)</option>
+                <option value="4">4 Images (Multi-Batch)</option>
             </select>
         </div>
         
@@ -230,7 +234,7 @@
   </main>
 
   <footer>
-    <p>© 2025 <strong>SteveAI</strong> • Built by <a href="#">Saadpie & Ahmed</a></p>
+    <p>© 2025 <strong>SteveAI</strong> • Precision Orchestration by <a href="#">Saadpie & Ahmed</a></p>
   </footer>
 
   <script type="module">
@@ -242,11 +246,10 @@
     const modelSelect = document.getElementById("modelSelect");
     const numImagesSelect = document.getElementById("numImagesSelect");
 
-    // Updated Provider Mappings for your refined list
     const PROVIDER_NAMES = {
-        'provider-4': '💎 Premium Studio (Google)',
+        'provider-4': '💎 Premium (Google/Imagen)',
         'provider-5': '⚡ Performance (Flux/Fast)',
-        'provider-8': '🌟 Specialized (Firefrost/Z-Image)'
+        'provider-8': '🎭 Specialized (SteveAI Custom)'
     };
 
     function populateModelSelect() {
@@ -259,7 +262,7 @@
 
         Object.keys(groupedModels).forEach(providerId => {
             const optgroup = document.createElement('optgroup');
-            optgroup.label = PROVIDER_NAMES[providerId] || `Provider ${providerId}`; 
+            optgroup.label = PROVIDER_NAMES[providerId] || `Other Models`; 
             groupedModels[providerId].forEach(model => {
                 const option = document.createElement('option');
                 option.value = model.id;
@@ -281,7 +284,9 @@
 
       generateBtn.disabled = true;
       generateBtn.textContent = "ORCHESTRATING...";
-      resultDiv.innerHTML = `<p style="color:#00ffcc; width: 100%;">Generating **${numImages}** specialized visuals...</p>`;
+      
+      // FIX: Changed MD **text** to <strong> and <span>
+      resultDiv.innerHTML = `<p style="color:#00ffcc; width: 100%;">Generating <strong>${numImages}</strong> specialized visuals...</p>`;
 
       try {
         const imageUrls = await generateImage(prompt, selectedModel, numImages); 
@@ -291,14 +296,15 @@
             const container = document.createElement('div');
             container.className = 'img-container';
             container.innerHTML = `
-                <img src="${url}" alt="Generated Image" onerror="this.src='/assets/placeholder.png'">
-                <p><a href="${url}" download="SteveAI_${index}.png" target="_blank">💾 SAVE HIGH-RES</a></p>
+                <img src="${url}" alt="Generated Image" loading="lazy" onerror="this.src='/assets/placeholder.png'">
+                <a href="${url}" target="_blank" download="SteveAI_${index}.png">DOWNLOAD HD</a>
             `;
             resultDiv.appendChild(container);
         });
 
       } catch (err) {
-        resultDiv.innerHTML = `<p style="color:red; width: 100%;">Engine Error: ${err.message}</p>`;
+        // FIX: Changed MD **text** to <strong>
+        resultDiv.innerHTML = `<p style="color:#ff00ff; width: 100%;"><strong>Engine Error:</strong> ${err.message}</p>`;
       } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = "GENERATE MASTERPIECE";
