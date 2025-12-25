@@ -3,15 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SteveAI - Ahmed Aftab Edition</title>
+  <title>SteveAI - Ultimate AI Assistant</title>
 
-  <meta name="description" content="SteveAI: Multi-Modal AI Orchestrator by Saadpie, powered by Ahmed Aftab's 16GB RAM Infrastructure.">
-  <meta name="author" content="Saadpie & Ahmed Aftab">
-  
-  <meta property="og:title" content="SteveAI - Ultimate AI Assistant">
-  <meta property="og:description" content="Multi-modal AI orchestrator powered by Ahmed Aftab's high-performance infrastructure.">
-  <meta property="og:url" content="https://steve-ai.netlify.app/">
+  <meta name="description" content="SteveAI: The Multi-Modal AI Orchestrator by Saadpie. Powered by 33+ specialized models.">
   <meta name="theme-color" content="#1e1e1e"/>
+  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
 
   <link rel="stylesheet" href="chat.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -22,13 +18,8 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "SteveAI",
-    "url": "https://steve-ai.netlify.app/",
-    "author": [
-      { "@type": "Person", "name": "saadpie" },
-      { "@type": "Person", "name": "Ahmed Aftab" }
-    ],
-    "applicationCategory": "Multimedia AI Assistant",
-    "description": "A Multi-Modal AI Orchestrator using 33+ specialized models."
+    "author": { "@type": "Person", "name": "Saadpie" },
+    "description": "The Multi-Modal AI Orchestrator powered by Ahmed Aftab's 16GB RAM Engine."
   }
   </script>
 </head>
@@ -37,22 +28,21 @@
   <div id="header">
     <div class="logo">
       <div class="logo-icon">
-        <img src="SteveAI-logo.jpg" alt="SteveAI Logo" style="width:100%; height:100%; border-radius:8px; object-fit:cover;">
+        <img src="SteveAI-logo.jpg" alt="SteveAI" style="width:100%; height:100%; border-radius:8px; object-fit:cover;">
       </div>
-      <span>SteveAI <small style="font-size: 0.6em; color: #ffae00;">v2.5</small></span>
+      <span>SteveAI <small style="font-size: 0.6em; opacity: 0.6;">v3.5</small></span>
     </div>
 
     <div class="header-actions">
       <select id="modeSelect" title="Model Mode">
-        <option value="chat" selected>SteveAI-chat</option>
-        <option value="reasoning">SteveAI-reasoning</option>
-        <option value="fast">SteveAI-fast</option>
-        <option value="lite">SteveAI-instant</option>
-        <option value="general">SteveAI-general</option> 
-        <option value="math">SteveAI-math</option>
-        <option value="coding">SteveAI-coding</option>
-        <option value="korean">SteveAI-Korean</option>
-        <option value="arabic">SteveAI-Arabic</option>
+        <option value="chat" selected>SteveAI-chat (GPT-5)</option>
+        <option value="reasoning">SteveAI-reasoning (DeepSeek-R1)</option>
+        <option value="fast">SteveAI-fast (Gemini 3 Flash)</option>
+        <option value="lite">SteveAI-instant (GPT-5 Nano)</option>
+        <option value="general">SteveAI-general (Claude 4)</option> 
+        <option value="math">SteveAI-math (Mimo-v2)</option>
+        <option value="coding">SteveAI-coding (Qwen-3-Next)</option>
+        <option value="designer">SteveAI-designer (Kimi-K2)</option>
       </select>
       <button id="clearChat" class="action-btn" title="Clear Chat">🗑️</button>
       <button id="themeToggle" class="action-btn" title="Toggle Theme">🌙</button>
@@ -66,20 +56,21 @@
   </div>
 
   <div id="commandHints" hidden>
-    <span>/help</span><span>/clear</span><span>/theme</span>
-    <span>/export</span><span>/image</span><span>/contact</span><span>/about</span>
+    <span>/image</span><span>/mode</span><span>/clear</span><span>/help</span>
+    <span>/export</span><span>/contact</span><span>/about</span>
   </div>
 
   <div id="inputContainer">
     <div id="imagePreviewContainer" style="display:none;">
-        <img id="imagePreview" src="" alt="Image Preview" />
-        <button id="clearImageBtn" title="Remove Image">✖</button>
+        <img id="imagePreview" src="" alt="Preview" />
+        <button id="clearImageBtn" title="Remove">✖</button>
     </div>
-    <form id="inputForm" onsubmit="return false;">
+    
+    <form id="inputForm">
       <input type="file" id="imageInputFile" accept="image/*" style="display:none;"> 
       <button type="button" id="imageUploadBtn" class="action-btn" title="Upload Image">🖼️</button>
       
-      <textarea id="messageInput" placeholder="Message SteveAI (Ahmed Aftab Edition)..." rows="1" required></textarea>
+      <textarea id="messageInput" placeholder="Message SteveAI..." rows="1" required></textarea>
       
       <button type="submit" id="sendBtn" title="Send">↑</button>
     </form>
@@ -89,24 +80,14 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   
   <script>
-    // --- GLOBAL UTILITIES ---
-    window.postProcessChat = (newChatElement) => {
-        // Handle Code blocks
-        newChatElement.querySelectorAll('pre').forEach(pre => {
-            const code = pre.querySelector('code');
-            if (code && window.Prism) Prism.highlightElement(code);
-            if (!pre.querySelector('.code-header')) {
-                const header = document.createElement('div');
-                header.className = 'code-header';
-                header.innerHTML = `<span>Code</span><button class="copy-btn" onclick="copyCode(this)">Copy</button>`;
-                pre.insertBefore(header, pre.firstChild);
-            }
-        });
-        // Handle Math
+    // Global Post-Processing for Math and Code
+    window.postProcessChat = (newElement) => {
+        if (window.Prism) Prism.highlightAllUnder(newElement);
         if (window.renderMathInElement) {
-            renderMathInElement(newChatElement, {
+            renderMathInElement(newElement, {
                 delimiters: [
                     {left: "$$", right: "$$", display: true},
                     {left: "$", right: "$", display: false}
@@ -114,55 +95,71 @@
                 throwOnError: false
             });
         }
+        // Auto-scroll to bottom
+        const chat = document.getElementById('chat');
+        chat.scrollTop = chat.scrollHeight;
     };
-
-    function copyCode(btn) {
-        const code = btn.closest('pre').querySelector('code').innerText;
-        navigator.clipboard.writeText(code);
-        btn.innerText = 'Copied!';
-        setTimeout(() => btn.innerText = 'Copy', 2000);
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
         const inputEl = document.getElementById('messageInput');
-        const form = document.getElementById('inputForm');
+        const hintsEl = document.getElementById('commandHints');
+        const imgInput = document.getElementById('imageInputFile');
+        const imgPreview = document.getElementById('imagePreview');
+        const imgPreviewCont = document.getElementById('imagePreviewContainer');
 
-        // Prevent reload on Enter, but allow Shift+Enter for new lines
-        inputEl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                form.dispatchEvent(new Event('submit', { cancelable: true }));
-            }
+        // Command Triggering
+        inputEl.addEventListener('input', () => {
+          hintsEl.hidden = !inputEl.value.startsWith('/');
+          inputEl.style.height = 'auto';
+          inputEl.style.height = (inputEl.scrollHeight) + 'px';
         });
 
-        // Image Handling Logic
-        const imageInputFile = document.getElementById('imageInputFile');
-        const imagePreview = document.getElementById('imagePreview');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-
-        document.getElementById('imageUploadBtn').onclick = () => imageInputFile.click();
-
-        imageInputFile.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    window.base64Image = ev.target.result;
-                    imagePreview.src = ev.target.result;
-                    imagePreviewContainer.style.display = 'flex';
-                };
-                reader.readAsDataURL(file);
-            }
+        // Image Handling
+        document.getElementById('imageUploadBtn').onclick = () => imgInput.click();
+        imgInput.onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                window.base64Image = ev.target.result;
+                imgPreview.src = ev.target.result;
+                imgPreviewCont.style.display = 'flex';
+            };
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         };
 
         document.getElementById('clearImageBtn').onclick = () => {
             window.base64Image = null;
-            imagePreviewContainer.style.display = 'none';
-            imageInputFile.value = '';
+            imgPreviewCont.style.display = 'none';
+            imgInput.value = '';
         };
     });
   </script>
   
   <script type="module" src="chat.js"></script>
+
+  <style>
+    /* 2025 Modernization Tweaks */
+    :root { --accent: #ffae00; --bg: #0d0d0d; --card: #161616; }
+    body { background: var(--bg); color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+    
+    #header { background: #111; border-bottom: 1px solid #222; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    #modeSelect { background: #222; color: var(--accent); border: 1px solid #333; padding: 5px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    
+    #chat { height: calc(100vh - 160px); padding: 15px; scrollbar-width: thin; }
+    
+    #inputContainer { background: #111; padding: 15px; border-top: 1px solid #222; }
+    #inputForm { max-width: 900px; margin: 0 auto; background: #1a1a1a; padding: 8px; border-radius: 14px; border: 1px solid #333; }
+    
+    textarea { border: none; background: transparent; color: #fff; padding: 10px; font-size: 15px; outline: none; width: 100%; }
+    #sendBtn { background: var(--accent); color: #000; border-radius: 10px; font-weight: bold; width: 45px; height: 40px; }
+    
+    .bouncing-dots span { background-color: var(--accent); width: 6px; height: 6px; }
+    
+    #imagePreviewContainer { border: 1px dashed #444; background: #000; padding: 8px; border-radius: 12px; max-width: 200px; }
+    #imagePreview { border-radius: 6px; }
+    
+    /* Code Header Polish */
+    .code-header { background: #2d2d2d; border-bottom: 1px solid #444; border-radius: 8px 8px 0 0; }
+    .copy-btn { font-weight: bold; text-transform: uppercase; }
+  </style>
 </body>
 </html>
