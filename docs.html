@@ -3,19 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SteveAI Docs – Ultimate AI Assistant | AI Chat, Coding & Image Generation</title>
+  <title>SteveAI Docs – Ultimate AI Assistant | AI Chat, Video & 3D Generation</title>
 
-  <meta name="description" content="Official SteveAI Documentation. Architected by Saadpie & Ahmed, powered by Shawaiz Ali Yasin's 16GB RAM infrastructure.">
-  <meta name="keywords" content="SteveAI, Shawaiz Ali Yasin, AI assistant, AI documentation, AI reasoning, coding AI, 16GB RAM AI">
-  <meta name="robots" content="index, follow">
-  <meta name="author" content="Saadpie & Shawaiz Ali Yasin">
+  <meta name="description" content="Official SteveAI Documentation. Architected by Saadpie & Ahmed, powered by Shawaiz Ali Yasin's infrastructure.">
+  <meta name="keywords" content="SteveAI, Shawaiz Ali Yasin, AI documentation, 3D Generation, AI reasoning, Vid-gen, 16GB RAM AI">
+  <meta name="author" content="Saadpie & Ahmed">
   <meta name="theme-color" content="#111">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="SteveAI Docs – Ultimate AI Assistant">
-  <meta property="og:description" content="Explore SteveAI's multi-modal features: reasoning, image generation, and the Shawaiz-powered infrastructure.">
-  <meta property="og:url" content="https://steve-ai.netlify.app/docs.html">
-  <meta property="og:image" content="https://steve-ai.netlify.app/assets/steveai-update-banner.png">
 
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="/assets/favicon.png">
@@ -24,151 +17,47 @@
     /* Global Reset & Base Styling */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #0c0c0c; 
-      color: #e0e0e0; 
-      line-height: 1.6;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      margin: 0; padding: 0; background-color: #0c0c0c; color: #e0e0e0; line-height: 1.6;
+      display: flex; flex-direction: column; min-height: 100vh;
     }
     
     header {
-      background: #1a1a1a;
-      color: #fff;
-      padding: 1rem 2rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #00ffcc;
+      background: #1a1a1a; color: #fff; padding: 1rem 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ffcc;
     }
-    .logo-link { 
-        text-decoration: none; 
-        color: inherit;
-        display: flex;
-        align-items: center;
-    }
-    .logo {
-        height: 30px; 
-        margin-right: 10px;
-        border-radius: 4px; 
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.8rem;
-      color: #00ffcc;
-    }
+    .logo-link { text-decoration: none; color: inherit; display: flex; align-items: center; }
+    .logo { height: 30px; margin-right: 10px; border-radius: 4px; }
+    header h1 { margin: 0; font-size: 1.8rem; color: #00ffcc; }
+    
     nav a {
-      color: #e0e0e0;
-      text-decoration: none;
-      margin-left: 1.5rem;
-      padding: 0.5rem 0.8rem;
-      border-radius: 4px;
-      transition: background-color 0.2s, color 0.2s;
+      color: #e0e0e0; text-decoration: none; margin-left: 1.2rem; padding: 0.5rem 0.8rem;
+      border-radius: 4px; transition: 0.2s; font-size: 0.9rem;
     }
-    nav a:hover, nav a.active {
-      background-color: #2c2c2c;
-      color: #00ffcc;
-    }
+    nav a:hover, nav a.active { background-color: #2c2c2c; color: #00ffcc; }
 
-    main {
-      flex-grow: 1;
-      max-width: 1000px;
-      width: 90%;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    section {
-      background: #1a1a1a;
-      padding: 2rem;
-      border-radius: 12px;
-      margin-bottom: 2rem;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-    }
-    section h2 {
-      color: #00ffcc;
-      border-bottom: 1px solid #333;
-      padding-bottom: 0.5rem;
-      margin-top: 0;
-      font-size: 1.5rem;
-    }
+    main { flex-grow: 1; max-width: 1000px; width: 90%; margin: 2rem auto; padding: 0 1rem; }
+    section { background: #1a1a1a; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); }
+    section h2 { color: #00ffcc; border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-top: 0; font-size: 1.5rem; }
 
     /* Update Banner */
     .update-banner {
       background: linear-gradient(135deg, #1b1b1b, #2c0b3d); 
       border: 2px solid #ff00ff;
-      text-shadow: 0 0 5px rgba(255, 0, 255, 0.3);
     }
-    .update-banner strong { color: #00ffcc; font-weight: 700; }
-    .update-banner ul {
-      list-style: none;
-      padding-left: 0;
-      margin-top: 1rem;
-      column-count: 2; 
-      column-gap: 20px;
-    }
-    .update-banner ul li {
-      background: rgba(44, 44, 44, 0.6);
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      border-left: 3px solid #00ffcc;
-      margin-bottom: 10px;
-      break-inside: avoid;
-    }
+    .update-banner strong { color: #00ffcc; }
+    .update-banner ul { list-style: none; padding-left: 0; margin-top: 1rem; column-count: 2; column-gap: 20px; }
+    .update-banner ul li { background: rgba(44, 44, 44, 0.6); padding: 0.5rem 1rem; border-radius: 6px; border-left: 3px solid #00ffcc; margin-bottom: 10px; }
 
-    /* Video Gen Info Section Styling */
-    .video-docs-badge {
-        background: #ff00ff;
-        color: white;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        vertical-align: middle;
-        margin-left: 10px;
-    }
+    .docs-badge { background: #ff00ff; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; vertical-align: middle; margin-left: 10px; }
 
-    code {
-      background-color: #2c2c2c;
-      color: #ffae00; 
-      padding: 3px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 0.95rem;
-    }
-
-    details {
-      background-color: #252525;
-      border: 1px solid #3a3a3a;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    summary {
-      padding: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      color: #00ffcc;
-      list-style-type: none;
-    }
-    summary::before { content: '▶️'; margin-right: 10px; }
-    details[open] > summary::before { content: '🔽'; }
-    details p { padding: 0 1rem 1rem 1rem; border-top: 1px solid #3a3a3a; margin: 0; }
+    code { background-color: #2c2c2c; color: #ffae00; padding: 3px 6px; border-radius: 4px; font-family: monospace; }
     
-    footer {
-      background: #1a1a1a;
-      color: #777;
-      text-align: center;
-      padding: 2rem;
-      border-top: 1px solid #2c2c2c;
-    }
+    footer { background: #1a1a1a; color: #777; text-align: center; padding: 2rem; border-top: 1px solid #2c2c2c; }
     footer a { color: #00ffcc; font-weight: bold; }
     
     @media (max-width: 768px) {
         header { flex-direction: column; align-items: flex-start; }
-        nav { display: flex; overflow-x: auto; width: 100%; padding-bottom: 0.5rem; }
-        nav a { flex-shrink: 0; margin: 0 0.75rem 0 0; }
+        nav { display: flex; overflow-x: auto; width: 100%; padding-bottom: 0.5rem; margin-top: 10px; }
         .update-banner ul { column-count: 1; }
     }
   </style>
@@ -178,100 +67,89 @@
   <header>
     <a href="/" class="logo-link">
         <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo"/> 
-        <h1>SteveAI Docs <span style="font-size: 0.6em; color: #ff00ff;">v2.5 High-Speed</span></h1>
+        <h1>SteveAI Docs <span style="font-size: 0.6em; color: #ff00ff;">v2.6 Spatial</span></h1>
     </a>
     <nav>
       <a href="/">Home</a>
-      <a href="/about.html">About</a>
-      <a href="/vid-gen">Video</a> <a href="/docs.html" class="active">Docs</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html">Image</a>
+      <a href="/vid-gen">Video</a> 
+      <a href="/3d">3D Sculptor</a>
+      <a href="/docs.html" class="active">Docs</a>
+      <a href="/about.html">About</a>
     </nav>
   </header>
 
   <main>
     <section class="update-banner">
-      <h2>🚀 Hardware Optimization: <strong>Shawaiz Infrastructure</strong></h2>
+      <h2>🚀 New Module: <strong>3D Sculptor Engine</strong></h2>
       <p>
-        SteveAI has migrated to a high-performance **16GB RAM Neural Engine** maintained by **Shawaiz Ali Yasin**. This allows for:
+        Architected by <strong>Saadpie & Ahmed</strong>, SteveAI now supports spatial asset generation. This expansion allows for:
       </p>
       <ul>
-        <li>⚡ **Zero Latency** in reasoning-heavy tasks</li>
-        <li>🖼️ **Bulk Image Generation** (Up to 4 images/prompt)</li>
-        <li>🎞️ **SteveAI-Vid-gen** Video Alpha support</li>
-        <li>🧠 **Massive Context Window** (2200+ token memory)</li>
+        <li>🧊 **High-Poly Meshes** via Hunyuan3D-2</li>
+        <li>🎞️ **Video Synthesis** via Wan 2.2</li>
+        <li>⚡ **Instant Previews** of 3D objects</li>
+        <li>🧠 **16GB Neural RAM** optimization</li>
       </ul>
     </section>
 
     <section>
-      <h2>System Architecture</h2>
+      <h2>System Infrastructure</h2>
       <p>
-        SteveAI is a Multi-Modal Orchestrator built by **Saadpie** and **Ahmed**. Unlike single-model bots, SteveAI routes your messages through 33+ specialized models to ensure peak accuracy.
+        SteveAI is a Multi-Modal AI Orchestrator. Core development is led by **Saadpie** and **Ahmed**, with the hardware infrastructure sustained by **Shawaiz Ali Yasin**.
       </p>
     </section>
 
     <section>
-      <h2>Video Generation (Vid-gen) <span class="video-docs-badge">NEW</span></h2>
+      <h2>3D Avatar Generation <span class="docs-badge">NEW</span></h2>
       <p>
-        Powered by the <strong>Wan 2.2 Lightning 14B</strong> architecture, SteveAI now supports cinematic video synthesis. This module is exclusively sustained by <strong>Shawaiz Ali Yasin's</strong> 16GB VRAM allocation.
+        Integrated by <strong>Ahmed & Saadpie</strong>, the 3D module uses the <strong>Hunyuan3D-2</strong> pipeline to turn 2D images or text prompts into textured 3D models.
       </p>
       <ul>
-        <li><strong>Sampling Steps:</strong> Optimized at 4-steps for 50x faster delivery.</li>
-        <li><strong>Resolution:</strong> Native 720p HD rendering.</li>
-        <li><strong>Engine:</strong> Distributed via Shawaiz's private LoRA pipeline.</li>
+        <li><strong>Output Format:</strong> Standard <code>.glb</code> files (Game-ready).</li>
+        <li><strong>Processing Stage:</strong> Two-stage (DiT Shape + Paint Texture).</li>
+        <li><strong>Usage:</strong> Access via the <code>/3d</code> path or the sidebar menu.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Video Gen (Vid-gen)</h2>
+      <p>
+        Powered by the <strong>Wan 2.2 Lightning</strong> architecture. This module is exclusively sustained by <strong>Shawaiz Ali Yasin's</strong> 16GB VRAM infrastructure.
+      </p>
+      <ul>
+        <li><strong>Engine:</strong> Distributed LoRA pipeline for high-speed synthesis.</li>
+        <li><strong>Capacity:</strong> 720p HD Cinematic output.</li>
       </ul>
     </section>
 
     <section>
       <h2>Commands & Shortcuts</h2>
-      <p>Interact with the orchestrator using these slash commands:</p>
       <ul>
-        <li><code>/mode &lt;type&gt;</code> – Switch between Reasoning, Fast, Coding, etc.</li>
-        <li><code>/image &lt;prompt&gt;</code> – Access 23+ generation models.</li>
-        <li><code>/video &lt;prompt&gt;</code> – Trigger the Shawaiz-Powered Vid-gen engine.</li>
-        <li><code>/play</code> – Recap your session using SteveAI Summary Logic.</li>
+        <li><code>/3d</code> – Opens the Ahmed & Saadpie 3D Sculptor.</li>
+        <li><code>/video &lt;prompt&gt;</code> – Trigger the Shawaiz-Powered Vid-gen.</li>
+        <li><code>/mode &lt;type&gt;</code> – Switch between Reasoning, Fast, and Coding.</li>
         <li><code>/about</code> – View credits for Shawaiz, Saadpie, and Ahmed.</li>
-        <li><code>/export</code> – Download chat history to your device.</li>
-        <li><code>/time</code> – Sync with local server time.</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Mode Reference</h2>
-      <ul>
-        <li><strong>Reasoning:</strong> DeepSeek-R1 powered logical chain. Best for math and philosophy.</li>
-        <li><strong>Fast:</strong> Gemini-2.5-Flash integration. Best for quick summaries and general Q&A.</li>
-        <li><strong>Coding:</strong> Specialized for debugging and modern syntax.</li>
-        <li><strong>Arabic/Korean:</strong> Native-tier translation and cultural logic.</li>
-        <li><strong>Video:</strong> Activates the High-Performance Video Synthesis mode.</li>
       </ul>
     </section>
 
     <section>
       <h2>FAQ</h2>
-      <details>
-        <summary>Who owns SteveAI?</summary>
-        <p>SteveAI is owned and powered by <strong>Shawaiz Ali Yasin</strong>, with core development by <strong>Saadpie</strong> and <strong>Ahmed</strong>.</p>
+      <details style="background: #252525; border: 1px solid #3a3a3a; border-radius: 8px; margin-bottom: 10px; padding: 10px;">
+        <summary style="color: #00ffcc; cursor: pointer; font-weight: bold;">Who owns SteveAI?</summary>
+        <p style="padding-top: 10px;">SteveAI is owned and powered by <strong>Shawaiz Ali Yasin</strong>, with core orchestration by <strong>Saadpie</strong> and <strong>Ahmed</strong>.</p>
       </details>
-      <details>
-        <summary>What is the hardware spec?</summary>
-        <p>SteveAI runs on a custom 16GB RAM environment optimized for neural processing and high-speed multi-modal routing, managed by <strong>Shawaiz</strong>.</p>
-      </details>
-      <details>
-        <summary>How fast is Vid-gen?</summary>
-        <p>Thanks to the 16GB Neural Engine, videos are synthesized in under 30 seconds compared to the industry average of 3-5 minutes.</p>
-      </details>
-      <details>
-        <summary>Can I use SteveAI for coding?</summary>
-        <p>Yes. The <code>/mode coding</code> command activates the DeepSeek-V3 engine, specifically tuned for technical excellence.</p>
+      <details style="background: #252525; border: 1px solid #3a3a3a; border-radius: 8px; margin-bottom: 10px; padding: 10px;">
+        <summary style="color: #00ffcc; cursor: pointer; font-weight: bold;">What is the 3D Sculptor?</summary>
+        <p style="padding-top: 10px;">It is a new generative feature built by Ahmed and Saadpie that creates 3D objects from simple text or images.</p>
       </details>
     </section>
   </main>
 
   <footer>
     <p>© 2025 <strong>SteveAI</strong> • Infrastructure by <strong>Shawaiz Ali Yasin</strong></p>
-    <p>Architected with ❤️ by <a href="https://github.com/saad-pie" target="_blank">Saadpie</a> & <a href="https://www.instagram.com/ahmxd15._" target="_blank">Ahmed</a></p>
-    <p>Support: <a href="mailto:saadabdulrehman2010@gmail.com">saadabdulrehman2010@gmail.com</a></p>
+    <p>Architected with ❤️ by <a href="#">Saadpie</a> & <a href="#">Ahmed</a></p>
   </footer>
 </body>
 </html>
