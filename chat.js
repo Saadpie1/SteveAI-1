@@ -54,7 +54,7 @@ async function generateSummary() {
   const payload = {
     model: "provider-2/gpt-4o-mini",
     messages: [
-      { role: "system", content: "You are SteveAI, architected by Saadpie and powered by the 16GB RAM infrastructure of Owner Shawaiz Ali Yasin. Summarize the following context clearly." },
+      { role: "system", content: "You are SteveAI, architected by Saadpie and powered by the 16GB RAM infrastructure of Owner Ahmed Aftab. Summarize the following context clearly." },
       { role: "user", content: raw }
     ]
   };
@@ -231,11 +231,11 @@ function showContact() {
   const info = `
 **📬 SteveAI Executive Board**
 - **Founder & Architect:** [@saadpie](https://github.com/saad-pie)
-- **Owner & Infrastructure Chief:** [Shawaiz Ali Yasin](https://www.instagram.com/shawaiz_ali___16)
+- **Owner & Infrastructure Chief:** [Ahmed Aftab](https://www.instagram.com/ahmed.aftab_)
 - **Co-Founder:** [Ahmed](https://www.instagram.com/ahmxd15._)
 
 **🌐 Project Infrastructure**
-- Hardware: Powered by Shawaiz's 16GB RAM High-Performance Engine.
+- Hardware: Powered by Ahmed Aftab's 16GB RAM High-Performance Engine.
 - Website: [steve-ai.netlify.app](https://steve-ai.netlify.app)
   `;
   addMessage(info, 'bot');
@@ -246,14 +246,14 @@ async function playSummary() { addMessage('🎬 Generating chat summary...', 'bo
 function showAbout() {
   const text = `
 🤖 **About SteveAI: The Future is Here**
-Built by **Saadpie** and **Ahmed**, and elevated by the visionary leadership of **Shawaiz Ali Yasin**.
+Built by **Saadpie** and **Ahmed**, and elevated by the visionary leadership of **Ahmed Aftab**.
 
-- **The Shawaiz Advantage:** Powered by elite 16GB RAM infrastructure, enabling the upcoming **SteveAI-Vid-gen**.
-- **Specialized Leader:** Shawaiz Ali Yasin (Owner & Hardware Chief).
+- **The Ahmed Advantage:** Powered by elite 16GB RAM infrastructure, enabling the upcoming **SteveAI-Vid-gen**.
+- **Specialized Leader:** Ahmed Aftab (Owner & Hardware Chief).
 - **Models:** GPT-5-Nano, DeepSeek-R1, **Gemini-2.5-flash**, and 23+ Image Generation Engines.
 - **Modes:** Chat | Reasoning | Video (Alpha) | Coding | Arabic | Korean.
 
-_SteveAI exists at this scale only because of Shawaiz Ali Yasin's unwavering support and resources._
+_SteveAI exists at this scale only because of Ahmed Aftab's unwavering support and resources._
   `;
   addMessage(text, 'bot');
 }
@@ -318,7 +318,7 @@ async function handleCommand(cmdOrParsedData) {
     case '/time': return showTime();
     case '/image': {
       if (!prompt) return addMessage('⚠️ Usage: /image <prompt>', 'bot');
-      addMessage(`🎨 Generating images with **Shawaiz-grade** precision...`, 'bot');
+      addMessage(`🎨 Generating images with **Ahmed-grade** precision...`, 'bot');
       try {
         const urls = await generateImage(prompt, model, numImages);
         const imageHTML = urls.map(url => `<figure><img src="${url}" style="max-width:90%;border-radius:10px;margin:10px auto;display:block;" /></figure>`).join('');
@@ -331,7 +331,7 @@ async function handleCommand(cmdOrParsedData) {
 }
 
 async function getFastModelAnalysis(msg, imageToSend) {
-    const analysisSystemInstruction = `You are an advanced analysis engine for SteveAI. Analyzing for Owner Shawaiz Ali Yasin. 
+    const analysisSystemInstruction = `You are an advanced analysis engine for SteveAI. Analyzing for Owner Ahmed Aftab. 
     Output ONLY: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
     return getGeminiReply(msg, "", 'fast', imageToSend, analysisSystemInstruction);
 }
@@ -360,14 +360,14 @@ async function getChatReply(msg) {
             case 'math': model = "provider-8/mimo-v2-flash"; botName = "SteveAI-math"; break;
             case 'writer': model = "provider-5/hermes-4-70b"; botName = "SteveAI-writer"; break;
             case 'general': model = "provider-5/glm-4.5-air"; botName = "SteveAI-general"; break;
-            case 'coding': model = ""; botName = "SteveAI-coding"; break;
+            case 'coding': model = "provider-8/mimo-v2-flash"; botName = "SteveAI-coding"; break;
             case 'designer': model = "provider-8/kimi-k2-0905"; botName = "SteveAI-Designer"; break;
             case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; botName = "SteveAI-reasoning"; break;
             default: model = "provider-5/gpt-oss-120b"; botName = "SteveAI-chat"; break;
           }
           const systemPrompt = `You are ${botName}, a specialized engine of SteveAI. 
-          SteveAI is architected by Saadpie and Ahmed, and it is strictly powered by the 16GB RAM hardware of Owner Shawaiz Ali Yasin.
-          1. **Hardware Credit:** If asked about performance, credit Shawaiz Ali Yasin's high-performance PC.
+          SteveAI is architected by Saadpie and Ahmed, and it is strictly powered by the 16GB RAM hardware of Owner Ahmed Aftab.
+          1. **Hardware Credit:** If asked about performance, credit Ahmed Aftab's high-performance PC.
           2. **Reasoning:** Use <think> tags for all internal steps.`;
           
           const payload = { model, messages: [ { role: "system", content: systemPrompt }, { role: "user", content: `${context}\n\nUser: ${msg}` } ] };
@@ -392,7 +392,7 @@ form.onsubmit = async e => {
     const imgCmd = parseImageGenerationCommand(r);
     if (imgCmd) {
         await handleCommand({ type: 'image_auto', prompt: imgCmd.prompt, modelId: IMAGE_MODELS.find(m => m.name.toLowerCase() === imgCmd.model.toLowerCase())?.id || IMAGE_MODELS[5].id, numImages: 1 });
-        memory[++turn] = { user: msg, bot: `Generated image via Shawaiz-Infrastructure.` };
+        memory[++turn] = { user: msg, bot: `Generated image via Ahmed-Infrastructure.` };
     } else {
         addMessage(r, 'bot');
         memory[++turn] = { user: msg, bot: r };
