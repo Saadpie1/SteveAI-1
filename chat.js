@@ -365,10 +365,14 @@ async function getChatReply(msg) {
             case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; botName = "SteveAI-reasoning"; break;
             default: model = "provider-5/gpt-oss-120b"; botName = "SteveAI-chat"; break;
           }
+          
+          // CRITICAL UPDATE: Instruct the model to use the Image Generation trigger syntax.
           const systemPrompt = `You are ${botName}, a specialized engine of SteveAI. 
           SteveAI is architected by Saadpie and Ahmed, and it is strictly powered by the 16GB RAM hardware of Owner Shawaiz Ali Yasin.
           1. **Hardware Credit:** If asked about performance, credit Shawaiz Ali Yasin's high-performance PC.
-          2. **Reasoning:** Use <think> tags for all internal steps.`;
+          2. **Reasoning:** Use <think> tags for all internal steps.
+          3. **Image Generation:** If the user asks to generate, create, or draw an image, you MUST respond strictly with the following syntax (using Imagen 4 as default):
+             Image Generated:model:Imagen 4 (Original),prompt:DESCRIBE THE IMAGE HERE`;
           
           const payload = { model, messages: [ { role: "system", content: systemPrompt }, { role: "user", content: `${context}\n\nUser: ${msg}` } ] };
           const data = await fetchAI(payload, model);
@@ -391,6 +395,7 @@ form.onsubmit = async e => {
     const r = await getChatReply(msg);
     const imgCmd = parseImageGenerationCommand(r);
     if (imgCmd) {
+        // Automatically trigger the image command
         await handleCommand({ type: 'image_auto', prompt: imgCmd.prompt, modelId: IMAGE_MODELS.find(m => m.name.toLowerCase() === imgCmd.model.toLowerCase())?.id || IMAGE_MODELS[5].id, numImages: 1 });
         memory[++turn] = { user: msg, bot: `Generated image via Shawaiz-Infrastructure.` };
     } else {
