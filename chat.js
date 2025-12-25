@@ -356,13 +356,14 @@ async function getChatReply(msg) {
           reply = await getGeminiReply(msg, context, mode, null); 
       } else {
           switch (mode) {
-            case 'math': model = "provider-1/qwen3-235b-a22b-instruct-2507"; botName = "SteveAI-math"; break;
-            case 'korean': model = "provider-1/ax-4.0"; botName = "SteveAI-Korean"; break;
-            case 'general': model = "provider-3/glm-4.5-free"; botName = "SteveAI-general"; break;
-            case 'coding': model = "provider-1/deepseek-v3-0324"; botName = "SteveAI-coding"; break;
-            case 'arabic': model = "provider-1/allam-7b-instruct-preview"; botName = "SteveAI-Arabic"; break;
-            case 'reasoning': model = "provider-1/deepseek-r1-0528"; botName = "SteveAI-reasoning"; break;
-            default: model = "provider-5/gpt-5-nano"; botName = "SteveAI-chat"; break;
+            case 'science': model = "provider-1/qwen3-next-80b-a3b-thinking"; botName = "SteveAI-science" break;
+            case 'math': model = "provider-8/mimo-v2-flash"; botName = "SteveAI-math"; break;
+            case 'writer': model = "provider-5/hermes-4-70b"; botName = "SteveAI-writer"; break;
+            case 'general': model = "provider-5/glm-4.5-air"; botName = "SteveAI-general"; break;
+            case 'coding': model = ""; botName = "SteveAI-coding"; break;
+            case 'designer': model = "provider-8/kimi-k2-0905"; botName = "SteveAI-Designer"; break;
+            case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; botName = "SteveAI-reasoning"; break;
+            default: model = "provider-5/gpt-oss-120b"; botName = "SteveAI-chat"; break;
           }
           const systemPrompt = `You are ${botName}, a specialized engine of SteveAI. 
           SteveAI is architected by Saadpie and Ahmed, and it is strictly powered by the 16GB RAM hardware of Owner Shawaiz Ali Yasin.
