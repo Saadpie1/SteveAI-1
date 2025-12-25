@@ -65,7 +65,6 @@
       color: #00ffcc;
     }
     
-    /* Navigation Accents */
     .threed-tab { border: 1px solid #ff00ff; color: #ff00ff !important; margin-left: 5px; }
 
     main {
@@ -212,7 +211,7 @@
     <span class="collab-tag">Orchestrated by Ahmed & Saadpie</span>
     
     <div class="controls">
-        <input type="text" id="prompt" placeholder="Describe your masterpiece (e.g., A futuristic cyberpunk city in 8k)..." />
+        <input type="text" id="prompt" placeholder="Describe your masterpiece..." />
         
         <div style="display: flex; gap: 10px; width: 100%; justify-content: center; flex-wrap: wrap;">
             <select id="modelSelect"></select>
@@ -220,7 +219,7 @@
                 <option value="1">1 Image</option>
                 <option value="2">2 Images</option>
                 <option value="3">3 Images</option>
-                <option value="4">4 Images (Multi-Orchestration)</option>
+                <option value="4">4 Images (Batch Mode)</option>
             </select>
         </div>
         
@@ -232,7 +231,6 @@
 
   <footer>
     <p>© 2025 <strong>SteveAI</strong> • Built by <a href="#">Saadpie & Ahmed</a></p>
-    <p><a href="mailto:saadabdulrehman2010@gmail.com">Contact Support</a></p>
   </footer>
 
   <script type="module">
@@ -244,33 +242,25 @@
     const modelSelect = document.getElementById("modelSelect");
     const numImagesSelect = document.getElementById("numImagesSelect");
 
+    // Updated Provider Mappings for your refined list
     const PROVIDER_NAMES = {
-        'provider-4': '💎 Premium (Google/Proprietary)',
-        'provider-5': '🔥 Fast-Track (Flash Models)',
-        'provider-2': '🎨 Community Creative Hub' 
+        'provider-4': '💎 Premium Studio (Google)',
+        'provider-5': '⚡ Performance (Flux/Fast)',
+        'provider-8': '🌟 Specialized (Firefrost/Z-Image)'
     };
-
-    function getProvider2GroupName(modelName) {
-        const lowerName = modelName.toLowerCase();
-        if (lowerName.includes('realism') || lowerName.includes('photoreal')) return 'Hyper-Realism';
-        if (lowerName.includes('animagine') || lowerName.includes('anime')) return 'Anime & Illustration';
-        if (lowerName.includes('nsfw')) return 'Specialized (Unfiltered)';
-        return 'Standard Artistic';
-    }
 
     function populateModelSelect() {
         const groupedModels = {};
         IMAGE_MODELS.forEach((model) => {
             const providerId = model.id.split('/')[0];
-            let groupKey = providerId === 'provider-2' ? getProvider2GroupName(model.name) : providerId;
-            if (!groupedModels[groupKey]) groupedModels[groupKey] = [];
-            groupedModels[groupKey].push(model);
+            if (!groupedModels[providerId]) groupedModels[providerId] = [];
+            groupedModels[providerId].push(model);
         });
 
-        Object.keys(groupedModels).forEach(groupKey => {
+        Object.keys(groupedModels).forEach(providerId => {
             const optgroup = document.createElement('optgroup');
-            optgroup.label = PROVIDER_NAMES[groupKey] || groupKey; 
-            groupedModels[groupKey].forEach(model => {
+            optgroup.label = PROVIDER_NAMES[providerId] || `Provider ${providerId}`; 
+            groupedModels[providerId].forEach(model => {
                 const option = document.createElement('option');
                 option.value = model.id;
                 option.textContent = model.name;
