@@ -16,53 +16,47 @@
     }
     header {
       background: #1a1a1a; color: #fff; padding: 1rem 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6;
+      display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ffcc;
     }
     .logo-link { text-decoration: none; color: inherit; display: flex; align-items: center; }
     .logo { height: 30px; margin-right: 10px; border-radius: 4px; }
-    header h1 { margin: 0; font-size: 1.8rem; color: #3b82f6; }
+    header h1 { margin: 0; font-size: 1.8rem; color: #00ffcc; }
     
-    nav { display: flex; align-items: center; }
     nav a {
       color: #e0e0e0; text-decoration: none; margin-left: 1.2rem; padding: 0.5rem 0.8rem;
       border-radius: 4px; transition: 0.2s; font-size: 0.9rem;
     }
-    nav a:hover, nav a.active { background-color: #2c2c2c; color: #3b82f6; }
+    nav a:hover, nav a.active { background-color: #2c2c2c; color: #00ffcc; }
     
-    /* 3D Tab Glow for the new Ahmed & Saadpie collab */
-    .threed-tab { 
-        border: 1px solid #00ffcc; 
-        color: #00ffcc !important; 
-        box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
-    }
+    /* 3D Tab Glow */
+    .threed-tab { border: 1px solid #ff00ff; color: #ff00ff !important; }
 
     main { flex-grow: 1; max-width: 1000px; width: 90%; margin: 2rem auto; padding: 0 1rem; }
     section { background: #1a1a1a; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); }
-    section h2 { color: #3b82f6; border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-top: 0; font-size: 1.5rem; }
+    section h2 { color: #00ffcc; border-bottom: 1px solid #333; padding-bottom: 0.5rem; margin-top: 0; font-size: 1.5rem; }
     
     .update-banner {
-      background: linear-gradient(135deg, #0b1a2e, #1b2d4e);
-      border: 3px solid #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+      background: linear-gradient(135deg, #1a0b2e, #2d1b4e);
+      border: 3px solid #00ffcc; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
       position: relative; overflow: hidden;
     }
     .update-banner::after {
         content: "NEW MODULE"; position: absolute; top: 10px; right: -30px;
-        background: #00ffcc; color: #000; padding: 5px 40px; transform: rotate(45deg);
+        background: #ff00ff; color: white; padding: 5px 40px; transform: rotate(45deg);
         font-size: 0.7rem; font-weight: bold;
     }
-    
-    .about-steveai { border-left: 5px solid #00ffcc; background: #151515; }
+    .about-steveai { border-left: 5px solid #ff00ff; background: #151515; }
     .about-steveai ul, .model-list ul {
         list-style: none; padding-left: 0; display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
     }
     .about-steveai ul li, .model-list ul li {
-        background: #2c2c2c; padding: 0.5rem; border-radius: 4px; border-left: 3px solid #3b82f6;
+        background: #2c2c2c; padding: 0.5rem; border-radius: 4px; border-left: 3px solid #00ffcc;
     }
-    .highlight { border-left-color: #00ffcc !important; font-weight: bold; }
+    .highlight { border-left-color: #ff00ff !important; font-weight: bold; }
 
     footer { background: #1a1a1a; color: #bbb; text-align: center; padding: 2rem 1rem; border-top: 1px solid #2c2c2c; }
-    footer a { color: #3b82f6; font-weight: bold; }
+    footer a { color: #00ffcc; font-weight: bold; }
 
     @media (max-width: 768px) {
         header { flex-direction: column; align-items: flex-start; }
@@ -76,76 +70,71 @@
   <header>
     <a href="/" class="logo-link">
         <img src="SteveAI-logo.jpg" alt="SteveAI Logo" class="logo" loading="lazy"/> 
-        <h1>SteveAI <span style="font-size: 0.6em; color: #00ffcc; vertical-align: middle;">ORCHESTRATOR</span></h1>
+        <h1>SteveAI <span style="font-size: 0.6em; color: #ff00ff; vertical-align: middle;">DAGI</span></h1>
     </a>
     <nav>
       <a href="/" class="active">Home</a>
       <a href="/chat.html">Chat</a>
       <a href="/image.html">Image</a>
       <a href="/vid-gen">Video</a>
-      <a href="/3d" class="threed-tab">3D Sculptor</a> <a href="/docs.html">Docs</a>
+      <a href="/3d" class="threed-tab">3D</a>
+      <a href="/docs.html">Docs</a>
+      <a href="/about.html">About</a>
     </nav>
   </header>
 
   <main>
     <section class="update-banner">
-      <h2 class="emoji-heading">🧊 3D Generation is Live! 🚀</h2>
+      <h2 class="emoji-heading">🧊 3D Avatar Generation is Here! 🚀</h2>
       <p>
-        The <strong>Ahmed & Saadpie</strong> 3D engine has arrived. SteveAI can now generate high-fidelity 3D avatars directly from your text or image prompts.
-      </p>
-      <p>
-        Powered by the <strong>Hunyuan3D-2</strong> pipeline, this module brings professional-grade spatial assets to the palm of your hand.
+        Architected by <strong>Ahmed & Saadpie</strong>, the 3D Sculptor module is now live. Turn your ideas into high-fidelity spatial assets instantly.
       </p>
     </section>
 
     <section class="about-steveai">
-        <h2 class="emoji-heading">🏛️ Global Infrastructure</h2>
-        <p>Architected and Orchestrated by <strong>Saadpie</strong> & <strong>Ahmed</strong>.</p>
+        <h2 class="emoji-heading">🏛️ Executive Leadership</h2>
+        <p>Orchestrated by <strong>Saadpie</strong> & <strong>Ahmed</strong>.</p>
         
-        <h3>⚙️ Multi-Modal Hub</h3>
+        <h3>⚙️ Global Operating Modes</h3>
         <ul>
-            <li><span style="color: #3b82f6;">33+ Specialized Models</span></li>
-            <li><span style="color: #3b82f6;">Real-time 3D Rendering</span></li>
-            <li><span style="color: #3b82f6;">Video Motion Synthesis</span></li>
+            <li><span style="color: #00ffcc;">Chat / Reasoning</span></li>
+            <li><span style="color: #00ffcc;">Coding / Math</span></li>
+            <li><span style="color: #00ffcc;">3D Mesh Generation</span></li>
         </ul>
 
-        <h3>✨ New Capabilities</h3>
+        <h3>✨ Exclusive Features</h3>
         <ul>
-            <li class="highlight">3D Avatar Gen (New)</li>
+            <li class="highlight">3D Sculptor (New)</li>
             <li>Vid-Gen Alpha</li>
-            <li>Context Persistence</li>
+            <li>Context Memory</li>
         </ul>
     </section>
 
     <section class="model-list">
-        <h2>🗣️ Conversational Engine (10+)</h2>
+        <h2>🗣️ Conversational (10+ Specialized)</h2>
         <ul>
             <li>GPT-5-Nano</li>
             <li class="highlight">Gemini-2.5-Flash</li>
-            <li>DeepSeek-R1 (Thinking)</li>
-            <li>Qwen-Max</li>
-            <li>Llama 4-Turbo</li>
+            <li>DeepSeek-R1</li>
+            <li>Qwen-3</li>
+            <li>GLM-4.5</li>
         </ul>
     </section>
 
     <section class="model-list">
-        <h2>🎨 Visual & Spatial (23+ Models)</h2>
+        <h2>🎨 Visual Arts (23+ Models)</h2>
         <ul>
-            <li>Hunyuan3D-2 (Active)</li>
-            <li class="highlight">Flux.1 Pro</li>
-            <li>Midjourney V7</li>
-            <li class="highlight">Steve-Vid-01</li>
-            <li>DALL-E 4</li>
+            <li>Hunyuan3D-2 (New)</li>
+            <li class="highlight">RealVis XL</li>
+            <li>Juggernaut X</li>
+            <li>Playground V2.5</li>
+            <li class="highlight">NSFW Gen</li>
         </ul>
     </section>
   </main>
 
   <footer>
     <p>© 2025 <strong>SteveAI</strong> • Orchestrated by <a href="#">Saadpie</a> & <a href="#">Ahmed</a></p>
-    <p style="margin-top: 10px; color: #3b82f6;">
-      Built for the next generation of Multi-Modal Intelligence.
-    </p>
   </footer>
 </body>
-              </html>
-              
+</html>
