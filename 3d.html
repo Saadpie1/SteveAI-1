@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteveAI | 3D Sculptor by Ahmed & Saadpie</title>
+    <script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/4.12.0/gradio.js"></script>
+    <style>
+        :root {
+            --bg: #09090b;
+            --card: #18181b;
+            --accent: #3b82f6;
+            --text: #fafafa;
+            --muted: #a1a1aa;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            margin: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .title {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #3b82f6, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .credits {
+            font-size: 1.1rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card);
+            border: 1px solid #27272a;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 class="title">SteveAI - Ultimate Assistant</h1>
+        <p class="credits">3D avatars made with <strong>Ahmed</strong> and <strong>Saadpie</strong></p>
+    </div>
+
+    <div class="container">
+        <span class="badge">Multi-Modal Orchestrator v2.0</span>
+        <h2 style="margin-top:0;">3D Sculptor Engine</h2>
+        <p style="color: var(--muted);">Generate high-poly rigged avatars using the Hunyuan3D-2 pipeline.</p>
+        
+        <gradio-app 
+            src="https://tencent-hunyuan3d-2.hf.space" 
+            theme_mode="dark" 
+            control_page_title="false">
+        </gradio-app>
+    </div>
+
+</body>
+</html>
