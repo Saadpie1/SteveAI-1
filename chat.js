@@ -14,11 +14,10 @@ const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
 
-// --- Memory Management (Unlimited Token Budget Logic) ---
+// --- Memory Management ---
 let memory = {};
 let turn = 0;
 
-// Builds a clean history string for the AI to remember past turns
 function buildContext() {
   return Object.keys(memory)
     .map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`)
@@ -51,8 +50,7 @@ function addBotActions(container, text) {
     actions.children[1].onclick = () => {
         const { answer } = parseThinkingResponse(text);
         window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(answer);
-        window.speechSynthesis.speak(utter);
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(answer));
     };
     container.appendChild(actions);
 }
@@ -91,14 +89,16 @@ function createCodeHeader(preElement) {
 
     if (['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase())) {
         const runBtn = document.createElement('button');
-        runBtn.className = 'copy-btn'; runBtn.style.background = '#ffae00'; runBtn.style.color = '#000';
+        runBtn.className = 'copy-btn'; 
+        runBtn.style.cssText = 'background: #ffae00; color: #000; font-weight: bold; border-radius: 4px; padding: 2px 8px;';
         runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run';
         runBtn.onclick = () => window.openInCanvas(codeElement.innerText, lang);
         btnGroup.appendChild(runBtn);
     }
 
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn'; copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+    copyBtn.className = 'copy-btn'; 
+    copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
     copyBtn.onclick = () => {
         navigator.clipboard.writeText(codeElement.innerText);
         copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
@@ -165,7 +165,7 @@ function addMessage(text, sender) {
     chat.appendChild(container);
     let i = 0;
     const contentToType = thinking ? answer : text;
-    const chunkSize = 20;
+    const chunkSize = 25;
 
     (function type() {
       if (i < contentToType.length) {
@@ -198,43 +198,34 @@ async function handleCommand(inputStr) {
     switch (command) {
         case '/clear':
             chat.innerHTML = ''; memory = {}; turn = 0;
-            addMessage('🧹 **SteveAI:** Chat wiped. Ready for a fresh start.', 'bot');
+            addMessage('🧹 **SteveAI:** Memory purged. Ahmed\'s RAM is now clean.', 'bot');
             break;
         case '/theme':
             document.body.classList.toggle('light');
-            addMessage('🌓 **SteveAI:** Atmosphere adjusted.', 'bot');
+            addMessage('🌓 **SteveAI:** UI visual mode toggled.', 'bot');
             break;
         case '/help':
-            addMessage(`**🧭 SteveAI Command Menu**\n- \`/clear\` — Wipe memory\n- \`/theme\` — Toggle mode\n- \`/image <prompt>\` — AI Art\n- \`/mode <type>\` — Switch logic\n- \`/export\` — Save history\n- \`/about\` — Project credits`, 'bot');
+            addMessage(`**🧭 SteveAI Command Menu**\n- \`/clear\` — Wipe memory\n- \`/theme\` — Toggle mode\n- \`/image <prompt>\` — AI Art\n- \`/mode <type>\` — Switch model\n- \`/export\` — Save chat\n- \`/about\` — System info`, 'bot');
             break;
         case '/export':
-            const chatText = Array.from(document.querySelectorAll('.bubble'))
-                .map(el => `${el.classList.contains('user') ? 'USER' : 'STEVEAI'}: ${el.innerText}`)
-                .join('\n\n---\n\n');
+            const chatText = Array.from(document.querySelectorAll('.bubble-content'))
+                .map(el => el.innerText).join('\n\n---\n\n');
             const blob = new Blob([chatText], {type:'text/plain'});
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(blob); 
-            a.download = `SteveAI_Chat_${new Date().toISOString().slice(0,10)}.txt`; 
-            a.click();
-            addMessage('💾 **SteveAI:** Conversation exported as .txt', 'bot');
-            break;
-        case '/mode':
-            if (modeSelect) {
-                modeSelect.value = fullArgs || 'chat';
-                addMessage(`🧭 Mode switched to: **${modeSelect.value.toUpperCase()}**`, 'bot');
-            }
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); 
+            a.download = `SteveAI_History.txt`; a.click();
+            addMessage('💾 **SteveAI:** History saved to local storage.', 'bot');
             break;
         case '/about':
-          addMessage(`🤖 **SteveAI**\nBuilt by **Saadpie** & **Ahmed**. Optimized for **Ahmed Aftab's 16GB Engine**.`, 'bot');
+          addMessage(`🤖 **SteveAI — Ultimate AI Assistant**\n- **Orchestrator:** Saadpie\n- **Engine:** Ahmed Aftab (16GB RAM)\n- **Status:** High Performance Active`, 'bot');
           break;
         case '/image':
             if (!fullArgs) return addMessage('⚠️ Usage: /image <prompt>', 'bot');
-            addMessage('🎨 Generating art with **Ahmed-grade** precision...', 'bot');
+            addMessage('🎨 Generating high-fidelity art...', 'bot');
             try {
-                const urls = await generateImage(fullArgs, IMAGE_MODELS[5].id, 1);
-                const html = urls.map(u => `<img src="${u}" style="max-width:100%; border-radius:10px; margin-top:10px;">`).join('');
-                addMessage(`🖼️ **Result:**\n${html}`, 'bot');
-            } catch (e) { addMessage('❌ Generation failed.', 'bot'); }
+                const urls = await generateImage(fullArgs, IMAGE_MODELS[0].id, 1);
+                const html = urls.map(u => `<img src="${u}" style="max-width:100%; border-radius:12px; margin-top:10px; border: 1px solid #333;">`).join('');
+                addMessage(`🖼️ **SteveAI Art:**\n${html}`, 'bot');
+            } catch (e) { addMessage('❌ Image generation failed.', 'bot'); }
             break;
         default:
             addMessage(`❓ Unknown command: \`${command}\``, 'bot');
@@ -245,7 +236,8 @@ async function handleCommand(inputStr) {
 async function fetchAI(payload) {
     const a4fBase = config.API_BASE[0]; 
     const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
-    for (const key of config.API_KEYS.slice(1).filter(k => k)) {
+    // Iterates through keys for high availability
+    for (const key of config.API_KEYS) {
         try {
             const res = await fetch(finalUrl, {
                 method: 'POST',
@@ -253,9 +245,9 @@ async function fetchAI(payload) {
                 body: JSON.stringify(payload)
             });
             if (res.ok) return await res.json();
-        } catch (e) {}
+        } catch (e) { continue; }
     }
-    throw new Error("API Failure");
+    throw new Error("Connectivity issues with Ahmed's engine.");
 }
 
 // --- Orchestration Logic ---
@@ -267,11 +259,7 @@ async function getChatReply(msg) {
   
   try {
       if (imageToSend) return await getGeminiReply(msg, context, 'fast', imageToSend, null);
-      
-      // Routing for Lite (Instant) and Fast modes
-      if (mode === 'lite' || mode === 'fast') {
-          return await getGeminiReply(msg, context, mode, null);
-      }
+      if (mode === 'lite' || mode === 'fast') return await getGeminiReply(msg, context, mode, null);
 
       let model;
       switch (mode) {
@@ -282,10 +270,10 @@ async function getChatReply(msg) {
         default: model = "provider-5/gpt-oss-120b"; break;
       }
 
-      const system = `You are SteveAI. Created by Saadpie. Powered by Ahmed Aftab's PC hardware. Use <think> for deep reasoning. If generating images, use: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
+      const system = `You are SteveAI by Saadpie. Powered by Ahmed Aftab's PC. If generating images, use syntax: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
       const payload = { model, messages: [{role:"system", content:system}, {role:"user", content:`${context}\n\nUser: ${msg}`}] };
       const data = await fetchAI(payload);
-      return data?.choices?.[0]?.message?.content || "No response.";
+      return data?.choices?.[0]?.message?.content || "No response received.";
   } finally { if (window.hideLoader) window.hideLoader(); }
 }
 
@@ -304,12 +292,15 @@ form.onsubmit = async e => {
     const imgCmd = parseImageGenerationCommand(r);
     if (imgCmd) {
         await handleCommand(`/image ${imgCmd.prompt}`);
-        memory[++turn] = { user: msg, bot: `Generated image: ${imgCmd.prompt}` };
+        memory[++turn] = { user: msg, bot: `Generated image for prompt: ${imgCmd.prompt}` };
     } else {
         addMessage(r, 'bot');
         memory[++turn] = { user: msg, bot: r };
     }
-  } catch(e) { console.error(e); } 
+  } catch(e) { 
+      console.error(e);
+      addMessage("⚠️ System error. Check Ahmed's server status.", 'bot');
+  } 
   finally { if (wasImage && document.getElementById('clearImageBtn')) document.getElementById('clearImageBtn').click(); }
 };
 
