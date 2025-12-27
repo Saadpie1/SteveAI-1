@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>SteveAI - Ultimate Multi-Modal Orchestrator</title>
+  <title>SteveAI - Ultimate AI Assistant</title>
 
-  <meta name="description" content="SteveAI: High-performance AI Orchestrator powered by Ahmed Aftab's 16GB RAM engine.">
+  <meta name="description" content="SteveAI: Your high-performance Multi-Modal AI Orchestrator powered by Ahmed Aftab's 16GB RAM engine.">
   <meta name="author" content="Saadpie">
-  <meta name="theme-color" content="#0d0d0d"/>
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap">
@@ -18,128 +17,118 @@
 
   <style>
     :root {
-      --bg-main: #0d0d0d;
-      --bg-header: #141414;
-      --bg-bubble-user: #0052cc;
-      --bg-bubble-bot: #1e1e1e;
+      --bg-dark: #0d0d0d;
+      --bg-panel: #141414;
+      --bg-user: #0052cc;
+      --bg-bot: #1e1e1e;
       --accent: #ffae00;
-      --text-main: #f0f0f0;
-      --border: #333;
-      --shadow: 0 4px 12px rgba(0,0,0,0.5);
+      --text: #f0f0f0;
+      --border: #2a2a2a;
+      --shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
 
     body.light {
-      --bg-main: #f5f7f9;
-      --bg-header: #ffffff;
-      --bg-bubble-user: #0052cc;
-      --bg-bubble-bot: #ffffff;
-      --text-main: #1a1a1a;
+      --bg-dark: #f8f9fa;
+      --bg-panel: #ffffff;
+      --bg-bot: #ffffff;
+      --text: #1a1a1a;
       --border: #d1d9e0;
       --shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { 
-      margin: 0; background: var(--bg-main); color: var(--text-main); 
+      margin: 0; background: var(--bg-dark); color: var(--text); 
       font-family: 'Inter', sans-serif; height: 100vh; display: flex; 
-      flex-direction: column; overflow: hidden; transition: background 0.3s ease;
+      flex-direction: column; overflow: hidden; transition: 0.3s ease;
     }
 
     /* --- Header --- */
     #header { 
       height: 65px; display: flex; justify-content: space-between; align-items: center; 
-      padding: 0 20px; background: var(--bg-header); border-bottom: 1px solid var(--border); 
-      box-shadow: var(--shadow); z-index: 1001; 
+      padding: 0 20px; background: var(--bg-panel); border-bottom: 1px solid var(--border); 
+      z-index: 1001; box-shadow: var(--shadow);
     }
     .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.2rem; }
-    .logo-icon img { width: 32px; height: 32px; border-radius: 6px; }
+    .logo-icon img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; }
 
     #modeSelect {
       background: #222; color: #fff; border: 1px solid var(--border);
-      padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; outline: none;
+      padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; cursor: pointer;
     }
-    body.light #modeSelect { background: #fff; color: #111; }
 
-    /* --- Chat Area --- */
-    #view-wrapper { display: flex; flex: 1; overflow: hidden; }
+    /* --- Chat Layout --- */
+    #view-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; }
     #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     #chat { flex: 1; overflow-y: auto; padding: 25px; scroll-behavior: smooth; }
 
-    /* --- Bubbles & Actions --- */
-    .message-container { display: flex; flex-direction: column; margin-bottom: 20px; position: relative; max-width: 85%; }
+    /* --- Professional Messaging --- */
+    .message-container { display: flex; flex-direction: column; margin-bottom: 28px; position: relative; max-width: 85%; transition: 0.3s; }
     .message-container.user { align-self: flex-end; align-items: flex-end; }
     .message-container.bot { align-self: flex-start; align-items: flex-start; }
 
     .bubble { 
-      padding: 14px 18px; border-radius: 18px; font-size: 15.5px; line-height: 1.5; 
-      position: relative; box-shadow: var(--shadow); transition: transform 0.2s ease;
+      padding: 14px 20px; border-radius: 20px; font-size: 16px; line-height: 1.6; 
+      box-shadow: var(--shadow); position: relative;
     }
-    .user .bubble { background: var(--bg-bubble-user); color: white; border-bottom-right-radius: 4px; }
-    .bot .bubble { background: var(--bg-bubble-bot); color: var(--text-main); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+    .user .bubble { background: var(--bg-user); color: #fff; border-bottom-right-radius: 4px; }
+    .bot .bubble { background: var(--bg-bot); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
 
-    /* Professional Action Buttons Fix */
+    /* Floating Actions Bar */
     .message-actions {
-      display: flex; gap: 8px; margin-top: 5px; opacity: 0; transition: opacity 0.2s;
+      display: flex; gap: 6px; margin-top: 8px; opacity: 0; 
+      transform: translateY(5px); transition: 0.2s ease;
     }
-    .message-container:hover .message-actions { opacity: 1; }
+    .message-container:hover .message-actions { opacity: 1; transform: translateY(0); }
+    
     .action-btn-small { 
-      background: none; border: none; color: #888; cursor: pointer; font-size: 0.9rem; 
-      padding: 4px; transition: color 0.2s;
+      background: var(--bg-panel); border: 1px solid var(--border); color: #888;
+      width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: 0.2s;
     }
-    .action-btn-small:hover { color: var(--accent); }
+    .action-btn-small:hover { border-color: var(--accent); color: var(--accent); background: #222; }
 
-    /* --- Code Block Professional Style --- */
-    .code-header {
-      background: #2d2d2d; color: #aaa; display: flex; justify-content: space-between; 
-      padding: 8px 15px; border-radius: 8px 8px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 12px;
-      border-bottom: 1px solid #444; margin-top: 15px;
+    /* --- Fix the "Egg" Buttons --- */
+    .icon-btn-circle {
+      width: 44px !important; height: 44px !important; min-width: 44px !important;
+      border-radius: 50% !important; border: none; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: 0.3s; flex-shrink: 0;
     }
-    pre { margin: 0 0 15px 0 !important; border-radius: 0 0 8px 8px !important; }
-    .copy-btn-inline { background: #3e4451; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-    .run-btn-inline { background: #10b981; color: white; border: none; padding: 4px 12px; border-radius: 4px; margin-right: 5px; cursor: pointer; font-size: 11px; }
+    #sendBtn { background: var(--accent); color: #000; font-size: 1.2rem; }
+    #sendBtn:hover { transform: scale(1.1); box-shadow: 0 0 15px rgba(255, 174, 0, 0.4); }
+    #imageUploadBtn { background: #333; color: #fff; }
 
-    /* --- Input Bar Overhaul --- */
-    #inputContainer { padding: 15px 20px 25px 20px; background: var(--bg-header); border-top: 1px solid var(--border); }
-    #inputForm { display: flex; align-items: center; max-width: 1000px; margin: 0 auto; gap: 12px; }
+    /* --- Input Area --- */
+    #inputContainer { padding: 15px 25px 25px 25px; background: var(--bg-panel); border-top: 1px solid var(--border); }
+    #inputForm { display: flex; align-items: center; max-width: 1000px; margin: 0 auto; gap: 15px; }
     
     .modern-input-wrapper { 
       flex: 1; display: flex; align-items: center; background: #1a1a1a; 
-      border: 1px solid var(--border); border-radius: 28px; padding: 5px 15px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      border: 1px solid var(--border); border-radius: 30px; padding: 4px 18px;
     }
-    .modern-input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,174,0,0.2); }
     body.light .modern-input-wrapper { background: #fff; }
-
     textarea { 
       flex: 1; border: none; background: transparent; color: inherit; 
-      padding: 10px; font-size: 16px; outline: none; resize: none; max-height: 150px;
+      padding: 12px 0; font-size: 16px; outline: none; resize: none; max-height: 200px;
     }
 
-    /* Fixed Perfectly Circular Buttons */
-    .icon-btn {
-      width: 42px; height: 42px; border-radius: 50%; border: none; 
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    /* --- Professional Code Blocks --- */
+    .code-header {
+      background: #1e1e1e; border: 1px solid #333; border-radius: 8px 8px 0 0;
+      padding: 8px 16px; display: flex; justify-content: space-between; align-items: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #999; margin-top: 10px;
     }
-    #sendBtn { background: var(--accent); color: #000; font-size: 1.1rem; }
-    #sendBtn:hover { transform: scale(1.05); background: #ffbc33; }
-    #imageUploadBtn { background: #333; color: #fff; }
-    #micBtn { background: transparent; color: #888; font-size: 1.1rem; }
-    #micBtn:hover { color: var(--accent); }
+    pre { margin: 0 0 15px 0 !important; border-radius: 0 0 8px 8px !important; }
+    .run-btn-code { background: #10b981; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 11px; margin-right: 5px; }
+    .copy-btn-code { background: #3b82f6; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
 
-    /* --- Canvas Sidebar --- */
-    #canvas-sidebar { 
-      width: 50%; background: #fff; border-left: 1px solid var(--border);
-      display: flex; flex-direction: column; transition: 0.3s ease; 
-    }
+    /* Canvas */
+    #canvas-sidebar { width: 50%; background: #fff; border-left: 2px solid var(--border); display: flex; flex-direction: column; transition: 0.3s; }
     #canvas-sidebar.hidden { display: none; }
-    
-    /* Responsive */
+
     @media (max-width: 768px) {
       #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100% !important; z-index: 9999; }
       .message-container { max-width: 95%; }
-      #header { padding: 0 10px; }
-      .logo span { display: none; }
     }
   </style>
 </head>
@@ -147,12 +136,9 @@
 <body>
   <div id="header">
     <div class="logo">
-      <div class="logo-icon">
-        <img src="SteveAI-logo.jpg" alt="Logo">
-      </div>
+      <div class="logo-icon"><img src="SteveAI-logo.jpg" alt="SteveAI"></div>
       <span>SteveAI</span>
     </div>
-
     <div class="header-actions">
       <select id="modeSelect">
         <option value="chat">SteveAI-chat</option>
@@ -161,27 +147,34 @@
         <option value="fast">SteveAI-fast</option>
         <option value="lite">SteveAI-instant</option>
       </select>
-      <button id="clearChat" class="action-btn-small" title="Clear Chat"><i class="fa-solid fa-trash-can"></i></button>
-      <button id="themeToggle" class="action-btn-small" title="Toggle Theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      <button id="clearChat" class="action-btn-small" title="Clear"><i class="fa-solid fa-broom"></i></button>
+      <button id="themeToggle" class="action-btn-small" title="Theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
     </div>
   </div>
 
   <div id="view-wrapper">
     <div id="chat-side">
       <div id="chat">
+        <div id="loading-indicator" class="bot-message" style="display:none;">
+            <div class="bouncing-dots" style="padding: 15px; display:flex; gap:5px;">
+              <span style="width:8px; height:8px; background:var(--accent); border-radius:50%; animation: bounce 1.4s infinite ease-in-out both;"></span>
+              <span style="width:8px; height:8px; background:var(--accent); border-radius:50%; animation: bounce 1.4s infinite ease-in-out both 0.2s;"></span>
+              <span style="width:8px; height:8px; background:var(--accent); border-radius:50%; animation: bounce 1.4s infinite ease-in-out both 0.4s;"></span>
+            </div>
         </div>
+      </div>
     </div>
 
     <div id="canvas-sidebar" class="hidden">
-      <div id="canvas-header" style="background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between;">
+      <div style="background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between; align-items:center;">
           <div class="canvas-tabs">
-              <button class="tab-btn active" onclick="window.switchCanvasTab('preview')">Live Preview</button>
-              <button class="tab-btn" onclick="window.switchCanvasTab('code')">Source Code</button>
+              <button class="action-btn-small" onclick="window.switchCanvasTab('preview')" style="width:auto; padding:0 15px;">Preview</button>
+              <button class="action-btn-small" onclick="window.switchCanvasTab('code')" style="width:auto; padding:0 15px;">Code</button>
           </div>
-          <button onclick="window.toggleCanvas()" style="background:none; border:none; color:white; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+          <button onclick="window.toggleCanvas()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
       </div>
-      <div id="canvas-content" style="flex:1; display:flex; flex-direction:column; background:white;">
-          <iframe id="canvas-iframe" style="flex:1; border:none;"></iframe>
+      <div id="canvas-content" style="flex:1; display:flex; flex-direction:column;">
+          <iframe id="canvas-iframe" style="flex:1; border:none; background:white;"></iframe>
           <div id="canvas-code-container" style="display:none; flex:1; overflow:auto; background:#1e1e1e;">
             <pre><code id="canvas-code-display" class="language-markup"></code></pre>
           </div>
@@ -190,48 +183,36 @@
   </div>
 
   <div id="inputContainer">
-    <div id="imagePreviewContainer" style="display:none; padding: 10px; gap: 10px;">
-        <div style="position:relative;">
-          <img id="imagePreview" src="" style="height: 60px; border-radius: 8px; border: 2px solid var(--accent);">
-          <button id="clearImageBtn" style="position:absolute; top:-5px; right:-5px; background:red; color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">×</button>
+    <div id="imagePreviewContainer" style="display:none; padding-bottom:10px;">
+        <div style="position:relative; display:inline-block;">
+          <img id="imagePreview" src="" style="height:60px; border-radius:10px; border:2px solid var(--accent);">
+          <button id="clearImageBtn" style="position:absolute; top:-8px; right:-8px; background:#ff4444; color:#fff; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">&times;</button>
         </div>
     </div>
-
     <form id="inputForm">
       <input type="file" id="imageInputFile" accept="image/*" style="display:none;"> 
-      <button type="button" id="imageUploadBtn" class="icon-btn" title="Upload Image"><i class="fa-solid fa-plus"></i></button>
+      <button type="button" id="imageUploadBtn" class="icon-btn-circle" title="Upload Image"><i class="fa-solid fa-plus"></i></button>
       
       <div class="modern-input-wrapper">
         <textarea id="messageInput" placeholder="Message SteveAI..." rows="1" required></textarea>
-        <button type="button" id="micBtn" class="icon-btn" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
+        <button type="button" id="micBtn" style="background:none; border:none; color:#888; cursor:pointer; font-size:1.1rem;"><i class="fa-solid fa-microphone"></i></button>
       </div>
 
-      <button type="submit" id="sendBtn" class="icon-btn" title="Send Message"><i class="fa-solid fa-paper-plane"></i></button>
+      <button type="submit" id="sendBtn" class="icon-btn-circle" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
     </form>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script type="module" src="chat.js"></script>
-
   <script>
-    // Auto-resize textarea
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    // Auto-expand textarea
     const tx = document.getElementById('messageInput');
     tx.addEventListener("input", function() {
       this.style.height = "auto";
       this.style.height = (this.scrollHeight) + "px";
     });
-
-    window.switchCanvasTab = (tab) => {
-        const preview = document.getElementById('canvas-iframe');
-        const code = document.getElementById('canvas-code-container');
-        const btns = document.querySelectorAll('.tab-btn');
-        if(tab === 'preview') {
-            preview.style.display = 'block'; code.style.display = 'none';
-        } else {
-            preview.style.display = 'none'; code.style.display = 'block';
-        }
-    };
   </script>
 </body>
 </html>
