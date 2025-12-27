@@ -14,20 +14,22 @@ const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
 
-// --- Memory Management (Unlimited Token Budget) ---
+// --- Memory Management (Unlimited Token Budget Logic) ---
 let memory = {};
 let turn = 0;
-const approxTokens = s => Math.ceil((s || "").length / 4);
 
-// --- Helpers ---
-function memoryString() {
-  return Object.keys(memory).map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`).join('\n');
+// Builds a clean history string for the AI to remember past turns
+function buildContext() {
+  return Object.keys(memory)
+    .map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`)
+    .join('\n');
 }
 
+// --- Helpers ---
 function getRandomTypingDelay() { return 10; }
 function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
 
-// --- Action Button Logic (Updated for Icons) ---
+// --- Action Button Logic ---
 function addUserActions(container, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
@@ -75,7 +77,7 @@ function parseImageGenerationCommand(text) {
     return (model && prompt) ? { prompt, model } : null;
 }
 
-// --- Canvas Integration (Code Headers) ---
+// --- Canvas Integration ---
 function createCodeHeader(preElement) {
     if (preElement.querySelector('.code-header')) return; 
     const codeElement = preElement.querySelector('code');
@@ -122,7 +124,6 @@ window.postProcessChat = (newChatElement) => {
     }
 };
 
-// --- Canvas Logic Redirection ---
 window.openInCanvas = (code, lang) => {
     const sidebar = document.getElementById('canvas-sidebar');
     const iframe = document.getElementById('canvas-iframe');
@@ -188,7 +189,7 @@ function addMessage(text, sender) {
   }
 }
 
-// --- Robust Command Router ---
+// --- Command Router ---
 async function handleCommand(inputStr) {
     const parts = inputStr.trim().split(' ');
     const command = parts[0].toLowerCase();
@@ -197,34 +198,25 @@ async function handleCommand(inputStr) {
     switch (command) {
         case '/clear':
             chat.innerHTML = ''; memory = {}; turn = 0;
-            addMessage('🧹 **SteveAI:** Chat memory cleared.', 'bot');
+            addMessage('🧹 **SteveAI:** Chat wiped. Ready for a fresh start.', 'bot');
             break;
         case '/theme':
             document.body.classList.toggle('light');
-            addMessage('🌓 **SteveAI:** Theme toggled.', 'bot');
+            addMessage('🌓 **SteveAI:** Atmosphere adjusted.', 'bot');
             break;
         case '/help':
-            addMessage(`
-**🧭 SteveAI Command Menu**
-- \`/clear\` — Reset conversation
-- \`/theme\` — Toggle mode
-- \`/image <prompt>\` — AI Art
-- \`/mode <type>\` — Switch specialized logic
-- \`/export\` — Download Chat
-- \`/about\` — Project history
-- \`/contact\` — Meet the board
-            `, 'bot');
-            break;
-        case '/about':
-            addMessage('🤖 **SteveAI**\nArchitected by **Saadpie** & **Ahmed**. Powered by **Ahmed Aftab\'s 16GB RAM Engine**.', 'bot');
-            break;
-        case '/contact':
-            addMessage('📬 **Board:**\n- **Saadpie** (Architect)\n- **Ahmed Aftab** (Owner)\n- **Ahmed** (Co-Founder)', 'bot');
+            addMessage(`**🧭 SteveAI Command Menu**\n- \`/clear\` — Wipe memory\n- \`/theme\` — Toggle mode\n- \`/image <prompt>\` — AI Art\n- \`/mode <type>\` — Switch logic\n- \`/export\` — Save history\n- \`/about\` — Project credits`, 'bot');
             break;
         case '/export':
-            const blob = new Blob([memoryString()], {type:'text/plain'});
-            const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='SteveAI_Chat.txt'; a.click();
-            addMessage('💾 Chat exported.', 'bot');
+            const chatText = Array.from(document.querySelectorAll('.bubble'))
+                .map(el => `${el.classList.contains('user') ? 'USER' : 'STEVEAI'}: ${el.innerText}`)
+                .join('\n\n---\n\n');
+            const blob = new Blob([chatText], {type:'text/plain'});
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `SteveAI_Chat_${new Date().toISOString().slice(0,10)}.txt`; 
+            a.click();
+            addMessage('💾 **SteveAI:** Conversation exported as .txt', 'bot');
             break;
         case '/mode':
             if (modeSelect) {
@@ -232,6 +224,9 @@ async function handleCommand(inputStr) {
                 addMessage(`🧭 Mode switched to: **${modeSelect.value.toUpperCase()}**`, 'bot');
             }
             break;
+        case '/about':
+          addMessage(`🤖 **SteveAI**\nBuilt by **Saadpie** & **Ahmed**. Optimized for **Ahmed Aftab's 16GB Engine**.`, 'bot');
+          break;
         case '/image':
             if (!fullArgs) return addMessage('⚠️ Usage: /image <prompt>', 'bot');
             addMessage('🎨 Generating art with **Ahmed-grade** precision...', 'bot');
@@ -246,7 +241,7 @@ async function handleCommand(inputStr) {
     }
 }
 
-// --- Fetch & Orchestration ---
+// --- API Fetching ---
 async function fetchAI(payload) {
     const a4fBase = config.API_BASE[0]; 
     const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
@@ -263,15 +258,20 @@ async function fetchAI(payload) {
     throw new Error("API Failure");
 }
 
+// --- Orchestration Logic ---
 async function getChatReply(msg) { 
-  const context = memoryString(); 
+  const context = buildContext(); 
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   const imageToSend = window.base64Image;
   if (window.showLoader) window.showLoader();
   
   try {
       if (imageToSend) return await getGeminiReply(msg, context, 'fast', imageToSend, null);
-      if (mode === 'lite' || mode === 'fast') return await getGeminiReply(msg, context, mode, null);
+      
+      // Routing for Lite (Instant) and Fast modes
+      if (mode === 'lite' || mode === 'fast') {
+          return await getGeminiReply(msg, context, mode, null);
+      }
 
       let model;
       switch (mode) {
@@ -282,14 +282,14 @@ async function getChatReply(msg) {
         default: model = "provider-5/gpt-oss-120b"; break;
       }
 
-      const system = `You are SteveAI (Architected by Saadpie, Powered by Ahmed Aftab's PC). Use <think> for reasoning. For images: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
+      const system = `You are SteveAI. Created by Saadpie. Powered by Ahmed Aftab's PC hardware. Use <think> for deep reasoning. If generating images, use: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
       const payload = { model, messages: [{role:"system", content:system}, {role:"user", content:`${context}\n\nUser: ${msg}`}] };
       const data = await fetchAI(payload);
       return data?.choices?.[0]?.message?.content || "No response.";
   } finally { if (window.hideLoader) window.hideLoader(); }
 }
 
-// --- Final Event Bindings ---
+// --- Event Bindings ---
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
