@@ -41,7 +41,7 @@ function shouldSummarize() {
   return turn >= 6 || approxTokens(memoryString()) > TOKEN_BUDGET;
 }
 
-function getRandomTypingDelay() { return Math.floor(Math.random() * 5); }
+function getRandomTypingDelay() { return (Math.floor(Math.random() * 5))/100; }
 
 // --- Markdown Parser ---
 function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
