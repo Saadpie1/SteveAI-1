@@ -5,14 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>SteveAI - Smart AI Assistant</title>
 
-  <meta name="description" content="SteveAI: Your high-performance Multi-Modal AI Orchestrator powered by Ahmed Aftab's 16GB RAM engine.">
-  <meta name="keywords" content="SteveAI, Saadpie, AI assistant, chatbot, DeepSeek, Gemini, Image Generation">
+  <meta name="description" content="SteveAI: Your high-performance Multi-Modal AI Orchestrator.">
   <meta name="author" content="Saadpie">
   <meta property="og:title" content="SteveAI - Smart AI Assistant">
-  <meta property="og:description" content="Ultimate Multi-Modal AI Orchestrator with 33+ specialized models.">
   <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
   <meta property="og:url" content="https://steve-ai.netlify.app/chat.html">
-  <meta property="og:type" content="website">
   <meta name="theme-color" content="#1e1e1e"/>
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
 
@@ -46,14 +43,10 @@
       <select id="modeSelect" title="Model Mode">
         <option value="chat" selected>SteveAI-chat</option>
         <option value="reasoning">SteveAI-reasoning</option>
-        <option value="fast">SteveAI-fast (Gemini)</option>
-        <option value="lite">SteveAI-instant</option>
         <option value="coding">SteveAI-coding</option>
-        <option value="math">SteveAI-math</option>
-        <option value="science">SteveAI-science</option>
         <option value="designer">SteveAI-designer</option>
+        <option value="math">SteveAI-math</option>
         <option value="writer">SteveAI-writer</option>
-        <option value="general">SteveAI-general</option>
       </select>
       <button id="clearChat" class="action-btn" title="Clear Chat"><i class="fa-solid fa-trash"></i></button>
       <button id="themeToggle" class="action-btn" title="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
@@ -64,11 +57,7 @@
     <div id="chat-side">
       <div id="chat">
         <div id="loading-indicator" class="bot-message" style="display:none;">
-            <div class="bouncing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
+            <div class="bouncing-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
     </div>
@@ -89,7 +78,7 @@
   </div>
 
   <div id="commandHints" hidden>
-    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span><span>/export</span><span>/about</span>
+    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span>
   </div>
 
   <div id="inputContainer">
@@ -105,138 +94,107 @@
         <textarea id="messageInput" placeholder="Ask SteveAI anything..." rows="1" required></textarea>
         <button type="button" id="micBtn" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
       </div>
-
       <button type="submit" id="sendBtn" title="Send"><i class="fa-solid fa-arrow-up"></i></button>
     </form>
   </div>
   
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+  <script type="module" src="chat.js"></script>
   
   <script>
-    // --- GLOBAL UTILITIES FOR CHAT.JS ---
+    // Global Loaders
     window.showLoader = () => {
         const loader = document.getElementById('loading-indicator');
         const chat = document.getElementById('chat');
-        if (loader) {
-            chat.appendChild(loader);
-            loader.style.display = 'block';
-            chat.scrollTop = chat.scrollHeight;
-        }
+        if (loader && chat) { chat.appendChild(loader); loader.style.display = 'block'; chat.scrollTop = chat.scrollHeight; }
     };
     window.hideLoader = () => {
         const loader = document.getElementById('loading-indicator');
         if (loader) loader.style.display = 'none';
     };
 
-    window.copyCode = (button) => {
-        const pre = button.closest('pre');
-        const code = pre.querySelector('code').innerText;
-        navigator.clipboard.writeText(code).then(() => {
-            button.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
-            setTimeout(() => { button.innerHTML = 'Copy'; }, 2000);
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const inputEl = document.getElementById('messageInput');
-        const micBtn = document.getElementById('micBtn');
-
-        // Voice Recognition (STT)
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            micBtn.onclick = () => {
-                if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
-                recognition.start();
-                micBtn.style.color = "#ff4444";
-            };
-            recognition.onresult = (e) => { inputEl.value = e.results[0][0].transcript; };
-            recognition.onend = () => { micBtn.style.color = ""; };
-        }
-
-        // Image Handling
-        const imageInputFile = document.getElementById('imageInputFile');
-        const imageUploadBtn = document.getElementById('imageUploadBtn');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const imagePreview = document.getElementById('imagePreview');
-
-        imageUploadBtn.addEventListener('click', () => { imageInputFile.click(); });
-        imageInputFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    window.base64Image = event.target.result; 
-                    imagePreview.src = event.target.result;
-                    imagePreviewContainer.style.display = 'flex';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById('clearImageBtn').onclick = () => {
-            window.base64Image = null; imagePreview.src = ''; 
-            imagePreviewContainer.style.display = 'none';
-        };
-
-        // Command Hints Logic
-        inputEl.addEventListener('input', () => {
-            document.getElementById('commandHints').hidden = !inputEl.value.startsWith('/');
-        });
-    });
+    // Correct toggle function for the sidebar
+    window.toggleCanvas = () => {
+        const sidebar = document.getElementById('canvas-sidebar');
+        sidebar.classList.toggle('hidden');
+    };
   </script>
-  
-  <script type="module" src="chat.js"></script>
-  
+
   <style>
-    /* Merged Styles */
-    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
-    body.light { background: #fafafa; color: #111; }
+    /* CSS FIXES FOR LAYOUT */
+    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
-    #header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; border-bottom: 1px solid #333; height: 60px; z-index: 1001; }
-    body.light #header { background: #fff; color: #111; }
-
-    #view-wrapper { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
-    #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-    #chat { height: 100%; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
-
-    /* Responsive Canvas Styles */
-    #canvas-sidebar { width: 45%; background: #1a1a1a; border-left: 1px solid #333; display: flex; flex-direction: column; transition: 0.3s; z-index: 2000; }
-    #canvas-sidebar.hidden { display: none; }
-    #canvas-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #111; border-bottom: 1px solid #333; }
-    #canvas-content { flex: 1; overflow: auto; background: #fff; }
-    #canvas-iframe { width: 100%; height: 100%; border: none; display: block; }
-
-    @media (max-width: 768px) {
-        #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100% !important; height: 100%; }
+    #header { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background: #111; border-bottom: 1px solid #333; height: 60px; flex-shrink: 0; }
+    
+    #view-wrapper { 
+        display: flex; 
+        flex-direction: row; /* Desktop: side-by-side */
+        flex: 1; 
+        overflow: hidden; 
+        position: relative; 
     }
 
-    /* Input Styling */
-    #inputContainer { padding: 12px; border-top: 1px solid #333; background: #111; width: 100%; box-sizing: border-box; }
+    #chat-side { 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        min-width: 0; 
+        height: 100%;
+    }
+
+    #chat { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
+
+    /* CANVAS SIDEBAR FIX */
+    #canvas-sidebar { 
+        width: 50%; /* Desktop takes half screen */
+        background: #fff; 
+        border-left: 1px solid #333; 
+        display: flex; 
+        flex-direction: column; 
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+
+    #canvas-sidebar.hidden { display: none; }
+
+    #canvas-header { 
+        padding: 8px 12px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        background: #111; 
+        color: #fff;
+    }
+
+    #canvas-content { flex: 1; position: relative; background: #fff; }
+    #canvas-iframe { width: 100%; height: 100%; border: none; }
+
+    /* MOBILE RESPONSIVENESS FIX */
+    @media (max-width: 768px) {
+        #canvas-sidebar { 
+            position: absolute; 
+            top: 0; 
+            right: 0; 
+            width: 100%; /* Full screen on mobile */
+            height: 100%;
+            z-index: 2000;
+        }
+        #view-wrapper { flex-direction: column; }
+    }
+
+    /* Input Area */
+    #inputContainer { padding: 12px; border-top: 1px solid #333; background: #111; flex-shrink: 0; }
     #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 10px; align-items: center; }
     .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 2px 12px; }
-    body.light .modern-input-wrapper { background: #fff; border-color: #ccc; }
-    textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; }
-    body.light textarea { color: #111; }
+    textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; max-height: 150px; }
     
-    #sendBtn { background: #ffae00; color: #111; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
-    #imageUploadBtn { background: #333; color: #fff; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
-    
-    #commandHints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; background: #111; padding: 8px; border-top: 1px solid #222; }
-    #commandHints span { background: #222; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
+    .action-btn, #sendBtn { cursor: pointer; border: none; transition: 0.2s; }
+    #sendBtn { background: #ffae00; color: #111; width: 42px; height: 42px; border-radius: 50%; }
 
-    /* Bouncing dots loader */
     .bouncing-dots { display: flex; gap: 4px; padding: 10px; }
-    .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: st-bounce 1.4s infinite ease-in-out both; }
-    .bouncing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .bouncing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: bounce 1.4s infinite; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
   </style>
 </body>
 </html>
