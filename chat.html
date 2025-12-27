@@ -139,10 +139,12 @@
         const btns = document.querySelectorAll('.tab-btn');
         btns.forEach(b => b.classList.remove('active'));
         if(tab === 'preview') {
-            preview.style.display = 'block'; code.style.display = 'none';
+            preview.style.display = 'flex'; /* Changed from block to flex */
+            code.style.display = 'none';
             btns[0].classList.add('active');
         } else {
-            preview.style.display = 'none'; code.style.display = 'block';
+            preview.style.display = 'none'; 
+            code.style.display = 'block';
             btns[1].classList.add('active');
         }
     };
@@ -206,24 +208,52 @@
     #header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background: #111; border-bottom: 1px solid #333; z-index: 1001; flex-shrink: 0; }
     body.light #header { background: #fff; color: #111; }
 
-    #view-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
+    #view-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; height: calc(100vh - 60px - 70px); }
     #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; }
     #chat { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
 
     /* CANVAS SIDEBAR FIX */
     #canvas-sidebar { 
-        width: 50%; /* Desktop view */
+        width: 50%; 
         background: #fff; 
         border-left: 1px solid #333; 
         display: flex; 
         flex-direction: column; 
         z-index: 1000;
         transition: 0.3s ease;
+        height: 100%;
     }
     #canvas-sidebar.hidden { display: none; }
     #canvas-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #111; border-bottom: 1px solid #333; flex-shrink: 0; }
-    #canvas-content { flex: 1; overflow: auto; background: #fff; }
-    #canvas-iframe { width: 100%; height: 100%; border: none; }
+    
+    /* FIX: Force content to take full height and use flex */
+    #canvas-content { 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        overflow: hidden; 
+        background: #fff; 
+    }
+    
+    #canvas-preview-container { 
+        flex: 1; 
+        display: flex; 
+        height: 100%; 
+    }
+    
+    #canvas-iframe { 
+        width: 100%; 
+        height: 100%; 
+        border: none; 
+        flex: 1;
+    }
+
+    #canvas-code-container { 
+        flex: 1; 
+        overflow: auto; 
+        height: 100%; 
+        background: #1e1e1e;
+    }
 
     /* MOBILE OVERLAY FIX */
     @media (max-width: 768px) {
@@ -232,7 +262,7 @@
             top: 0; 
             left: 0; 
             width: 100vw !important; 
-            height: 100vh !important; 
+            height: 100% !important; 
             z-index: 9999; 
             border: none;
         }
