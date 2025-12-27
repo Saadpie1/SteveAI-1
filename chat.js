@@ -7,11 +7,6 @@ import { generateImage, IMAGE_MODELS } from './image.js';
 import { getGeminiReply } from './gemini.js'; 
 
 // --- Config & DOM ---
-const API_BASE = config.API_BASE; 
-const PROXY = config.PROXY;
-const proxiedURL = config.proxiedURL;
-const API_KEYS = config.API_KEYS; 
-
 const chat = document.getElementById('chat');
 const form = document.getElementById('inputForm');
 const input = document.getElementById('messageInput');
@@ -48,6 +43,9 @@ function shouldSummarize() {
 
 function getRandomTypingDelay() { return Math.floor(Math.random() * 5); }
 
+// --- Markdown Parser ---
+function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
+
 // --- Canvas Logic ---
 window.openInCanvas = (code, lang) => {
     if (!canvasSidebar) return;
@@ -75,29 +73,23 @@ window.openInCanvas = (code, lang) => {
 };
 
 window.toggleCanvas = () => canvasSidebar.classList.toggle('hidden');
+
 window.switchCanvasTab = (tab) => {
     const preview = document.getElementById('canvas-preview-container');
     const codeView = document.getElementById('canvas-code-container');
     const btns = document.querySelectorAll('.tab-btn');
     if (tab === 'preview') {
         preview.style.display = 'block'; codeView.style.display = 'none';
-        btns[0].classList.add('active'); btns[1].classList.remove('active');
+        if(btns[0]) btns[0].classList.add('active'); 
+        if(btns[1]) btns[1].classList.remove('active');
     } else {
         preview.style.display = 'none'; codeView.style.display = 'block';
-        btns[0].classList.remove('active'); btns[1].classList.add('active');
+        if(btns[0]) btns[0].classList.remove('active'); 
+        if(btns[1]) btns[1].classList.add('active');
     }
 };
 
 // --- UI Logic & Post-Processing ---
-window.copyCode = (button) => {
-    const pre = button.closest('pre');
-    const code = pre.querySelector('code').innerText;
-    navigator.clipboard.writeText(code).then(() => {
-        button.textContent = 'Copied!';
-        setTimeout(() => { button.textContent = 'Copy'; }, 2000);
-    });
-};
-
 function createCodeHeader(preElement) {
     if (preElement.querySelector('.code-header')) return; 
     const codeElement = preElement.querySelector('code');
@@ -144,42 +136,23 @@ window.postProcessChat = (newChatElement) => {
             });
         } catch (e) {}
     }
-    // TTS for Bot Responses
-    if (newChatElement.classList.contains('bot-message')) {
-        const cleanText = newChatElement.innerText.replace(/Copy|Run/g, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        window.speechSynthesis.speak(utterance);
-    }
 };
 
 // --- Core AI Logic ---
-async function generateSummary() {
-  const raw = memoryString();
-  const payload = {
-    model: "provider-2/gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You are SteveAI, architected by Saadpie and powered by the 16GB RAM infrastructure of Owner Ahmed Aftab. Summarize clearly." },
-      { role: "user", content: raw }
-    ]
-  };
-  try {
-    const data = await fetchAI(payload, "provider-2/gpt-4o-mini");
-    return data?.choices?.[0]?.message?.content?.trim() || "";
-  } catch (e) { return lastTurns(2); }
-}
-
-async function buildContext() {
-  if (shouldSummarize()) {
-    const sum = await generateSummary();
-    if (sum) {
-      memorySummary = sum;
-      const keep = {};
-      const keys = Object.keys(memory).map(Number).sort((a,b)=>a-b).slice(-4);
-      keys.forEach(k => keep[k] = memory[k]);
-      memory = keep;
+async function fetchAI(payload, model) {
+    const a4fBase = config.API_BASE[0]; 
+    const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
+    for (const key of config.API_KEYS.slice(1).filter(k => k)) {
+        try {
+            const res = await fetch(finalUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) return await res.json();
+        } catch (e) {}
     }
-  }
-  return memorySummary ? `[SUMMARY]\n${memorySummary}\n\n[RECENT]\n${lastTurns(6)}` : memoryString();
+    throw new Error("Failed");
 }
 
 function parseThinkingResponse(text) {
@@ -229,58 +202,45 @@ function addMessage(text, sender) {
         setTimeout(type, getRandomTypingDelay());
       } else {
         content.innerHTML = finalFullHTML; 
-        addBotActions(container, text);
+        addBotActions(container, bubble, text);
         if (window.postProcessChat) window.postProcessChat(container);
       }
     })();
   } else {
     content.innerHTML = markdownToHTML(text); 
     chat.appendChild(container);
-    addUserActions(container, text);
+    addUserActions(container, bubble, text);
     if (window.postProcessChat) window.postProcessChat(container);
     chat.scrollTop = chat.scrollHeight;
   }
 }
 
-function addUserActions(container, text) {
+function addUserActions(container, bubble, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
     actions.innerHTML = `<button class="action-btn">🔁</button><button class="action-btn">📋</button>`;
+    actions.firstChild.onclick = () => { input.value = text; input.focus(); };
+    actions.lastChild.onclick = () => navigator.clipboard.writeText(text);
     container.appendChild(actions);
 }
 
-function addBotActions(container, text) {
+function addBotActions(container, bubble, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
     actions.innerHTML = `<button class="action-btn">📋</button><button class="action-btn">🔊</button>`;
+    actions.firstChild.onclick = () => navigator.clipboard.writeText(text);
+    actions.lastChild.onclick = () => {
+        const { answer } = parseThinkingResponse(text);
+        speechSynthesis.speak(new SpeechSynthesisUtterance(answer));
+    };
     container.appendChild(actions);
 }
 
-// --- API & Commands ---
-async function fetchAI(payload, model) {
-    const a4fBase = config.API_BASE[0]; 
-    const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
-    for (const key of config.API_KEYS.slice(1).filter(k => k)) {
-        try {
-            const res = await fetch(finalUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) return await res.json();
-        } catch (e) {}
-    }
-    throw new Error("Failed");
-}
-
-async function handleCommand(cmdOrData) {
-    // Re-implemented your exact command router here
-    if (typeof cmdOrData === 'string' && cmdOrData.startsWith('/clear')) {
-        chat.innerHTML = ''; memory = {}; turn = 0; return;
-    }
-    // ... handles /theme, /help, /export, /contact, /image
-    if (typeof cmdOrData === 'string' && cmdOrData.startsWith('/image')) {
-        const prompt = cmdOrData.replace('/image', '').trim();
+// --- Command Logic ---
+async function handleCommand(cmd) {
+    if (cmd.startsWith('/clear')) { chat.innerHTML = ''; memory = {}; turn = 0; return; }
+    if (cmd.startsWith('/image')) {
+        const prompt = cmd.replace('/image', '').trim();
         addMessage("🎨 Generating with Ahmed-grade precision...", 'bot');
         const urls = await generateImage(prompt, IMAGE_MODELS[5].id, 1);
         const html = urls.map(u => `<img src="${u}" style="max-width:90%;border-radius:10px;margin:10px 0;">`).join('');
@@ -289,33 +249,25 @@ async function handleCommand(cmdOrData) {
 }
 
 async function getChatReply(msg) { 
-  const context = await buildContext();
+  const context = memoryString(); // Simplified for troubleshooting
   const mode = (modeSelect?.value || 'chat').toLowerCase();
-  let model; let botName;
   const imageToSend = window.base64Image;
   
   if (window.showLoader) window.showLoader();
   
   try {
-      if (imageToSend) {
-          return await getGeminiReply(msg, context, 'fast', imageToSend, null);
-      }
+      if (imageToSend) return await getGeminiReply(msg, context, 'fast', imageToSend, null);
       
+      let model = "provider-5/gpt-oss-120b";
       switch (mode) {
-        case 'science': model = "provider-1/qwen3-next-80b-a3b-thinking"; break;
-        case 'math': model = "provider-8/mimo-v2-flash"; break;
-        case 'coding': model = "provider-8/mimo-v2-flash"; break;
         case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; break;
-        default: model = "provider-5/gpt-oss-120b"; break;
+        case 'coding': model = "provider-8/mimo-v2-flash"; break;
       }
 
-      const systemPrompt = `You are SteveAI Engine (${mode}). 
-      Architected by Saadpie, Powered by Ahmed Aftab's 16GB RAM infrastructure.
-      1. Reasoning: Use <think> tags.
-      2. Image: Use "Image Generated:model:Imagen 4 (Original),prompt:PROMPT".
-      3. Canvas: Provide web code in single blocks. SteveAI renders it automatically.`;
-      
-      const payload = { model, messages: [ { role: "system", content: systemPrompt }, { role: "user", content: `${context}\n\nUser: ${msg}` } ] };
+      const payload = { model, messages: [ 
+          { role: "system", content: "You are SteveAI. Use <think> for reasoning." },
+          { role: "user", content: `${context}\n\nUser: ${msg}` } 
+      ] };
       const data = await fetchAI(payload, model);
       return data?.choices?.[0]?.message?.content || "No response.";
   } finally { if (window.hideLoader) window.hideLoader(); }
@@ -342,9 +294,6 @@ form.onsubmit = async e => {
   } finally { if (wasImage && window.clearImageBtn) window.clearImageBtn.click(); }
 };
 
-// --- Initialization ---
 input.oninput = () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; };
 themeToggle.onclick = () => document.body.classList.toggle('light');
 clearChatBtn.onclick = () => { chat.innerHTML = ''; memory = {}; turn = 0; };
-
-export { memory, turn, getChatReply, addMessage, handleCommand };
