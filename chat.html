@@ -17,17 +17,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "SteveAI Chat",
-    "url": "https://steve-ai.netlify.app/chat.html",
-    "author": { "@type": "Person", "name": "saadpie" },
-    "description": "SteveAI — your Multi-Modal AI Orchestrator."
-  }
-  </script>
 </head>
 
 <body>
@@ -72,13 +61,11 @@
       </div>
       <div id="canvas-content">
           <div id="canvas-preview-container"><iframe id="canvas-iframe"></iframe></div>
-          <div id="canvas-code-container" style="display:none;"><pre><code id="canvas-code-display" class="language-javascript"></code></pre></div>
+          <div id="canvas-code-container" style="display:none;">
+            <pre><code id="canvas-code-display" class="language-markup"></code></pre>
+          </div>
       </div>
     </div>
-  </div>
-
-  <div id="commandHints" hidden>
-    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span>
   </div>
 
   <div id="inputContainer">
@@ -103,7 +90,6 @@
   <script type="module" src="chat.js"></script>
   
   <script>
-    // Global Loaders
     window.showLoader = () => {
         const loader = document.getElementById('loading-indicator');
         const chat = document.getElementById('chat');
@@ -114,25 +100,45 @@
         if (loader) loader.style.display = 'none';
     };
 
-    // Correct toggle function for the sidebar
     window.toggleCanvas = () => {
         const sidebar = document.getElementById('canvas-sidebar');
         sidebar.classList.toggle('hidden');
     };
+
+    // Tab switching logic for Canvas
+    window.switchCanvasTab = (tab) => {
+        const preview = document.getElementById('canvas-preview-container');
+        const code = document.getElementById('canvas-code-container');
+        const btns = document.querySelectorAll('.tab-btn');
+        
+        btns.forEach(b => b.classList.remove('active'));
+        if(tab === 'preview') {
+            preview.style.display = 'block';
+            code.style.display = 'none';
+            btns[0].classList.add('active');
+        } else {
+            preview.style.display = 'none';
+            code.style.display = 'block';
+            btns[1].classList.add('active');
+        }
+    };
   </script>
 
   <style>
-    /* CSS FIXES FOR LAYOUT */
-    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    /* CRITICAL LAYOUT RESET */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
     
-    #header { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background: #111; border-bottom: 1px solid #333; height: 60px; flex-shrink: 0; }
+    body { background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; }
+    
+    #header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background: #111; border-bottom: 1px solid #333; flex-shrink: 0; }
     
     #view-wrapper { 
         display: flex; 
-        flex-direction: row; /* Desktop: side-by-side */
         flex: 1; 
         overflow: hidden; 
-        position: relative; 
+        position: relative; /* Essential for mobile positioning */
+        width: 100%;
     }
 
     #chat-side { 
@@ -143,55 +149,66 @@
         height: 100%;
     }
 
-    #chat { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
+    #chat { flex: 1; overflow-y: auto; padding: 15px; scroll-behavior: smooth; }
 
     /* CANVAS SIDEBAR FIX */
     #canvas-sidebar { 
-        width: 50%; /* Desktop takes half screen */
+        width: 50%; /* Desktop half-width */
+        height: 100%;
         background: #fff; 
         border-left: 1px solid #333; 
         display: flex; 
         flex-direction: column; 
-        transition: transform 0.3s ease;
         z-index: 1000;
+        transition: width 0.3s ease;
     }
 
     #canvas-sidebar.hidden { display: none; }
 
     #canvas-header { 
-        padding: 8px 12px; 
+        padding: 10px; 
         display: flex; 
         justify-content: space-between; 
         align-items: center; 
         background: #111; 
         color: #fff;
+        flex-shrink: 0;
     }
 
-    #canvas-content { flex: 1; position: relative; background: #fff; }
-    #canvas-iframe { width: 100%; height: 100%; border: none; }
+    .tab-btn { background: #222; border: none; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-right: 5px; }
+    .tab-btn.active { background: #333; color: #ffae00; }
+    .close-canvas { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
 
-    /* MOBILE RESPONSIVENESS FIX */
+    #canvas-content { flex: 1; overflow: auto; background: #fff; color: #000; }
+    #canvas-iframe { width: 100%; height: 100%; border: none; }
+    #canvas-code-container pre { margin: 0; padding: 15px; background: #1e1e1e; color: #fff; height: 100%; overflow: auto; }
+
+    /* MOBILE FULL-SCREEN FIX */
     @media (max-width: 768px) {
         #canvas-sidebar { 
-            position: absolute; 
+            position: fixed; /* Use fixed to breakout of flex containers */
             top: 0; 
-            right: 0; 
-            width: 100%; /* Full screen on mobile */
-            height: 100%;
-            z-index: 2000;
+            left: 0; 
+            width: 100vw; 
+            height: 100vh;
+            z-index: 9999; /* Stay on top of everything */
+            border-left: none;
         }
-        #view-wrapper { flex-direction: column; }
+        #header { padding: 0 10px; }
+        .logo span { display: none; } /* Save space on mobile */
     }
 
     /* Input Area */
-    #inputContainer { padding: 12px; border-top: 1px solid #333; background: #111; flex-shrink: 0; }
-    #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 10px; align-items: center; }
-    .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 2px 12px; }
-    textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; max-height: 150px; }
+    #inputContainer { padding: 10px; border-top: 1px solid #333; background: #111; flex-shrink: 0; }
+    #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 8px; align-items: center; }
+    .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 0 12px; }
+    textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 12px 0; outline: none; max-height: 150px; font-size: 16px; }
     
-    .action-btn, #sendBtn { cursor: pointer; border: none; transition: 0.2s; }
-    #sendBtn { background: #ffae00; color: #111; width: 42px; height: 42px; border-radius: 50%; }
+    .action-btn, #sendBtn { cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; }
+    #sendBtn { background: #ffae00; color: #111; width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+    #imageUploadBtn { background: #333; color: #fff; width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
 
+    /* Loader */
     .bouncing-dots { display: flex; gap: 4px; padding: 10px; }
     .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: bounce 1.4s infinite; }
     @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
