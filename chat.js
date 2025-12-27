@@ -19,11 +19,11 @@ const canvasSidebar = document.getElementById('canvas-sidebar');
 const canvasIframe = document.getElementById('canvas-iframe');
 const canvasCodeDisplay = document.getElementById('canvas-code-display');
 
-// --- Memory Management ---
+// --- Memory Management (Unlimited Token Budget) ---
 let memory = {};
 let turn = 0;
 let memorySummary = "";
-const TOKEN_BUDGET = 2200;
+const TOKEN_BUDGET = Infinity; // Budget is now unlimited
 const approxTokens = s => Math.ceil((s || "").length / 4);
 
 // --- Helpers ---
@@ -36,12 +36,13 @@ function lastTurns(n = 6) {
   return keys.slice(-n).map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`).join('\n');
 }
 
+// Disabled summarization to maintain full context
 function shouldSummarize() {
-  if (memorySummary) return false;
-  return turn >= 6 || approxTokens(memoryString()) > TOKEN_BUDGET;
+  return false; 
 }
 
-function getRandomTypingDelay() { return (Math.floor(Math.random() * 5))/100; }
+// High-speed delay for 100 tokens/sec feel
+function getRandomTypingDelay() { return 10; }
 
 // --- Markdown Parser ---
 function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
@@ -176,6 +177,7 @@ function parseImageGenerationCommand(text) {
     return (model && prompt) ? { prompt, model } : null;
 }
 
+// --- UPDATED ADD MESSAGE (TURBO STREAMING) ---
 function addMessage(text, sender) { 
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -187,17 +189,21 @@ function addMessage(text, sender) {
   bubble.appendChild(content);
 
   const { answer, thinking } = parseThinkingResponse(text);
-  const thinkingHTML = thinking ? `<details class="thinking-details"><summary>🧠 Reasoning</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
+  // Keep thinking details open for transparency during rapid output
+  const thinkingHTML = thinking ? `<details class="thinking-details" open><summary>🧠 Reasoning</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
   const finalFullHTML = thinkingHTML + markdownToHTML(answer);
 
   if (sender === 'bot') {
     chat.appendChild(container);
-    let i = 0, buf = "";
+    let i = 0;
     const contentToType = thinking ? answer : text;
+    const chunkSize = 15; // Renders 15 chars every 10ms (~100 tokens/sec)
+
     (function type() {
       if (i < contentToType.length) {
-        buf += contentToType[i++];
-        content.innerHTML = thinking ? (thinkingHTML + markdownToHTML(buf)) : markdownToHTML(buf);
+        i += chunkSize;
+        const currentSlice = contentToType.substring(0, i);
+        content.innerHTML = thinking ? (thinkingHTML + markdownToHTML(currentSlice)) : markdownToHTML(currentSlice);
         chat.scrollTop = chat.scrollHeight;
         setTimeout(type, getRandomTypingDelay());
       } else {
@@ -249,7 +255,7 @@ async function handleCommand(cmd) {
 }
 
 async function getChatReply(msg) { 
-  const context = memoryString(); // Simplified for troubleshooting
+  const context = memoryString(); 
   const mode = (modeSelect?.value || 'chat').toLowerCase();
   const imageToSend = window.base64Image;
   
