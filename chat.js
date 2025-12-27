@@ -14,16 +14,9 @@ const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
 
-// Canvas Elements
-const canvasSidebar = document.getElementById('canvas-sidebar');
-const canvasIframe = document.getElementById('canvas-iframe');
-const canvasCodeDisplay = document.getElementById('canvas-code-display');
-
 // --- Memory Management (Unlimited Token Budget) ---
 let memory = {};
 let turn = 0;
-let memorySummary = "";
-const TOKEN_BUDGET = Infinity; 
 const approxTokens = s => Math.ceil((s || "").length / 4);
 
 // --- Helpers ---
@@ -34,47 +27,7 @@ function memoryString() {
 function getRandomTypingDelay() { return 10; }
 function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
 
-// --- Canvas Logic (Fixed for Preview Height) ---
-window.openInCanvas = (code, lang) => {
-    if (!canvasSidebar) return;
-    canvasSidebar.classList.remove('hidden');
-    canvasCodeDisplay.textContent = code;
-    if (window.Prism) Prism.highlightElement(canvasCodeDisplay);
-
-    let content = '';
-    const cleanLang = (lang || 'html').toLowerCase();
-    
-    if (cleanLang === 'html' || code.includes('<!DOCTYPE') || code.includes('<html')) {
-        content = code;
-    } else if (cleanLang === 'javascript' || cleanLang === 'js') {
-        content = `<html><body style="background:#fff;padding:20px;font-family:sans-serif;"><h3>JS Output:</h3><div id="out"></div><script>
-            const console = { log: (m) => { document.getElementById('out').innerHTML += '<p style="border-bottom:1px solid #eee;padding:5px;">'+m+'</p>'; } };
-            try { ${code} } catch(e) { console.log('Error: ' + e.message); }
-        <\/script></body></html>`;
-    } else if (cleanLang === 'css') {
-        content = `<html><head><style>${code}</style></head><body><div style="padding:20px;"><h1>CSS Preview</h1><p>SteveAI CSS Test</p></div></body></html>`;
-    } else { window.switchCanvasTab('code'); return; }
-    
-    canvasIframe.srcdoc = content;
-    window.switchCanvasTab('preview');
-};
-
-window.switchCanvasTab = (tab) => {
-    const preview = document.getElementById('canvas-preview-container');
-    const codeView = document.getElementById('canvas-code-container');
-    const btns = document.querySelectorAll('.tab-btn');
-    if (tab === 'preview') {
-        preview.style.display = 'flex'; // Changed to flex to ensure height expansion
-        codeView.style.display = 'none';
-        btns[0]?.classList.add('active'); btns[1]?.classList.remove('active');
-    } else {
-        preview.style.display = 'none';
-        codeView.style.display = 'block';
-        btns[0]?.classList.remove('active'); btns[1]?.classList.add('active');
-    }
-};
-
-// --- Action Button Handlers (Updated Icons) ---
+// --- Action Button Logic (Updated for Icons) ---
 function addUserActions(container, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
@@ -96,12 +49,13 @@ function addBotActions(container, text) {
     actions.children[1].onclick = () => {
         const { answer } = parseThinkingResponse(text);
         window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance(answer));
+        const utter = new SpeechSynthesisUtterance(answer);
+        window.speechSynthesis.speak(utter);
     };
     container.appendChild(actions);
 }
 
-// --- Message Parser ---
+// --- Message Parsers ---
 function parseThinkingResponse(text) {
     const thinkingRegex = /<think>(.*?)<\/think>/gs;
     const match = thinkingRegex.exec(text);
@@ -121,7 +75,78 @@ function parseImageGenerationCommand(text) {
     return (model && prompt) ? { prompt, model } : null;
 }
 
-// --- UI Rendering ---
+// --- Canvas Integration (Code Headers) ---
+function createCodeHeader(preElement) {
+    if (preElement.querySelector('.code-header')) return; 
+    const codeElement = preElement.querySelector('code');
+    const match = codeElement.className.match(/language-(\w+)/);
+    const lang = match ? match[1] : 'Code';
+    
+    const header = document.createElement('div');
+    header.className = 'code-header';
+    header.innerHTML = `<span>${lang.toUpperCase()}</span><div class="btn-group"></div>`;
+    const btnGroup = header.querySelector('.btn-group');
+
+    if (['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase())) {
+        const runBtn = document.createElement('button');
+        runBtn.className = 'copy-btn'; runBtn.style.background = '#ffae00'; runBtn.style.color = '#000';
+        runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run';
+        runBtn.onclick = () => window.openInCanvas(codeElement.innerText, lang);
+        btnGroup.appendChild(runBtn);
+    }
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn'; copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(codeElement.innerText);
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        setTimeout(() => copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>', 2000);
+    };
+    btnGroup.appendChild(copyBtn);
+    preElement.insertBefore(header, preElement.firstChild);
+}
+
+window.postProcessChat = (newChatElement) => {
+    if (window.Prism) {
+         newChatElement.querySelectorAll('pre').forEach(pre => {
+            try { Prism.highlightElement(pre.querySelector('code')); createCodeHeader(pre); } catch (e) {}
+        });
+    }
+    if (window.renderMathInElement) {
+        try {
+            renderMathInElement(newChatElement, {
+                delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}],
+                throwOnError: false
+            });
+        } catch (e) {}
+    }
+};
+
+// --- Canvas Logic Redirection ---
+window.openInCanvas = (code, lang) => {
+    const sidebar = document.getElementById('canvas-sidebar');
+    const iframe = document.getElementById('canvas-iframe');
+    const display = document.getElementById('canvas-code-display');
+    
+    sidebar.classList.remove('hidden');
+    display.textContent = code;
+    if (window.Prism) Prism.highlightElement(display);
+
+    let content = '';
+    const cleanLang = (lang || 'html').toLowerCase();
+    if (cleanLang === 'html' || code.includes('<!DOCTYPE')) content = code;
+    else if (cleanLang === 'css') content = `<html><style>${code}</style><body><div class="preview"><h1>CSS Preview</h1></div></body></html>`;
+    else if (cleanLang === 'js' || cleanLang === 'javascript') {
+        content = `<html><body><div id="out"></div><script>
+            const console = { log: m => document.getElementById('out').innerHTML += '<p>'+m+'</p>' };
+            try { ${code} } catch(e) { console.log(e.message); }
+        <\/script></body></html>`;
+    }
+    iframe.srcdoc = content;
+    window.switchCanvasTab('preview');
+};
+
+// --- UI Messaging ---
 function addMessage(text, sender) { 
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -139,7 +164,7 @@ function addMessage(text, sender) {
     chat.appendChild(container);
     let i = 0;
     const contentToType = thinking ? answer : text;
-    const chunkSize = 15;
+    const chunkSize = 20;
 
     (function type() {
       if (i < contentToType.length) {
@@ -163,12 +188,11 @@ function addMessage(text, sender) {
   }
 }
 
-// --- Command Router ---
+// --- Robust Command Router ---
 async function handleCommand(inputStr) {
     const parts = inputStr.trim().split(' ');
     const command = parts[0].toLowerCase();
-    const args = parts.slice(1);
-    const fullArgs = args.join(' ');
+    const fullArgs = parts.slice(1).join(' ');
 
     switch (command) {
         case '/clear':
@@ -184,56 +208,45 @@ async function handleCommand(inputStr) {
 **🧭 SteveAI Command Menu**
 - \`/clear\` — Reset conversation
 - \`/theme\` — Toggle mode
-- \`/help\` — Show this menu
-- \`/about\` — Project history
-- \`/contact\` — Meet the leaders
 - \`/image <prompt>\` — AI Art
-- \`/mode <type>\` — Switch logic
-- \`/time\` — Check clock
+- \`/mode <type>\` — Switch specialized logic
+- \`/export\` — Download Chat
+- \`/about\` — Project history
+- \`/contact\` — Meet the board
             `, 'bot');
             break;
         case '/about':
-            addMessage(`
-🤖 **About SteveAI**
-Built by **Saadpie** & **Ahmed**, powered by **Ahmed Aftab's 16GB RAM PC**. 
-The orchestrator routes through 33+ specialized models.
-            `, 'bot');
+            addMessage('🤖 **SteveAI**\nArchitected by **Saadpie** & **Ahmed**. Powered by **Ahmed Aftab\'s 16GB RAM Engine**.', 'bot');
             break;
         case '/contact':
-            addMessage(`
-**📬 Executive Board**
-- **Architect:** [@saadpie](https://github.com/saad-pie)
-- **Owner:** Ahmed Aftab
-- **Co-Founder:** Ahmed (@ahmxd15._)
-            `, 'bot');
+            addMessage('📬 **Board:**\n- **Saadpie** (Architect)\n- **Ahmed Aftab** (Owner)\n- **Ahmed** (Co-Founder)', 'bot');
+            break;
+        case '/export':
+            const blob = new Blob([memoryString()], {type:'text/plain'});
+            const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='SteveAI_Chat.txt'; a.click();
+            addMessage('💾 Chat exported.', 'bot');
             break;
         case '/mode':
-            const allowed = ['chat', 'reasoning', 'fast', 'lite', 'math', 'coding', 'science'];
-            if (!fullArgs || !allowed.includes(fullArgs.toLowerCase())) {
-                addMessage(`⚠️ Usage: \`/mode ${allowed.join('|')}\``, 'bot');
-            } else {
-                modeSelect.value = fullArgs.toLowerCase();
-                addMessage(`🧭 Mode switched to: **${fullArgs.toUpperCase()}**`, 'bot');
+            if (modeSelect) {
+                modeSelect.value = fullArgs || 'chat';
+                addMessage(`🧭 Mode switched to: **${modeSelect.value.toUpperCase()}**`, 'bot');
             }
-            break;
-        case '/time':
-            addMessage(`⏰ **System Time:** ${new Date().toLocaleTimeString()}`, 'bot');
             break;
         case '/image':
             if (!fullArgs) return addMessage('⚠️ Usage: /image <prompt>', 'bot');
-            addMessage(`🎨 Generating image with **Ahmed-grade** precision...`, 'bot');
+            addMessage('🎨 Generating art with **Ahmed-grade** precision...', 'bot');
             try {
                 const urls = await generateImage(fullArgs, IMAGE_MODELS[5].id, 1);
                 const html = urls.map(u => `<img src="${u}" style="max-width:100%; border-radius:10px; margin-top:10px;">`).join('');
                 addMessage(`🖼️ **Result:**\n${html}`, 'bot');
-            } catch (e) { addMessage(`❌ Error: ${e.message}`, 'bot'); }
+            } catch (e) { addMessage('❌ Generation failed.', 'bot'); }
             break;
         default:
             addMessage(`❓ Unknown command: \`${command}\``, 'bot');
     }
 }
 
-// --- Orchestrator Flow ---
+// --- Fetch & Orchestration ---
 async function fetchAI(payload) {
     const a4fBase = config.API_BASE[0]; 
     const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
@@ -247,7 +260,7 @@ async function fetchAI(payload) {
             if (res.ok) return await res.json();
         } catch (e) {}
     }
-    throw new Error("All keys exhausted.");
+    throw new Error("API Failure");
 }
 
 async function getChatReply(msg) { 
@@ -263,22 +276,20 @@ async function getChatReply(msg) {
       let model;
       switch (mode) {
         case 'science': model = "provider-1/qwen3-next-80b-a3b-thinking"; break;
-        case 'math': model = "provider-8/mimo-v2-flash"; break;
+        case 'math': 
         case 'coding': model = "provider-8/mimo-v2-flash"; break;
         case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; break;
         default: model = "provider-5/gpt-oss-120b"; break;
       }
 
-      const payload = { model, messages: [ 
-          { role: "system", content: `You are SteveAI, powered by Ahmed Aftab's 16GB RAM Engine. Use <think> for reasoning. For images, use: Image Generated:model:Imagen 4 (Original),prompt:PROMPT` },
-          { role: "user", content: `${context}\n\nUser: ${msg}` } 
-      ] };
+      const system = `You are SteveAI (Architected by Saadpie, Powered by Ahmed Aftab's PC). Use <think> for reasoning. For images: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
+      const payload = { model, messages: [{role:"system", content:system}, {role:"user", content:`${context}\n\nUser: ${msg}`}] };
       const data = await fetchAI(payload);
       return data?.choices?.[0]?.message?.content || "No response.";
   } finally { if (window.hideLoader) window.hideLoader(); }
 }
 
-// --- Events ---
+// --- Final Event Bindings ---
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
@@ -298,10 +309,9 @@ form.onsubmit = async e => {
         addMessage(r, 'bot');
         memory[++turn] = { user: msg, bot: r };
     }
-  } catch(e) { addMessage("⚠️ Error processing request.", "bot"); } 
-  finally { if (wasImage && window.clearImageBtn) window.clearImageBtn.click(); }
+  } catch(e) { console.error(e); } 
+  finally { if (wasImage && document.getElementById('clearImageBtn')) document.getElementById('clearImageBtn').click(); }
 };
 
-input.oninput = () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; };
-themeToggle.onclick = () => document.body.classList.toggle('light');
-clearChatBtn.onclick = () => { chat.innerHTML = ''; memory = {}; turn = 0; };
+themeToggle.onclick = () => handleCommand('/theme');
+clearChatBtn.onclick = () => handleCommand('/clear');
