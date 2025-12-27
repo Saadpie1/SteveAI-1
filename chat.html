@@ -57,7 +57,8 @@
         <option value="reasoning">SteveAI-reasoning</option>
         <option value="fast">SteveAI-fast</option>
         <option value="lite">SteveAI-instant</option>
-        <option value="general">SteveAI-general</option> <option value="math">SteveAI-math</option>
+        <option value="general">SteveAI-general</option> 
+        <option value="math">SteveAI-math</option>
         <option value="coding">SteveAI-coding</option>
         <option value="designer">SteveAI-designer</option>
         <option value="science">SteveAI-science</option>
@@ -154,8 +155,9 @@
         const btnGroup = document.createElement('div');
         btnGroup.style.display = 'flex'; btnGroup.style.gap = '5px';
 
-        // NEW: Add Run Button for Preview
-        if (['HTML', 'Javascript', 'Js', 'Css'].includes(lang)) {
+        // Add Run Button for Preview
+        const runnable = ['HTML', 'Javascript', 'Js', 'Css'].includes(lang);
+        if (runnable) {
             const runBtn = document.createElement('button');
             runBtn.className = 'copy-btn'; runBtn.style.background = '#28a745';
             runBtn.textContent = '▶ Run';
@@ -195,11 +197,6 @@
                     throwOnError: false, ignoredTags: ["script", "noscript", "style", "textarea"], errorColor: "#ff0000" 
                 });
             } catch (e) {}
-        }
-        if (newChatElement.classList.contains('bot-message')) {
-            const cleanText = newChatElement.innerText.replace(/Copy|▶ Run/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            window.speechSynthesis.speak(utterance);
         }
     };
   
@@ -273,21 +270,19 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         };
         window.hideLoader = () => { if (loadingIndicator) loadingIndicator.style.display = 'none'; };
-
-        if (window.postProcessChat) {
-             document.querySelectorAll('.bot-message').forEach(message => { window.postProcessChat(message); });
-        }
     });
   </script>
   
   <script type="module" src="chat.js"></script>
   
   <style>
-    /* 1. RESTORED EXACT CSS */
-    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+    /* 1. CORE UI CSS */
+    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; transition: background 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
     body.light { background: #fafafa; color: #111; }
-    #header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; color: #fff; border-bottom: 1px solid #333; height: 60px; box-sizing: border-box;}
+    
+    #header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; color: #fff; border-bottom: 1px solid #333; height: 60px; box-sizing: border-box; z-index: 1001;}
     #chat { height: 100%; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
+    
     #inputContainer { padding: 10px; border-top: 1px solid #333; background: #111; display: flex; flex-direction: column; align-items: center; min-height: 80px;}
     #inputForm { display: flex; width: 100%; max-width: 800px; gap: 10px; }
     
@@ -295,35 +290,52 @@
     body.light .modern-input-wrapper { background: #fff; border-color: #ccc; }
 
     textarea { flex-grow: 1; resize: none; background: transparent !important; color: #fff; border: none !important; padding: 10px; font-size: 1em; outline: none; transition: all 0.3s ease; }
-    #micBtn { background: none; border: none; cursor: pointer; color: #888; font-size: 1.2em; padding: 5px; }
-    #sendBtn { width: 40px; height: 40px; background: #ffae00; color: #111; border: none; border-radius: 10px; font-size: 1.5em; line-height: 1; cursor: pointer; transition: background 0.2s; }
-    #sendBtn:hover { background: #ffc107; }
     body.light textarea { color: #000; }
     
-    #commandHints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; background: #181818; padding: 6px 0; font-size: 0.9em; border-top: 1px solid #222; }
-    #commandHints span { background: #222; padding: 3px 8px; border-radius: 6px; cursor: pointer; user-select: none; }
-    #imageUploadBtn { width: 40px; height: 40px; background: #333; color: #fff; border: none; border-radius: 10px; font-size: 1.5em; line-height: 1; cursor: pointer; }
+    #sendBtn { width: 40px; height: 40px; background: #ffae00; color: #111; border: none; border-radius: 10px; font-size: 1.5em; cursor: pointer; }
+    #imageUploadBtn { width: 40px; height: 40px; background: #333; color: #fff; border: none; border-radius: 10px; font-size: 1.5em; cursor: pointer; }
 
-    .bouncing-dots { display: flex; align-items: center; margin-left: 5px; }
-    .bouncing-dots span { width: 8px; height: 8px; margin: 0 2px; background-color: #ffae00; border-radius: 50%; animation: bounce 1.2s infinite ease-in-out; }
-    .bouncing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .bouncing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 44% { transform: scale(1); } }
-    
-    pre { position: relative; padding-top: 35px; border-radius: 8px; overflow: hidden; margin: 1em 0; }
-    pre code { display: block; padding: 1em; white-space: pre-wrap; word-break: break-all; }
-    .code-header { position: absolute; top: 0; left: 0; right: 0; height: 35px; background: #333; color: #ccc; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 0.9em; z-index: 5; }
-    .copy-btn { background: #ffae00; color: #111; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-
-    /* 2. ADDED CANVAS CSS (Non-destructive) */
-    #canvas-sidebar { width: 45%; background: #1a1a1a; border-left: 1px solid #333; display: flex; flex-direction: column; transition: 0.3s; overflow: hidden; }
+    /* 2. UPDATED RESPONSIVE CANVAS SIDEBAR */
+    #canvas-sidebar { 
+        width: 45%; 
+        background: #1a1a1a; 
+        border-left: 1px solid #333; 
+        display: flex; 
+        flex-direction: column; 
+        transition: 0.3s ease-in-out; 
+        overflow: hidden; 
+        z-index: 2000;
+    }
     #canvas-sidebar.hidden { width: 0; border: none; display: none; }
+    
     #canvas-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #111; border-bottom: 1px solid #333; }
     .tab-btn { background: #222; border: none; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-right: 5px;}
     .tab-btn.active { background: #333; color: #ffae00; }
     .close-canvas { background: none; border: none; color: #fff; font-size: 1.2em; cursor: pointer; }
+    
     #canvas-content { flex: 1; overflow: auto; background: #fff; }
-    #canvas-iframe { width: 100%; height: 100%; border: none; }
+    #canvas-iframe { width: 100%; height: 100%; border: none; display: block;}
+
+    /* MOBILE FIX: Sidebar becomes a full-screen overlay */
+    @media (max-width: 768px) {
+        #canvas-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100%;
+            border-left: none;
+        }
+    }
+
+    /* 3. CODE BLOCKS & ACTIONS */
+    pre { position: relative; padding-top: 35px; border-radius: 8px; overflow: hidden; margin: 1em 0; }
+    .code-header { position: absolute; top: 0; left: 0; right: 0; height: 35px; background: #333; color: #ccc; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 0.9em; z-index: 5; }
+    .copy-btn { background: #ffae00; color: #111; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+
+    .bouncing-dots { display: flex; align-items: center; margin-left: 5px; }
+    .bouncing-dots span { width: 8px; height: 8px; margin: 0 2px; background-color: #ffae00; border-radius: 50%; animation: bounce 1.2s infinite ease-in-out; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 44% { transform: scale(1); } }
   </style>
 </body>
 </html>
