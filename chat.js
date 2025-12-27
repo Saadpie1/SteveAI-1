@@ -23,7 +23,7 @@ const canvasCodeDisplay = document.getElementById('canvas-code-display');
 let memory = {};
 let turn = 0;
 let memorySummary = "";
-const TOKEN_BUDGET = Infinity; // Budget is now unlimited
+const TOKEN_BUDGET = Infinity; 
 const approxTokens = s => Math.ceil((s || "").length / 4);
 
 // --- Helpers ---
@@ -36,10 +36,8 @@ function lastTurns(n = 6) {
   return keys.slice(-n).map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`).join('\n');
 }
 
-// Disabled summarization to maintain full context
-function shouldSummarize() {
-  return false; 
-}
+// Summary logic (Optional, currently set to false per your request)
+function shouldSummarize() { return false; }
 
 // High-speed delay for 100 tokens/sec feel
 function getRandomTypingDelay() { return 10; }
@@ -65,7 +63,7 @@ window.openInCanvas = (code, lang) => {
             try { ${code} } catch(e) { console.log('Error: ' + e.message); }
         <\/script></body></html>`;
     } else if (cleanLang === 'css') {
-        content = `<html><head><style>${code}</style></head><body><div style="padding:20px;"><h1>CSS Preview</h1><p>SteveAI CSS Test</p><button>Button</button><div style="width:100px;height:100px;background:grey;margin-top:10px;">Box</div></div></body></html>`;
+        content = `<html><head><style>${code}</style></head><body><div style="padding:20px;"><h1>CSS Preview</h1><p>SteveAI CSS Test</p></div></body></html>`;
     } else {
         window.switchCanvasTab('code'); return;
     }
@@ -81,12 +79,10 @@ window.switchCanvasTab = (tab) => {
     const btns = document.querySelectorAll('.tab-btn');
     if (tab === 'preview') {
         preview.style.display = 'block'; codeView.style.display = 'none';
-        if(btns[0]) btns[0].classList.add('active'); 
-        if(btns[1]) btns[1].classList.remove('active');
+        btns[0]?.classList.add('active'); btns[1]?.classList.remove('active');
     } else {
         preview.style.display = 'none'; codeView.style.display = 'block';
-        if(btns[0]) btns[0].classList.remove('active'); 
-        if(btns[1]) btns[1].classList.add('active');
+        btns[0]?.classList.remove('active'); btns[1]?.classList.add('active');
     }
 };
 
@@ -100,12 +96,8 @@ function createCodeHeader(preElement) {
     
     const header = document.createElement('div');
     header.className = 'code-header';
-    const langSpan = document.createElement('span');
-    langSpan.textContent = lang.toUpperCase();
-    header.appendChild(langSpan);
-
-    const btnGroup = document.createElement('div');
-    btnGroup.style.display = 'flex'; btnGroup.style.gap = '8px';
+    header.innerHTML = `<span>${lang.toUpperCase()}</span><div class="btn-group"></div>`;
+    const btnGroup = header.querySelector('.btn-group');
 
     if (['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase())) {
         const runBtn = document.createElement('button');
@@ -117,9 +109,12 @@ function createCodeHeader(preElement) {
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-btn'; copyBtn.textContent = 'Copy';
-    copyBtn.onclick = () => window.copyCode(copyBtn);
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(codeElement.innerText);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+    };
     btnGroup.appendChild(copyBtn);
-    header.appendChild(btnGroup);
     preElement.insertBefore(header, preElement.firstChild);
 }
 
@@ -143,6 +138,7 @@ window.postProcessChat = (newChatElement) => {
 async function fetchAI(payload, model) {
     const a4fBase = config.API_BASE[0]; 
     const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
+    let lastErr = "";
     for (const key of config.API_KEYS.slice(1).filter(k => k)) {
         try {
             const res = await fetch(finalUrl, {
@@ -151,17 +147,15 @@ async function fetchAI(payload, model) {
                 body: JSON.stringify(payload)
             });
             if (res.ok) return await res.json();
-        } catch (e) {}
+        } catch (e) { lastErr = e.message; }
     }
-    throw new Error("Failed");
+    throw new Error(lastErr || "Failed");
 }
 
 function parseThinkingResponse(text) {
     const thinkingRegex = /<think>(.*?)<\/think>/gs;
     const match = thinkingRegex.exec(text);
-    if (match) {
-        return { answer: text.replace(thinkingRegex, '').trim(), thinking: match[1].trim() };
-    }
+    if (match) return { answer: text.replace(thinkingRegex, '').trim(), thinking: match[1].trim() };
     return { answer: text, thinking: null };
 }
 
@@ -177,7 +171,7 @@ function parseImageGenerationCommand(text) {
     return (model && prompt) ? { prompt, model } : null;
 }
 
-// --- UPDATED ADD MESSAGE (TURBO STREAMING) ---
+// --- TURBO STREAMING MESSAGE UI ---
 function addMessage(text, sender) { 
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -189,15 +183,14 @@ function addMessage(text, sender) {
   bubble.appendChild(content);
 
   const { answer, thinking } = parseThinkingResponse(text);
-  // Keep thinking details open for transparency during rapid output
-  const thinkingHTML = thinking ? `<details class="thinking-details" open><summary>🧠 Reasoning</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
+  const thinkingHTML = thinking ? `<details class="thinking-details" open><summary>🧠 Reasoning/Steps</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
   const finalFullHTML = thinkingHTML + markdownToHTML(answer);
 
   if (sender === 'bot') {
     chat.appendChild(container);
     let i = 0;
     const contentToType = thinking ? answer : text;
-    const chunkSize = 15; // Renders 15 chars every 10ms (~100 tokens/sec)
+    const chunkSize = 15;
 
     (function type() {
       if (i < contentToType.length) {
@@ -225,8 +218,8 @@ function addUserActions(container, bubble, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
     actions.innerHTML = `<button class="action-btn">🔁</button><button class="action-btn">📋</button>`;
-    actions.firstChild.onclick = () => { input.value = text; input.focus(); };
-    actions.lastChild.onclick = () => navigator.clipboard.writeText(text);
+    actions.children[0].onclick = () => { input.value = text; input.focus(); };
+    actions.children[1].onclick = () => navigator.clipboard.writeText(text);
     container.appendChild(actions);
 }
 
@@ -234,15 +227,55 @@ function addBotActions(container, bubble, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
     actions.innerHTML = `<button class="action-btn">📋</button><button class="action-btn">🔊</button>`;
-    actions.firstChild.onclick = () => navigator.clipboard.writeText(text);
-    actions.lastChild.onclick = () => {
+    actions.children[0].onclick = () => navigator.clipboard.writeText(text);
+    actions.children[1].onclick = () => {
         const { answer } = parseThinkingResponse(text);
         speechSynthesis.speak(new SpeechSynthesisUtterance(answer));
     };
     container.appendChild(actions);
 }
 
-// --- Command Logic ---
+// --- RESTORED ORCHESTRATOR FLOW ---
+async function getChatReply(msg) { 
+  const context = memoryString(); 
+  const mode = (modeSelect?.value || 'chat').toLowerCase();
+  const imageToSend = window.base64Image;
+  
+  if (window.showLoader) window.showLoader();
+  
+  try {
+      // 1. Vision Logic
+      if (imageToSend) return await getGeminiReply(msg, context, 'fast', imageToSend, null);
+      
+      // 2. Gemini Lite/Fast Mode Restoration
+      if (mode === 'lite' || mode === 'fast') return await getGeminiReply(msg, context, mode, null);
+
+      // 3. Orchestrator Routing
+      let model; let botName;
+      switch (mode) {
+        case 'science': model = "provider-1/qwen3-next-80b-a3b-thinking"; botName = "SteveAI-science"; break;
+        case 'math': model = "provider-8/mimo-v2-flash"; botName = "SteveAI-math"; break;
+        case 'writer': model = "provider-5/hermes-4-70b"; botName = "SteveAI-writer"; break;
+        case 'general': model = "provider-5/glm-4.5-air"; botName = "SteveAI-general"; break;
+        case 'coding': model = "provider-8/mimo-v2-flash"; botName = "SteveAI-coding"; break;
+        case 'designer': model = "provider-8/kimi-k2-0905"; botName = "SteveAI-Designer"; break;
+        case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; botName = "SteveAI-reasoning"; break;
+        default: model = "provider-5/gpt-oss-120b"; botName = "SteveAI-chat"; break;
+      }
+
+      const systemPrompt = `You are ${botName}, an engine of SteveAI (Architected by Saadpie, Powered by Ahmed Aftab's 16GB RAM PC).
+      Use <think> for reasoning. For images, use: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
+
+      const payload = { model, messages: [ 
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `${context}\n\nUser: ${msg}` } 
+      ] };
+      const data = await fetchAI(payload, model);
+      return data?.choices?.[0]?.message?.content || "No response.";
+  } finally { if (window.hideLoader) window.hideLoader(); }
+}
+
+// --- Event Handlers ---
 async function handleCommand(cmd) {
     if (cmd.startsWith('/clear')) { chat.innerHTML = ''; memory = {}; turn = 0; return; }
     if (cmd.startsWith('/image')) {
@@ -252,31 +285,6 @@ async function handleCommand(cmd) {
         const html = urls.map(u => `<img src="${u}" style="max-width:90%;border-radius:10px;margin:10px 0;">`).join('');
         addMessage(`🖼️ **Result:**\n${html}`, 'bot');
     }
-}
-
-async function getChatReply(msg) { 
-  const context = memoryString(); 
-  const mode = (modeSelect?.value || 'chat').toLowerCase();
-  const imageToSend = window.base64Image;
-  
-  if (window.showLoader) window.showLoader();
-  
-  try {
-      if (imageToSend) return await getGeminiReply(msg, context, 'fast', imageToSend, null);
-      
-      let model = "provider-5/gpt-oss-120b";
-      switch (mode) {
-        case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; break;
-        case 'coding': model = "provider-8/mimo-v2-flash"; break;
-      }
-
-      const payload = { model, messages: [ 
-          { role: "system", content: "You are SteveAI. Use <think> for reasoning." },
-          { role: "user", content: `${context}\n\nUser: ${msg}` } 
-      ] };
-      const data = await fetchAI(payload, model);
-      return data?.choices?.[0]?.message?.content || "No response.";
-  } finally { if (window.hideLoader) window.hideLoader(); }
 }
 
 form.onsubmit = async e => {
@@ -293,6 +301,7 @@ form.onsubmit = async e => {
     const imgCmd = parseImageGenerationCommand(r);
     if (imgCmd) {
         await handleCommand(`/image ${imgCmd.prompt}`);
+        memory[++turn] = { user: msg, bot: `Generated image: ${imgCmd.prompt}` };
     } else {
         addMessage(r, 'bot');
         memory[++turn] = { user: msg, bot: r };
