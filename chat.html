@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>SteveAI - Smart AI Assistant</title>
 
-  <meta name="description" content="SteveAI is your smart AI assistant for chatting, learning, and creating.">
-  <meta name="keywords" content="SteveAI, AI assistant, chatbot, smart AI, generative AI, productivity, learning AI">
-  <meta name="author" content="SteveAI">
+  <meta name="description" content="SteveAI: Your high-performance Multi-Modal AI Orchestrator powered by Ahmed Aftab's 16GB RAM engine.">
+  <meta name="keywords" content="SteveAI, Saadpie, AI assistant, chatbot, DeepSeek, Gemini, Image Generation">
+  <meta name="author" content="Saadpie">
   <meta property="og:title" content="SteveAI - Smart AI Assistant">
-  <meta property="og:description" content="Chat with SteveAI: your AI assistant for learning, productivity, and creativity.">
+  <meta property="og:description" content="Ultimate Multi-Modal AI Orchestrator with 33+ specialized models.">
   <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
   <meta property="og:url" content="https://steve-ai.netlify.app/chat.html">
   <meta property="og:type" content="website">
@@ -28,7 +28,7 @@
     "name": "SteveAI Chat",
     "url": "https://steve-ai.netlify.app/chat.html",
     "author": { "@type": "Person", "name": "saadpie" },
-    "description": "SteveAI — your Multi-Modal AI Assistant."
+    "description": "SteveAI — your Multi-Modal AI Orchestrator."
   }
   </script>
 </head>
@@ -46,13 +46,17 @@
       <select id="modeSelect" title="Model Mode">
         <option value="chat" selected>SteveAI-chat</option>
         <option value="reasoning">SteveAI-reasoning</option>
+        <option value="fast">SteveAI-fast (Gemini)</option>
+        <option value="lite">SteveAI-instant</option>
         <option value="coding">SteveAI-coding</option>
-        <option value="designer">SteveAI-designer</option>
         <option value="math">SteveAI-math</option>
+        <option value="science">SteveAI-science</option>
+        <option value="designer">SteveAI-designer</option>
         <option value="writer">SteveAI-writer</option>
+        <option value="general">SteveAI-general</option>
       </select>
-      <button id="clearChat" class="action-btn" title="Clear Chat">🗑️</button>
-      <button id="themeToggle" class="action-btn" title="Toggle Theme">🌙</button>
+      <button id="clearChat" class="action-btn" title="Clear Chat"><i class="fa-solid fa-trash"></i></button>
+      <button id="themeToggle" class="action-btn" title="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
     </div>
   </div>
 
@@ -85,7 +89,7 @@
   </div>
 
   <div id="commandHints" hidden>
-    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span>
+    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span><span>/export</span><span>/about</span>
   </div>
 
   <div id="inputContainer">
@@ -98,7 +102,7 @@
       <button type="button" id="imageUploadBtn" class="action-btn" title="Upload Image"><i class="fa-solid fa-image"></i></button>
       
       <div class="modern-input-wrapper">
-        <textarea id="messageInput" placeholder="Type your message..." rows="1" required></textarea>
+        <textarea id="messageInput" placeholder="Ask SteveAI anything..." rows="1" required></textarea>
         <button type="button" id="micBtn" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
       </div>
 
@@ -115,80 +119,35 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
   
   <script>
-    // --- UTILITIES & POST-PROCESSING ---
-    function getCodeLanguage(codeElement) {
-        const match = codeElement.className.match(/language-(\w+)/);
-        return match ? match[1].charAt(0).toUpperCase() + match[1].slice(1) : 'Code';
-    }
-
-    function createCopyButton(preElement) {
-        if (preElement.querySelector('.code-header')) return; 
-        const codeElement = preElement.querySelector('code');
-        if (!codeElement) return;
-        const lang = getCodeLanguage(codeElement);
-        const header = document.createElement('div');
-        header.className = 'code-header';
-        
-        const langSpan = document.createElement('span');
-        langSpan.textContent = lang;
-        header.appendChild(langSpan);
-
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'code-btn-group';
-
-        if (['HTML', 'Javascript', 'Js', 'Css'].includes(lang)) {
-            const runBtn = document.createElement('button');
-            runBtn.className = 'copy-btn run-btn';
-            runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run';
-            runBtn.onclick = () => window.openInCanvas(codeElement.innerText, lang);
-            btnGroup.appendChild(runBtn);
+    // --- GLOBAL UTILITIES FOR CHAT.JS ---
+    window.showLoader = () => {
+        const loader = document.getElementById('loading-indicator');
+        const chat = document.getElementById('chat');
+        if (loader) {
+            chat.appendChild(loader);
+            loader.style.display = 'block';
+            chat.scrollTop = chat.scrollHeight;
         }
+    };
+    window.hideLoader = () => {
+        const loader = document.getElementById('loading-indicator');
+        if (loader) loader.style.display = 'none';
+    };
 
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'copy-btn';
-        copyBtn.textContent = 'Copy';
-        copyBtn.onclick = () => window.copyCode(copyBtn); 
-        btnGroup.appendChild(copyBtn);
-
-        header.appendChild(btnGroup);
-        preElement.insertBefore(header, preElement.firstChild);
-    }
-    
     window.copyCode = (button) => {
         const pre = button.closest('pre');
         const code = pre.querySelector('code').innerText;
         navigator.clipboard.writeText(code).then(() => {
-            button.textContent = 'Copied!';
-            setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+            button.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+            setTimeout(() => { button.innerHTML = 'Copy'; }, 2000);
         });
     }
 
-    window.postProcessChat = (newChatElement) => {
-        if (window.Prism) {
-             newChatElement.querySelectorAll('pre').forEach(pre => {
-                try { Prism.highlightElement(pre.querySelector('code')); createCopyButton(pre); } catch (e) {}
-            });
-        }
-        if (window.renderMathInElement) {
-            try {
-                renderMathInElement(newChatElement, {
-                    delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}],
-                    throwOnError: false
-                });
-            } catch (e) {}
-        }
-        if (newChatElement.classList.contains('bot-message')) {
-            const cleanText = newChatElement.innerText.replace(/Copy|▶ Run/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            window.speechSynthesis.speak(utterance);
-        }
-    };
-  
     document.addEventListener('DOMContentLoaded', () => {
         const inputEl = document.getElementById('messageInput');
         const micBtn = document.getElementById('micBtn');
 
-        // VOICE RECOGNITION
+        // Voice Recognition (STT)
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
@@ -201,7 +160,7 @@
             recognition.onend = () => { micBtn.style.color = ""; };
         }
 
-        // IMAGE UPLOAD LOGIC
+        // Image Handling
         const imageInputFile = document.getElementById('imageInputFile');
         const imageUploadBtn = document.getElementById('imageUploadBtn');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -225,58 +184,59 @@
             window.base64Image = null; imagePreview.src = ''; 
             imagePreviewContainer.style.display = 'none';
         };
+
+        // Command Hints Logic
+        inputEl.addEventListener('input', () => {
+            document.getElementById('commandHints').hidden = !inputEl.value.startsWith('/');
+        });
     });
   </script>
   
   <script type="module" src="chat.js"></script>
   
   <style>
-    /* 1. LAYOUT & THEME */
+    /* Merged Styles */
     body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
     body.light { background: #fafafa; color: #111; }
     
     #header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; border-bottom: 1px solid #333; height: 60px; z-index: 1001; }
+    body.light #header { background: #fff; color: #111; }
+
     #view-wrapper { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
     #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     #chat { height: 100%; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
 
-    /* 2. RESPONSIVE CANVAS */
+    /* Responsive Canvas Styles */
     #canvas-sidebar { width: 45%; background: #1a1a1a; border-left: 1px solid #333; display: flex; flex-direction: column; transition: 0.3s; z-index: 2000; }
     #canvas-sidebar.hidden { display: none; }
     #canvas-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #111; border-bottom: 1px solid #333; }
     #canvas-content { flex: 1; overflow: auto; background: #fff; }
     #canvas-iframe { width: 100%; height: 100%; border: none; display: block; }
-    .tab-btn { background: #222; border: none; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; }
-    .tab-btn.active { background: #333; color: #ffae00; }
 
     @media (max-width: 768px) {
         #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100% !important; height: 100%; }
-        #view-wrapper { height: calc(100vh - 130px); }
     }
 
-    /* 3. INPUT AREA */
+    /* Input Styling */
     #inputContainer { padding: 12px; border-top: 1px solid #333; background: #111; width: 100%; box-sizing: border-box; }
     #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 10px; align-items: center; }
     .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 2px 12px; }
+    body.light .modern-input-wrapper { background: #fff; border-color: #ccc; }
     textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; }
+    body.light textarea { color: #111; }
     
-    #sendBtn, #imageUploadBtn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0; }
-    #sendBtn { background: #ffae00; color: #111; font-size: 1.2em; }
-    #imageUploadBtn { background: #333; color: #fff; font-size: 1.1em; }
-    #micBtn { background: none; border: none; color: #888; cursor: pointer; font-size: 1.2em; }
+    #sendBtn { background: #ffae00; color: #111; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
+    #imageUploadBtn { background: #333; color: #fff; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
+    
+    #commandHints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; background: #111; padding: 8px; border-top: 1px solid #222; }
+    #commandHints span { background: #222; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
 
-    /* 4. ANIMATIONS & CODE */
+    /* Bouncing dots loader */
     .bouncing-dots { display: flex; gap: 4px; padding: 10px; }
     .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: st-bounce 1.4s infinite ease-in-out both; }
-    .bouncing-dots span:nth-child(1) { animation-delay: -0.32s; }
-    .bouncing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    .bouncing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .bouncing-dots span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-    pre { position: relative; padding-top: 35px; border-radius: 8px; overflow: hidden; background: #1e1e1e !important; }
-    .code-header { position: absolute; top: 0; left: 0; right: 0; height: 35px; background: #333; color: #ccc; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 0.85em; }
-    .code-btn-group { display: flex; gap: 6px; }
-    .copy-btn { background: #ffae00; color: #111; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .run-btn { background: #28a745; color: white; }
   </style>
 </body>
 </html>
