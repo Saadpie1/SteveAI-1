@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>SteveAI - Smart AI Assistant</title>
 
   <meta name="description" content="SteveAI is your smart AI assistant for chatting, learning, and creating.">
@@ -13,19 +13,13 @@
   <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
   <meta property="og:url" content="https://steve-ai.netlify.app/chat.html">
   <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="SteveAI - Smart AI Assistant">
-  <meta name="twitter:description" content="Discover SteveAI: your AI-powered assistant for chat, learning, and creativity.">
-  <meta name="twitter:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
   <meta name="theme-color" content="#1e1e1e"/>
-  <link rel="canonical" href="https://steve-ai.netlify.app/chat.html">
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
 
-  <link rel="preload" href="chat.css" as="style">
   <link rel="stylesheet" href="chat.css">
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script type="application/ld+json">
   {
@@ -33,11 +27,8 @@
     "@type": "SoftwareApplication",
     "name": "SteveAI Chat",
     "url": "https://steve-ai.netlify.app/chat.html",
-    "image": "SteveAI-logo.jpg",
     "author": { "@type": "Person", "name": "saadpie" },
-    "applicationCategory": "AI Assistant",
-    "operatingSystem": "Web Browser",
-    "description": "Chat with SteveAI — your AI assistant from the future."
+    "description": "SteveAI — your Multi-Modal AI Assistant."
   }
   </script>
 </head>
@@ -55,13 +46,9 @@
       <select id="modeSelect" title="Model Mode">
         <option value="chat" selected>SteveAI-chat</option>
         <option value="reasoning">SteveAI-reasoning</option>
-        <option value="fast">SteveAI-fast</option>
-        <option value="lite">SteveAI-instant</option>
-        <option value="general">SteveAI-general</option> 
-        <option value="math">SteveAI-math</option>
         <option value="coding">SteveAI-coding</option>
         <option value="designer">SteveAI-designer</option>
-        <option value="science">SteveAI-science</option>
+        <option value="math">SteveAI-math</option>
         <option value="writer">SteveAI-writer</option>
       </select>
       <button id="clearChat" class="action-btn" title="Clear Chat">🗑️</button>
@@ -69,9 +56,8 @@
     </div>
   </div>
 
-  <div id="view-wrapper" style="display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden;">
-    
-    <div id="chat-side" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+  <div id="view-wrapper">
+    <div id="chat-side">
       <div id="chat">
         <div id="loading-indicator" class="bot-message" style="display:none;">
             <div class="bouncing-dots">
@@ -96,30 +82,27 @@
           <div id="canvas-code-container" style="display:none;"><pre><code id="canvas-code-display" class="language-javascript"></code></pre></div>
       </div>
     </div>
-
   </div>
 
   <div id="commandHints" hidden>
-    <span>/help</span><span>/clear</span><span>/theme</span>
-    <span>/export</span><span>/image</span><span>/contact</span><span>/play</span>
+    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span>
   </div>
 
   <div id="inputContainer">
     <div id="imagePreviewContainer" style="display:none;">
-        <img id="imagePreview" src="" alt="Image Preview" />
-        <button id="clearImageBtn" title="Remove Image">✖</button>
+        <img id="imagePreview" src="" alt="Preview" />
+        <button id="clearImageBtn">✖</button>
     </div>
     <form id="inputForm">
       <input type="file" id="imageInputFile" accept="image/*" style="display:none;"> 
-      
-      <button type="button" id="imageUploadBtn" class="action-btn" title="Upload Image">🖼️</button>
+      <button type="button" id="imageUploadBtn" class="action-btn" title="Upload Image"><i class="fa-solid fa-image"></i></button>
       
       <div class="modern-input-wrapper">
         <textarea id="messageInput" placeholder="Type your message..." rows="1" required></textarea>
-        <button type="button" id="micBtn" title="Voice Input">🎤</button>
+        <button type="button" id="micBtn" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
       </div>
 
-      <button type="submit" id="sendBtn" title="Send">↑</button>
+      <button type="submit" id="sendBtn" title="Send"><i class="fa-solid fa-arrow-up"></i></button>
     </form>
   </div>
   
@@ -127,17 +110,15 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
   
   <script>
-    // --- GLOBAL UTILITIES ---
+    // --- UTILITIES & POST-PROCESSING ---
     function getCodeLanguage(codeElement) {
         const match = codeElement.className.match(/language-(\w+)/);
-        if (match) { return match[1].charAt(0).toUpperCase() + match[1].slice(1); }
-        return 'Code';
+        return match ? match[1].charAt(0).toUpperCase() + match[1].slice(1) : 'Code';
     }
 
     function createCopyButton(preElement) {
@@ -153,23 +134,21 @@
         header.appendChild(langSpan);
 
         const btnGroup = document.createElement('div');
-        btnGroup.style.display = 'flex'; btnGroup.style.gap = '5px';
+        btnGroup.className = 'code-btn-group';
 
-        // Add Run Button for Preview
-        const runnable = ['HTML', 'Javascript', 'Js', 'Css'].includes(lang);
-        if (runnable) {
+        if (['HTML', 'Javascript', 'Js', 'Css'].includes(lang)) {
             const runBtn = document.createElement('button');
-            runBtn.className = 'copy-btn'; runBtn.style.background = '#28a745';
-            runBtn.textContent = '▶ Run';
+            runBtn.className = 'copy-btn run-btn';
+            runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run';
             runBtn.onclick = () => window.openInCanvas(codeElement.innerText, lang);
             btnGroup.appendChild(runBtn);
         }
 
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-btn';
-        copyButton.textContent = 'Copy';
-        copyButton.onclick = () => window.copyCode(copyButton); 
-        btnGroup.appendChild(copyButton);
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = () => window.copyCode(copyBtn); 
+        btnGroup.appendChild(copyBtn);
 
         header.appendChild(btnGroup);
         preElement.insertBefore(header, preElement.firstChild);
@@ -194,18 +173,22 @@
             try {
                 renderMathInElement(newChatElement, {
                     delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}],
-                    throwOnError: false, ignoredTags: ["script", "noscript", "style", "textarea"], errorColor: "#ff0000" 
+                    throwOnError: false
                 });
             } catch (e) {}
+        }
+        if (newChatElement.classList.contains('bot-message')) {
+            const cleanText = newChatElement.innerText.replace(/Copy|▶ Run/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            window.speechSynthesis.speak(utterance);
         }
     };
   
     document.addEventListener('DOMContentLoaded', () => {
-        let base64Image = null;
         const inputEl = document.getElementById('messageInput');
-        const hintsEl = document.getElementById('commandHints');
         const micBtn = document.getElementById('micBtn');
 
+        // VOICE RECOGNITION
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
@@ -218,25 +201,11 @@
             recognition.onend = () => { micBtn.style.color = ""; };
         }
 
-        inputEl.addEventListener('input', () => {
-          hintsEl.hidden = !inputEl.value.trim().startsWith('/');
-        });
-
-        document.querySelectorAll('#commandHints span').forEach(span => {
-          span.onclick = () => {
-            inputEl.value = span.textContent + ' ';
-            inputEl.focus();
-            const event = new Event('input');
-            inputEl.dispatchEvent(event);
-            hintsEl.hidden = true;
-          };
-        });
-        
+        // IMAGE UPLOAD LOGIC
         const imageInputFile = document.getElementById('imageInputFile');
         const imageUploadBtn = document.getElementById('imageUploadBtn');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         const imagePreview = document.getElementById('imagePreview');
-        const clearImageBtn = document.getElementById('clearImageBtn');
 
         imageUploadBtn.addEventListener('click', () => { imageInputFile.click(); });
         imageInputFile.addEventListener('change', (e) => {
@@ -244,98 +213,70 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    base64Image = event.target.result; 
-                    window.base64Image = base64Image; 
-                    imagePreview.src = base64Image;
+                    window.base64Image = event.target.result; 
+                    imagePreview.src = event.target.result;
                     imagePreviewContainer.style.display = 'flex';
-                    inputEl.focus();
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        clearImageBtn.addEventListener('click', () => {
-            base64Image = null; window.base64Image = null; 
-            imagePreview.src = ''; imageInputFile.value = ''; 
+        document.getElementById('clearImageBtn').onclick = () => {
+            window.base64Image = null; imagePreview.src = ''; 
             imagePreviewContainer.style.display = 'none';
-            inputEl.focus();
-        });
-        
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const chatWindow = document.getElementById('chat');
-        window.showLoader = () => {
-            if (!loadingIndicator || !chatWindow) return;
-            chatWindow.appendChild(loadingIndicator);
-            loadingIndicator.style.display = 'block'; 
-            chatWindow.scrollTop = chatWindow.scrollHeight;
         };
-        window.hideLoader = () => { if (loadingIndicator) loadingIndicator.style.display = 'none'; };
     });
   </script>
   
   <script type="module" src="chat.js"></script>
   
   <style>
-    /* 1. CORE UI CSS */
-    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; transition: background 0.3s; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+    /* 1. LAYOUT & THEME */
+    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
     body.light { background: #fafafa; color: #111; }
     
-    #header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; color: #fff; border-bottom: 1px solid #333; height: 60px; box-sizing: border-box; z-index: 1001;}
+    #header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; border-bottom: 1px solid #333; height: 60px; z-index: 1001; }
+    #view-wrapper { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
+    #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; }
     #chat { height: 100%; overflow-y: auto; padding: 20px; scroll-behavior: smooth; }
-    
-    #inputContainer { padding: 10px; border-top: 1px solid #333; background: #111; display: flex; flex-direction: column; align-items: center; min-height: 80px;}
-    #inputForm { display: flex; width: 100%; max-width: 800px; gap: 10px; }
-    
-    .modern-input-wrapper { flex-grow: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding-right: 8px; }
-    body.light .modern-input-wrapper { background: #fff; border-color: #ccc; }
 
-    textarea { flex-grow: 1; resize: none; background: transparent !important; color: #fff; border: none !important; padding: 10px; font-size: 1em; outline: none; transition: all 0.3s ease; }
-    body.light textarea { color: #000; }
-    
-    #sendBtn { width: 40px; height: 40px; background: #ffae00; color: #111; border: none; border-radius: 10px; font-size: 1.5em; cursor: pointer; }
-    #imageUploadBtn { width: 40px; height: 40px; background: #333; color: #fff; border: none; border-radius: 10px; font-size: 1.5em; cursor: pointer; }
-
-    /* 2. UPDATED RESPONSIVE CANVAS SIDEBAR */
-    #canvas-sidebar { 
-        width: 45%; 
-        background: #1a1a1a; 
-        border-left: 1px solid #333; 
-        display: flex; 
-        flex-direction: column; 
-        transition: 0.3s ease-in-out; 
-        overflow: hidden; 
-        z-index: 2000;
-    }
-    #canvas-sidebar.hidden { width: 0; border: none; display: none; }
-    
+    /* 2. RESPONSIVE CANVAS */
+    #canvas-sidebar { width: 45%; background: #1a1a1a; border-left: 1px solid #333; display: flex; flex-direction: column; transition: 0.3s; z-index: 2000; }
+    #canvas-sidebar.hidden { display: none; }
     #canvas-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #111; border-bottom: 1px solid #333; }
-    .tab-btn { background: #222; border: none; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-right: 5px;}
-    .tab-btn.active { background: #333; color: #ffae00; }
-    .close-canvas { background: none; border: none; color: #fff; font-size: 1.2em; cursor: pointer; }
-    
     #canvas-content { flex: 1; overflow: auto; background: #fff; }
-    #canvas-iframe { width: 100%; height: 100%; border: none; display: block;}
+    #canvas-iframe { width: 100%; height: 100%; border: none; display: block; }
+    .tab-btn { background: #222; border: none; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; }
+    .tab-btn.active { background: #333; color: #ffae00; }
 
-    /* MOBILE FIX: Sidebar becomes a full-screen overlay */
     @media (max-width: 768px) {
-        #canvas-sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100% !important;
-            height: 100%;
-            border-left: none;
-        }
+        #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100% !important; height: 100%; }
+        #view-wrapper { height: calc(100vh - 130px); }
     }
 
-    /* 3. CODE BLOCKS & ACTIONS */
-    pre { position: relative; padding-top: 35px; border-radius: 8px; overflow: hidden; margin: 1em 0; }
-    .code-header { position: absolute; top: 0; left: 0; right: 0; height: 35px; background: #333; color: #ccc; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 0.9em; z-index: 5; }
-    .copy-btn { background: #ffae00; color: #111; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+    /* 3. INPUT AREA */
+    #inputContainer { padding: 12px; border-top: 1px solid #333; background: #111; width: 100%; box-sizing: border-box; }
+    #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 10px; align-items: center; }
+    .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 2px 12px; }
+    textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; }
+    
+    #sendBtn, #imageUploadBtn { width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer; flex-shrink: 0; }
+    #sendBtn { background: #ffae00; color: #111; font-size: 1.2em; }
+    #imageUploadBtn { background: #333; color: #fff; font-size: 1.1em; }
+    #micBtn { background: none; border: none; color: #888; cursor: pointer; font-size: 1.2em; }
 
-    .bouncing-dots { display: flex; align-items: center; margin-left: 5px; }
-    .bouncing-dots span { width: 8px; height: 8px; margin: 0 2px; background-color: #ffae00; border-radius: 50%; animation: bounce 1.2s infinite ease-in-out; }
-    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 44% { transform: scale(1); } }
+    /* 4. ANIMATIONS & CODE */
+    .bouncing-dots { display: flex; gap: 4px; padding: 10px; }
+    .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: st-bounce 1.4s infinite ease-in-out both; }
+    .bouncing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .bouncing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    pre { position: relative; padding-top: 35px; border-radius: 8px; overflow: hidden; background: #1e1e1e !important; }
+    .code-header { position: absolute; top: 0; left: 0; right: 0; height: 35px; background: #333; color: #ccc; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 0.85em; }
+    .code-btn-group { display: flex; gap: 6px; }
+    .copy-btn { background: #ffae00; color: #111; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .run-btn { background: #28a745; color: white; }
   </style>
 </body>
 </html>
