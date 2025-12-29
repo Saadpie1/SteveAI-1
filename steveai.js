@@ -1,6 +1,6 @@
 /**
- * SteveAI Orchestrator v2.8
- * FIX: 'includes' Crash & Redirect Mitigation
+ * SteveAI Orchestrator v2.9
+ * FIX: Programmatic Guest Creation & Redirect Shield
  */
 
 const chatWindow = document.getElementById('chat-window');
@@ -8,10 +8,26 @@ const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const modelSelector = document.getElementById('model-selector');
 
-// SteveAI Memory
 let conversationHistory = JSON.parse(localStorage.getItem('steve_session')) || [
-    { role: "system", content: "You are SteveAI by Saadpie. Multi-Modal Orchestrator v2.8." }
+    { role: "system", content: "You are SteveAI by Saadpie. Multi-Modal Orchestrator v2.9." }
 ];
+
+// --- 1. THE REDIRECT SHIELD & GUEST INIT ---
+async function ensureGuestAccess() {
+    if (!puter.auth.isSignedIn()) {
+        console.log("SteveAI: Creating/Renewing Temporary Guest Session...");
+        try {
+            // This is the 2025 'Magic' call: It attempts to create a temp user 
+            // without showing a popup if possible, or using an iframe.
+            await puter.auth.signIn({ attempt_temp_user_creation: true });
+        } catch (e) {
+            console.warn("Guest creation silent block. Standard sign-in might be required.");
+        }
+    }
+}
+
+// Run guest init as soon as Puter is ready
+ensureGuestAccess();
 
 window.onload = () => {
     conversationHistory.forEach(m => { if(m.role !== 'system') addBubble(m.content, m.role === 'user'); });
@@ -22,61 +38,60 @@ function addBubble(content, isUser = false) {
     const div = document.createElement('div');
     div.className = `msg ${isUser ? 'user' : 'ai'}`;
     if (content instanceof HTMLElement) div.appendChild(content);
-    else div.innerText = content;
+    else div.innerText = content || "...";
     chatWindow.appendChild(div);
     chatWindow.scrollTop = chatWindow.scrollHeight;
     return div;
 }
 
-// SILENT RESET: Wipes session without refreshing the whole page
-async function silentReset() {
+// SILENT RESET: Forces Puter to generate a brand new Guest Identity in Cookies
+async function rotateIdentity() {
     await puter.auth.signOut();
-    localStorage.removeItem('puter_guest_id'); // Targets specific Puter identifiers
-    sessionStorage.clear();
-    const note = addBubble("✨ SteveAI: Access Renewed (Silent Reset).", false);
-    setTimeout(() => note.remove(), 2000);
+    // Re-trigger the guest creation flow
+    await ensureGuestAccess();
 }
 
 async function streamChat() {
     const prompt = userInput.value.trim();
     const model = modelSelector.value;
     
-    // FIX 1: Defensive check for model existence to prevent '.includes' error
+    // FIX: Pre-check model name safely
     if (!prompt || !model) return;
 
     addBubble(prompt, true);
     conversationHistory.push({ role: "user", content: prompt });
     userInput.value = "";
 
-    const aiBubble = addBubble("Establishing Frontier Link...");
+    const aiBubble = addBubble("Establishing Link...");
     let fullAiResponse = "";
 
     try {
-        // --- VIDEO (Sora 2) ---
+        // Ensure we have a valid session before the AI call
+        await ensureGuestAccess();
+
+        // --- MEDIA ROUTING ---
         if (model === 'sora-2') {
-            aiBubble.innerText = "Generating Sora 2 Video (est. 45s)...";
-            // Use test_mode: true if you want to avoid 'Low Balance' entirely for testing
-            const video = await puter.ai.txt2vid(prompt, { model: 'sora-2', seconds: 4, test_mode: false });
+            aiBubble.innerText = "Sora 2 Generating (est. 45s)...";
+            const video = await puter.ai.txt2vid(prompt, { model: 'sora-2', seconds: 4 });
             aiBubble.innerText = "Sora 2 Generation Complete:";
             video.controls = video.autoplay = true;
             aiBubble.appendChild(video);
             return;
         }
 
-        // --- IMAGE ---
-        if (model.includes('FLUX') || model.includes('image')) {
+        if (model.toLowerCase().includes('flux') || model.toLowerCase().includes('image')) {
             const img = await puter.ai.txt2img(prompt, { model: model });
             aiBubble.innerText = "Generation Success:";
             aiBubble.appendChild(img);
             return;
         }
 
-        // --- CHAT ---
+        // --- CHAT ROUTING ---
         const response = await puter.ai.chat(conversationHistory, { model: model, stream: true });
 
-        // FIX 2: Stop the loop if the response is unauthorized/empty
+        // Safeguard against the 'Unauthorized' redirect block
         if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
-            throw new Error("UNAUTHORIZED_REDIRECT");
+            throw new Error("RE_AUTH_REQUIRED");
         }
 
         aiBubble.innerText = ""; 
@@ -93,15 +108,15 @@ async function streamChat() {
         localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
 
     } catch (err) {
-        console.error("SteveAI System Note:", err);
-        const msg = err?.message || String(err);
+        console.error("SteveAI Error:", err);
+        const msg = (err?.message || String(err)).toLowerCase();
 
-        // Catch the 'Low Balance' or Redirect trigger
-        if (msg.includes("Unauthorized") || msg.includes("balance") || msg.includes("REDIRECT")) {
-            aiBubble.innerText = "⚠️ Limit Reached. Use a VPN or wait 1 hour to bypass IP restrictions.";
-            await silentReset();
+        // If Sora/GPT-5 is blocked, rotate identity silently
+        if (msg.includes("unauthorized") || msg.includes("auth") || msg.includes("limit")) {
+            aiBubble.innerText = "♻️ Session Refreshed. Please try your request again.";
+            await rotateIdentity();
         } else {
-            aiBubble.innerText = "Backend Error: " + msg;
+            aiBubble.innerText = "Backend Note: " + msg;
         }
     }
 }
