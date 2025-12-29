@@ -27,25 +27,24 @@
 <body>
 
     <div class="header">
-    <div class="logo">STEVE-AI <span style="font-weight: 200; color: var(--blue);">v2.5</span></div>
-    <select id="model-selector" class="model-select">
-        <optgroup label="REASONING GIANTS">
-            <option value="gpt-5.2-pro">GPT-5.2 Thinking</option>
-            <option value="claude-opus-4-5">Claude 4.5 Opus</option>
-            <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
-        </optgroup>
-        <optgroup label="SPEED & AGENTIC">
-            <option value="grok-4-1-fast">Grok 4.1 Fast</option>
-            <option value="gpt-5.1-codex-max">Codex Max (Coding)</option>
-        </optgroup>
-        <optgroup label="MULTIMODAL (IMAGE/VIDEO)">
-            <option value="black-forest-labs/FLUX.2-pro">Flux 2.0 Pro</option>
-            <option value="openai/sora-2">Sora 2 (Video)</option>
-            <option value="gemini-2.5-flash-image-preview">Nano Banana Pro</option>
-        </optgroup>
-    </select>
-</div>
-
+        <div class="logo">STEVE-AI <span style="font-weight: 200; color: var(--blue);">Saadpie</span></div>
+        <select id="model-selector" class="model-select">
+            <optgroup label="REASONING GIANTS">
+                <option value="gpt-5.2-pro">GPT-5.2 Thinking</option>
+                <option value="claude-opus-4-5">Claude 4.5 Opus</option>
+                <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
+            </optgroup>
+            <optgroup label="SPEED & AGENTIC">
+                <option value="grok-4-1-fast">Grok 4.1 Fast</option>
+                <option value="gpt-5.1-codex-max">Codex Max (Coding)</option>
+            </optgroup>
+            <optgroup label="MULTIMODAL">
+                <option value="black-forest-labs/FLUX.2-pro">Flux 2.0 Pro</option>
+                <option value="openai/sora-2">Sora 2 (Video)</option>
+                <option value="gemini-2.5-flash-image-preview">Nano Banana Pro</option>
+            </optgroup>
+        </select>
+    </div>
 
     <div id="chat-window"></div>
 
@@ -68,7 +67,11 @@
 
         async function triggerBypass() {
             localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
-            localStorage.clear();
+            // Specifically target Puter keys
+            Object.keys(localStorage).forEach(key => {
+                if (key.includes('puter')) localStorage.removeItem(key);
+            });
+            sessionStorage.clear();
             document.cookie.split(";").forEach(c => {
                 document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
             });
@@ -78,7 +81,6 @@
         function addBubble(content, isUser = false) {
             const div = document.createElement('div');
             div.className = `msg ${isUser ? 'user' : 'ai'}`;
-            // If content is an actual Image Element (from Puter txt2img)
             if (content instanceof HTMLElement) {
                 div.appendChild(content);
             } else {
@@ -102,20 +104,26 @@
             let fullAiResponse = "";
 
             try {
-                // IMAGE GENERATION ROUTE
-                if (model === 'fotor-ai' || model === 'dall-e-3') {
-                    const imgElement = await puter.ai.txt2img(prompt, { model: model });
-                    aiBubble.innerText = "Generated Image:";
-                    aiBubble.appendChild(imgElement);
+                // MULTIMODAL ROUTE
+                if (model.includes('FLUX') || model.includes('sora') || model.includes('image')) {
+                    const media = await puter.ai.txt2img(prompt, { model: model });
+                    aiBubble.innerText = "Generated Result:";
+                    aiBubble.appendChild(media);
                     return;
                 }
 
                 // TEXT CHAT ROUTE
                 const response = await puter.ai.chat(conversationHistory, { model: model, stream: true });
+
+                // DEFENSIVE: Check if response is actually iterable
+                if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
+                    throw new Error("Unauthorized or invalid stream response");
+                }
+
                 aiBubble.innerText = ""; 
 
                 for await (const part of response) {
-                    const chunk = part?.text || "";
+                    const chunk = part?.text || part?.message?.content || "";
                     if (chunk) {
                         fullAiResponse += chunk;
                         aiBubble.innerText = fullAiResponse;
@@ -126,11 +134,10 @@
                 localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
 
             } catch (err) {
-                // BUG FIX: Safer check for the error message
-                const errMsg = err?.message || String(err) || "Unknown Error";
                 console.error("SteveAI Error:", err);
+                const errMsg = err?.message || String(err);
 
-                if (errMsg.toLowerCase().includes("limit") || errMsg.includes("429")) {
+                if (errMsg.includes("Unauthorized") || errMsg.includes("limit") || errMsg.includes("429") || errMsg.includes("iterable")) {
                     aiBubble.innerText = "♻️ CYCLE: Rotating SteveAI Identity...";
                     setTimeout(triggerBypass, 1500);
                 } else {
@@ -143,5 +150,4 @@
         userInput.onkeypress = (e) => { if (e.key === 'Enter') streamChat(); };
     </script>
 </body>
-          </html>
-          
+</html>
