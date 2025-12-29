@@ -16,12 +16,13 @@
         .msg { max-width: 85%; padding: 14px 18px; border-radius: 18px; font-size: 15px; line-height: 1.6; animation: slideUp 0.3s ease-out; word-wrap: break-word; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .user { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 4px; }
-        .ai { align-self: flex-start; background: var(--card); border: 1px solid #30363d; border-bottom-left-radius: 4px; }
-        .ai img { width: 100%; border-radius: 10px; margin-top: 10px; }
+        .ai { align-self: flex-start; background: var(--card); border: 1px solid #30363d; border-bottom-left-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .ai video, .ai img { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid #30363d; }
         .model-select { background: #010409; color: var(--blue); border: 1px solid var(--blue); padding: 6px 10px; border-radius: 6px; font-size: 11px; outline: none; }
         .input-area { background: #161b22; border-top: 1px solid #30363d; padding: 15px; display: flex; gap: 10px; }
         input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: white; padding: 14px; border-radius: 10px; outline: none; }
-        button { background: var(--accent); color: white; border: none; padding: 0 25px; border-radius: 10px; font-weight: 800; cursor: pointer; }
+        button { background: var(--accent); color: white; border: none; padding: 0 25px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.95); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -30,17 +31,13 @@
         <div class="logo">STEVE-AI <span style="font-weight: 200; color: var(--blue);">Saadpie</span></div>
         <select id="model-selector" class="model-select">
             <optgroup label="REASONING GIANTS">
-                <option value="gpt-5.2-pro">GPT-5.2 Thinking</option>
+                <option value="gpt-5.2-chat">GPT-5.2 Thinking</option>
                 <option value="claude-opus-4-5">Claude 4.5 Opus</option>
                 <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
             </optgroup>
-            <optgroup label="SPEED & AGENTIC">
-                <option value="grok-4-1-fast">Grok 4.1 Fast</option>
-                <option value="gpt-5.1-codex-max">Codex Max (Coding)</option>
-            </optgroup>
-            <optgroup label="MULTIMODAL">
-                <option value="black-forest-labs/FLUX.2-pro">Flux 2.0 Pro</option>
-                <option value="openai/sora-2">Sora 2 (Video)</option>
+            <optgroup label="CREATIVE (MEDIA)">
+                <option value="sora-2">Sora 2 (Video)</option>
+                <option value="black-forest-labs/FLUX.1-schnell">Flux 2.0 Pro</option>
                 <option value="gemini-2.5-flash-image-preview">Nano Banana Pro</option>
             </optgroup>
         </select>
@@ -49,7 +46,7 @@
     <div id="chat-window"></div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Type a message or image prompt..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Ask SteveAI or describe a video..." autocomplete="off">
         <button id="send-btn">SEND</button>
     </div>
 
@@ -59,18 +56,17 @@
         const sendBtn = document.getElementById('send-btn');
         const modelSelector = document.getElementById('model-selector');
 
-        let conversationHistory = JSON.parse(localStorage.getItem('steve_session')) || [];
+        let conversationHistory = JSON.parse(localStorage.getItem('steve_session')) || [
+            { role: "system", content: "You are SteveAI by Saadpie. Multi-Modal Orchestrator v2.6." }
+        ];
 
         window.onload = () => {
-            conversationHistory.forEach(m => addBubble(m.content, m.role === 'user'));
+            conversationHistory.forEach(m => { if(m.role !== 'system') addBubble(m.content, m.role === 'user'); });
         };
 
         async function triggerBypass() {
             localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
-            // Specifically target Puter keys
-            Object.keys(localStorage).forEach(key => {
-                if (key.includes('puter')) localStorage.removeItem(key);
-            });
+            Object.keys(localStorage).forEach(key => { if (key.includes('puter')) localStorage.removeItem(key); });
             sessionStorage.clear();
             document.cookie.split(";").forEach(c => {
                 document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
@@ -81,11 +77,8 @@
         function addBubble(content, isUser = false) {
             const div = document.createElement('div');
             div.className = `msg ${isUser ? 'user' : 'ai'}`;
-            if (content instanceof HTMLElement) {
-                div.appendChild(content);
-            } else {
-                div.innerText = content;
-            }
+            if (content instanceof HTMLElement) div.appendChild(content);
+            else div.innerText = content;
             chatWindow.appendChild(div);
             chatWindow.scrollTop = chatWindow.scrollHeight;
             return div;
@@ -100,28 +93,37 @@
             conversationHistory.push({ role: "user", content: prompt });
             userInput.value = "";
 
-            const aiBubble = addBubble("Connecting to SteveAI...");
+            const aiBubble = addBubble("SteveAI is orchestrating...");
             let fullAiResponse = "";
 
             try {
-                // MULTIMODAL ROUTE
-                if (model.includes('FLUX') || model.includes('sora') || model.includes('image')) {
-                    const media = await puter.ai.txt2img(prompt, { model: model });
-                    aiBubble.innerText = "Generated Result:";
-                    aiBubble.appendChild(media);
+                // --- VIDEO ROUTE (Sora 2) ---
+                if (model === 'sora-2') {
+                    aiBubble.innerText = "Sora 2 is generating your 4s clip (est. 30s)...";
+                    const videoElement = await puter.ai.txt2vid(prompt, { model: 'sora-2', seconds: 4 });
+                    aiBubble.innerText = "Sora 2 Generation Complete:";
+                    videoElement.controls = true;
+                    videoElement.autoplay = true;
+                    aiBubble.appendChild(videoElement);
                     return;
                 }
 
-                // TEXT CHAT ROUTE
-                const response = await puter.ai.chat(conversationHistory, { model: model, stream: true });
+                // --- IMAGE ROUTE (Flux/Nano) ---
+                if (model.includes('FLUX') || model.includes('image')) {
+                    const img = await puter.ai.txt2img(prompt, { model: model });
+                    aiBubble.innerText = "Generated Image:";
+                    aiBubble.appendChild(img);
+                    return;
+                }
 
-                // DEFENSIVE: Check if response is actually iterable
+                // --- CHAT ROUTE ---
+                const response = await puter.ai.chat(conversationHistory, { model: model, stream: true });
+                
                 if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
-                    throw new Error("Unauthorized or invalid stream response");
+                    throw new Error("Unauthorized or Invalid Stream");
                 }
 
                 aiBubble.innerText = ""; 
-
                 for await (const part of response) {
                     const chunk = part?.text || part?.message?.content || "";
                     if (chunk) {
@@ -134,14 +136,13 @@
                 localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
 
             } catch (err) {
-                console.error("SteveAI Error:", err);
-                const errMsg = err?.message || String(err);
-
-                if (errMsg.includes("Unauthorized") || errMsg.includes("limit") || errMsg.includes("429") || errMsg.includes("iterable")) {
-                    aiBubble.innerText = "♻️ CYCLE: Rotating SteveAI Identity...";
+                console.error("SteveAI Runtime Error:", err);
+                const msg = err?.message || String(err);
+                if (msg.includes("Unauthorized") || msg.includes("limit") || msg.includes("429") || msg.includes("iterable")) {
+                    aiBubble.innerText = "♻️ ROTATING IDENTITY: Renewing SteveAI Access...";
                     setTimeout(triggerBypass, 1500);
                 } else {
-                    aiBubble.innerText = "System Note: " + errMsg;
+                    aiBubble.innerText = "Backend Note: " + msg;
                 }
             }
         }
