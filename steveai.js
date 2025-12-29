@@ -1,7 +1,6 @@
 /**
- * SteveAI Orchestrator v2.7
- * Developed by Saadpie
- * FIX: Silent Identity Rotation & Sora Credit Handling
+ * SteveAI Orchestrator v2.8
+ * FIX: 'includes' Crash & Redirect Mitigation
  */
 
 const chatWindow = document.getElementById('chat-window');
@@ -9,40 +8,16 @@ const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const modelSelector = document.getElementById('model-selector');
 
+// SteveAI Memory
 let conversationHistory = JSON.parse(localStorage.getItem('steve_session')) || [
-    { role: "system", content: "You are SteveAI by Saadpie. Multi-Modal Orchestrator v2.7." }
+    { role: "system", content: "You are SteveAI by Saadpie. Multi-Modal Orchestrator v2.8." }
 ];
 
 window.onload = () => {
-    conversationHistory.forEach(m => { 
-        if(m.role !== 'system') addBubble(m.content, m.role === 'user'); 
-    });
+    conversationHistory.forEach(m => { if(m.role !== 'system') addBubble(m.content, m.role === 'user'); });
 };
 
-// --- SILENT BYPASS (No Page Refresh) ---
-async function silentRotate() {
-    try {
-        console.log("SteveAI: Performing Silent Identity Rotation...");
-        // 1. Sign out of current Puter Guest Session
-        await puter.auth.signOut();
-        
-        // 2. Clear local identifiers
-        Object.keys(localStorage).forEach(key => { 
-            if (key.includes('puter')) localStorage.removeItem(key); 
-        });
-        sessionStorage.clear();
-
-        // 3. Instead of reload, we wait for Puter to auto-assign a new guest ID on next call
-        // We notify the user silently
-        const note = addBubble("✨ Identity Refreshed. Accessing Frontier models...", false);
-        setTimeout(() => note.remove(), 3000);
-        
-    } catch (err) {
-        console.error("Rotation failed, falling back to hard reset.");
-        location.reload(); 
-    }
-}
-
+// UI: Message Bubbles
 function addBubble(content, isUser = false) {
     const div = document.createElement('div');
     div.className = `msg ${isUser ? 'user' : 'ai'}`;
@@ -53,54 +28,55 @@ function addBubble(content, isUser = false) {
     return div;
 }
 
+// SILENT RESET: Wipes session without refreshing the whole page
+async function silentReset() {
+    await puter.auth.signOut();
+    localStorage.removeItem('puter_guest_id'); // Targets specific Puter identifiers
+    sessionStorage.clear();
+    const note = addBubble("✨ SteveAI: Access Renewed (Silent Reset).", false);
+    setTimeout(() => note.remove(), 2000);
+}
+
 async function streamChat() {
     const prompt = userInput.value.trim();
     const model = modelSelector.value;
-    if (!prompt) return;
+    
+    // FIX 1: Defensive check for model existence to prevent '.includes' error
+    if (!prompt || !model) return;
 
     addBubble(prompt, true);
     conversationHistory.push({ role: "user", content: prompt });
     userInput.value = "";
 
-    const aiBubble = addBubble("SteveAI is orchestrating...");
+    const aiBubble = addBubble("Establishing Frontier Link...");
     let fullAiResponse = "";
 
     try {
-        // --- SORA 2 VIDEO LOGIC ---
+        // --- VIDEO (Sora 2) ---
         if (model === 'sora-2') {
-            aiBubble.innerText = "Sora 2 Generating (4s clip)...";
-            try {
-                const videoElement = await puter.ai.txt2vid(prompt, { 
-                    model: 'sora-2', 
-                    seconds: 4,
-                    // Try testMode if normal fails (Uncomment below to enable test mode by default)
-                    // testMode: false 
-                });
-                aiBubble.innerText = "Sora 2 Generation Complete:";
-                videoElement.controls = videoElement.autoplay = true;
-                aiBubble.appendChild(videoElement);
-            } catch (vErr) {
-                if (vErr.message.includes("credit") || vErr.status === 401) {
-                    aiBubble.innerText = "⚠️ Sora 2 Credits Depleted. Resetting Identity...";
-                    await silentRotate();
-                } else throw vErr;
-            }
+            aiBubble.innerText = "Generating Sora 2 Video (est. 45s)...";
+            // Use test_mode: true if you want to avoid 'Low Balance' entirely for testing
+            const video = await puter.ai.txt2vid(prompt, { model: 'sora-2', seconds: 4, test_mode: false });
+            aiBubble.innerText = "Sora 2 Generation Complete:";
+            video.controls = video.autoplay = true;
+            aiBubble.appendChild(video);
             return;
         }
 
-        // --- IMAGE LOGIC ---
+        // --- IMAGE ---
         if (model.includes('FLUX') || model.includes('image')) {
             const img = await puter.ai.txt2img(prompt, { model: model });
-            aiBubble.innerText = "Generated Image:";
+            aiBubble.innerText = "Generation Success:";
             aiBubble.appendChild(img);
             return;
         }
 
-        // --- CHAT LOGIC ---
+        // --- CHAT ---
         const response = await puter.ai.chat(conversationHistory, { model: model, stream: true });
-        
+
+        // FIX 2: Stop the loop if the response is unauthorized/empty
         if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
-            throw new Error("Unauthorized");
+            throw new Error("UNAUTHORIZED_REDIRECT");
         }
 
         aiBubble.innerText = ""; 
@@ -112,18 +88,20 @@ async function streamChat() {
                 chatWindow.scrollTop = chatWindow.scrollHeight;
             }
         }
+        
         conversationHistory.push({ role: "assistant", content: fullAiResponse });
         localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
 
     } catch (err) {
+        console.error("SteveAI System Note:", err);
         const msg = err?.message || String(err);
-        if (msg.includes("Unauthorized") || msg.includes("limit") || msg.includes("401")) {
-            aiBubble.innerText = "♻️ Rotating SteveAI Identity...";
-            await silentRotate();
-            // Optional: Automatically retry the last message
-            // streamChat(); 
+
+        // Catch the 'Low Balance' or Redirect trigger
+        if (msg.includes("Unauthorized") || msg.includes("balance") || msg.includes("REDIRECT")) {
+            aiBubble.innerText = "⚠️ Limit Reached. Use a VPN or wait 1 hour to bypass IP restrictions.";
+            await silentReset();
         } else {
-            aiBubble.innerText = "Backend Note: " + msg;
+            aiBubble.innerText = "Backend Error: " + msg;
         }
     }
 }
