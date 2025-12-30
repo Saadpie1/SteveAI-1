@@ -19,11 +19,10 @@ const syncBtn = document.getElementById('syncModelsBtn');
 let memory = {};
 let turn = 0;
 
-// --- Dynamic Model Syncing (Chat Only) ---
+// --- Dynamic Model Syncing (Strict Chat Filter) ---
 async function syncModels() {
     const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
-    // Fetch with features to accurately filter for chat capabilities
-    const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free&features`);
+    const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free`);
 
     try {
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
@@ -37,26 +36,31 @@ async function syncModels() {
                 <hr>
             `;
             
-            // Filter for models that support chat completions
-            const chatModels = data.data.filter(m => {
-                const features = m.features || [];
-                const id = m.id.toLowerCase();
-                // Exclude obvious image/non-chat models
-                const isImageModel = id.includes('flux') || id.includes('sdxl') || id.includes('imagen') || id.includes('dall-e');
-                return features.includes('chat') || (!isImageModel && !features.includes('image'));
-            });
+            // Strictly filter for the conversational type identified in terminal tests
+            const chatModels = data.data.filter(m => m.type === "chat/completion");
 
             chatModels.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
-                // Prettify name: removes provider prefix and dashes, adds thinking emoji if applicable
+                
+                // Prettify name: removes provider prefix and dashes
                 let label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
-                if (label.includes('THINKING') || label.includes('R1')) label = `🧠 ${label}`;
+                
+                // Contextual Icons for Saadpie's Orchestrator
+                if (label.includes('THINKING') || label.includes('R1')) {
+                    label = `🧠 ${label}`;
+                } else if (label.includes('LLAMA 4') || label.includes('SCOUT') || label.includes('MAVERICK')) {
+                    label = `🚀 ${label}`;
+                } else if (label.includes('GEMINI') || label.includes('FLASH')) {
+                    label = `✨ ${label}`;
+                } else if (label.includes('CODER') || label.includes('PHI 4')) {
+                    label = `💻 ${label}`;
+                }
                 
                 opt.textContent = label;
                 modeSelect.appendChild(opt);
             });
-            console.log(`✅ SteveAI: ${chatModels.length} chat models synced.`);
+            console.log(`✅ SteveAI: Engine synced with ${chatModels.length} chat/completion models.`);
         }
     } catch (e) {
         console.error("❌ Model sync failed:", e);
@@ -348,4 +352,4 @@ form.onsubmit = async e => {
 themeToggle.onclick = () => handleCommand('/theme');
 clearChatBtn.onclick = () => handleCommand('/clear');
 if (syncBtn) syncBtn.onclick = () => syncModels();
-    
+                           
