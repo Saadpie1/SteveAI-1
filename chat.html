@@ -85,14 +85,15 @@
   </div>
 
   <div id="inputContainer">
+    <div id="imagePreviewContainer" style="display:none;">
+        <div class="preview-wrapper">
+            <img id="imagePreview" src="" alt="Preview" />
+            <button id="clearImageBtn" type="button">✖</button>
+        </div>
+    </div>
+
     <form id="inputForm">
       <div class="upload-area-wrapper">
-        <div id="imagePreviewContainer" style="display:none;">
-            <div class="preview-wrapper">
-                <img id="imagePreview" src="" alt="Preview" />
-                <button id="clearImageBtn" type="button">✖</button>
-            </div>
-        </div>
         <input type="file" id="imageInputFile" accept="image/*" style="display:none;"> 
         <button type="button" id="imageUploadBtn" class="circular-btn" title="Upload Image"><i class="fa-solid fa-image"></i></button>
       </div>
@@ -179,7 +180,7 @@
                 reader.onload = (event) => {
                     window.base64Image = event.target.result; 
                     imagePreview.src = event.target.result;
-                    imagePreviewContainer.style.display = 'block';
+                    imagePreviewContainer.style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
             }
@@ -283,29 +284,34 @@
     }
     .hints-hidden { display: none !important; }
 
-    /* IMAGE PREVIEW: FLOATING STYLE */
-    .upload-area-wrapper { position: relative; display: flex; align-items: center; }
-    
+    /* IMAGE PREVIEW: CENTERED FULL-SIZE PREVIEW */
     #imagePreviewContainer { 
-        position: absolute;
-        bottom: 55px;
-        left: 0;
-        z-index: 10;
+        display: none; 
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 10px;
+        background: transparent;
+        justify-content: center; /* Center horizontally */
+        align-items: center;
     }
     .preview-wrapper {
         position: relative;
-        height: 70px;
-        width: 70px;
+        max-height: 200px; /* Limits height while keeping orientation */
+        max-width: 100%;
         border-radius: 12px;
         border: 2px solid #ffae00;
         background: #1a1a1a;
-        padding: 2px;
+        padding: 4px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
     #imagePreview { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
+        display: block;
+        max-height: 190px;
+        max-width: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain; /* Shows full image orientation */
         border-radius: 8px;
     }
     #clearImageBtn { 
@@ -316,14 +322,15 @@
         color: white; 
         border: none; 
         border-radius: 50%; 
-        width: 22px; 
-        height: 22px; 
-        font-size: 10px;
+        width: 26px; 
+        height: 26px; 
+        font-size: 12px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        z-index: 20;
     }
 
     #inputContainer { background: #111; width: 100%; flex-shrink: 0; }
@@ -347,8 +354,8 @@
         border-radius: 50%;
         width: 44px;
         height: 44px;
-        min-width: 44px; /* Stops slimming */
-        flex-shrink: 0;   /* Stops slimming */
+        min-width: 44px; 
+        flex-shrink: 0;   
         border: none;
         cursor: pointer;
         display: flex;
@@ -374,5 +381,5 @@
     }
   </style>
 </body>
-                                           </html>
-  
+            </html>
+    
