@@ -18,6 +18,41 @@ const modeSelect = document.getElementById('modeSelect');
 let memory = {};
 let turn = 0;
 
+// --- Dynamic Model Syncing ---
+async function syncModels() {
+    const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
+    const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free`);
+
+    try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
+        const data = await res.json();
+        
+        if (data && data.data) {
+            // Keep specialized SteveAI defaults, then clear and repopulate
+            modeSelect.innerHTML = `
+                <option value="chat" selected>SteveAI-Default</option>
+                <option value="fast">SteveAI-Fast (Gemini)</option>
+                <hr>
+            `;
+            
+            data.data.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                // Prettify name: removes provider prefix and dashes
+                const label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
+                opt.textContent = label;
+                modeSelect.appendChild(opt);
+            });
+            console.log("✅ SteveAI: Engine synced with Ahmed's latest models.");
+        }
+    } catch (e) {
+        console.error("❌ Model sync failed:", e);
+    }
+}
+
+// Initialize Sync
+syncModels();
+
 function buildContext() {
   return Object.keys(memory)
     .map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`)
@@ -236,7 +271,6 @@ async function handleCommand(inputStr) {
 async function fetchAI(payload) {
     const a4fBase = config.API_BASE[0]; 
     const finalUrl = config.proxiedURL(`${a4fBase}/chat/completions`);
-    // Iterates through keys for high availability
     for (const key of config.API_KEYS) {
         try {
             const res = await fetch(finalUrl, {
@@ -253,22 +287,16 @@ async function fetchAI(payload) {
 // --- Orchestration Logic ---
 async function getChatReply(msg) { 
   const context = buildContext(); 
-  const mode = (modeSelect?.value || 'chat').toLowerCase();
+  const selectedMode = (modeSelect?.value || 'chat').toLowerCase();
   const imageToSend = window.base64Image;
   if (window.showLoader) window.showLoader();
   
   try {
       if (imageToSend) return await getGeminiReply(msg, context, 'fast', imageToSend, null);
-      if (mode === 'lite' || mode === 'fast') return await getGeminiReply(msg, context, mode, null);
+      if (selectedMode === 'fast') return await getGeminiReply(msg, context, 'fast', null);
 
-      let model;
-      switch (mode) {
-        case 'science': model = "provider-1/qwen3-next-80b-a3b-thinking"; break;
-        case 'math': 
-        case 'coding': model = "provider-8/mimo-v2-flash"; break;
-        case 'reasoning': model = "provider-5/deepseek-r1-0528-fast"; break;
-        default: model = "provider-5/gpt-oss-120b"; break;
-      }
+      // Determine model: if 'chat', use default. Otherwise, use the dynamic ID from the dropdown.
+      let model = selectedMode === 'chat' ? "provider-5/gpt-oss-120b" : modeSelect.value;
 
       const system = `You are SteveAI by Saadpie. Powered by Ahmed Aftab's PC. If generating images, use syntax: Image Generated:model:Imagen 4 (Original),prompt:PROMPT`;
       const payload = { model, messages: [{role:"system", content:system}, {role:"user", content:`${context}\n\nUser: ${msg}`}] };
@@ -306,3 +334,4 @@ form.onsubmit = async e => {
 
 themeToggle.onclick = () => handleCommand('/theme');
 clearChatBtn.onclick = () => handleCommand('/clear');
+  
