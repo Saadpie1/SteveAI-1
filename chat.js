@@ -275,22 +275,32 @@ async function getChatReply(msg) {
   const selectedMode = (modeSelect?.value || 'chat').toLowerCase();
   const imageToSend = window.base64Image;
   if (window.showLoader) window.showLoader();
+  
   try {
       if (imageToSend || selectedMode === 'fast') {
           return await getGeminiReply(msg, context, 'fast', imageToSend, null);
       }
 
-      const isPuter = PUTER_MODELS.some(m => m.id === selectedMode);
-      if (isPuter || selectedMode === 'chat') {
-          try {
-              // Try Puter Engine
-              return await getPuterReply(msg, context, selectedMode);
-          } catch (e) {
-              console.warn("⚠️ Puter Redirect Blocked. Switching to Fallback...");
-              // SILENT FALLBACK: Use Ahmed's default model to avoid the redirect
+      const isPuter = PUTER_MODELS.some(m => m.id === selectedMode) || selectedMode === 'chat';
+      
+      if (isPuter) {
+          // --- INVISIBLE REDIRECT SHIELD ---
+          // If Puter is not signed in, calling ai.chat() triggers the redirect.
+          // We check the status first. If not ready, we use Ahmed Engine as a proxy.
+          if (typeof puter !== 'undefined' && puter.auth.isSignedIn()) {
+              try {
+                  return await getPuterReply(msg, context, selectedMode);
+              } catch (e) {
+                  console.warn("Puter Node Error, falling back...");
+                  return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
+              }
+          } else {
+              // Redirect would happen here, so we skip Puter entirely for this message
+              console.log("🛡️ SteveAI: Puter session pending. Using Ahmed Shield invisibly.");
               return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
           }
       }
+      
       return await fetchAhmedEngine(msg, context, selectedMode);
   } finally { if (window.hideLoader) window.hideLoader(); }
 }
@@ -315,4 +325,4 @@ form.onsubmit = async e => {
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-                
+            
