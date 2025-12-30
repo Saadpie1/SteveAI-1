@@ -270,13 +270,14 @@ async function fetchAhmedEngine(msg, context, modelId) {
     return data?.choices?.[0]?.message?.content || "Ahmed Engine node failed.";
 }
 
-async function getChatReply(msg) { 
+async function getChatReply(msg, imageToSend = null) { 
   const context = buildContext(); 
   const selectedMode = (modeSelect?.value || 'chat').toLowerCase();
-  const imageToSend = window.base64Image;
+  
   if (window.showLoader) window.showLoader();
   
   try {
+      // 🟢 ROUTE TO GEMINI FAST FOR IMAGE ANALYSIS OR EXPLICIT FAST MODE
       if (imageToSend || selectedMode === 'fast') {
           return await getGeminiReply(msg, context, 'fast', imageToSend, null);
       }
@@ -309,7 +310,7 @@ form.onsubmit = async e => {
   if (!msg && !imageToSend) return;
   if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; return; }
   
-  // FIXED: If image exists, show it in user bubble and clear the preview immediately
+  // FIXED: If image exists, show it in user bubble
   if (imageToSend) {
     addMessage(`${msg}\n\n<img src="${imageToSend}" style="max-width:200px; border-radius:10px; border:1px solid #ffae00;">`, 'user');
   } else {
@@ -317,15 +318,19 @@ form.onsubmit = async e => {
   }
   
   input.value = '';
-  const wasImage = !!imageToSend;
 
   // Clear preview container immediately so it doesn't push buttons
-  if (wasImage && document.getElementById('clearImageBtn')) {
+  if (imageToSend && document.getElementById('clearImageBtn')) {
     document.getElementById('clearImageBtn').click(); 
   }
 
   try {
-    const r = await getChatReply(msg);
+    // Pass the image data to the orchestrator before it's lost
+    const r = await getChatReply(msg, imageToSend);
+    
+    // Clear global image state after it has been sent to API
+    window.base64Image = null;
+
     const imgCmd = parseImageGenerationCommand(r);
     if (imgCmd) await handleCommand(`/image ${imgCmd.prompt}`);
     else { addMessage(r, 'bot'); memory[++turn] = { user: msg, bot: r }; }
@@ -338,4 +343,4 @@ form.onsubmit = async e => {
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-        
+                       
