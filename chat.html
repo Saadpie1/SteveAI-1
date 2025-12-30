@@ -264,6 +264,40 @@
         scroll-behavior: smooth; 
     }
 
+    /* --- TABLE RENDERING FIXES --- */
+    .bubble table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #333;
+        display: block; /* Allows horizontal scrolling on small screens */
+        overflow-x: auto;
+    }
+    .bubble th {
+        background: #222;
+        color: #ffae00;
+        font-weight: 600;
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 2px solid #333;
+    }
+    .bubble td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #333;
+        color: #eee;
+        line-height: 1.4;
+    }
+    .bubble tr:last-child td { border-bottom: none; }
+    .bubble tr:nth-child(even) { background: #1f1f1f; }
+    body.light .bubble table { background: #fff; border-color: #ddd; }
+    body.light .bubble th { background: #f5f5f5; border-bottom-color: #eee; }
+    body.light .bubble td { border-bottom-color: #eee; color: #333; }
+
+    /* Command Hints */
     #commandHints {
         display: flex;
         gap: 8px;
@@ -284,7 +318,7 @@
     }
     .hints-hidden { display: none !important; }
 
-    /* IMAGE PREVIEW: CENTERED FULL-SIZE PREVIEW */
+    /* IMAGE PREVIEW */
     #imagePreviewContainer { 
         display: none; 
         width: 100%;
@@ -292,12 +326,12 @@
         margin: 0 auto;
         padding: 10px;
         background: transparent;
-        justify-content: center; /* Center horizontally */
+        justify-content: center;
         align-items: center;
     }
     .preview-wrapper {
         position: relative;
-        max-height: 200px; /* Limits height while keeping orientation */
+        max-height: 200px;
         max-width: 100%;
         border-radius: 12px;
         border: 2px solid #ffae00;
@@ -311,7 +345,7 @@
         max-width: 100%;
         width: auto;
         height: auto;
-        object-fit: contain; /* Shows full image orientation */
+        object-fit: contain;
         border-radius: 8px;
     }
     #clearImageBtn { 
@@ -347,7 +381,6 @@
     }
     textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; font-size: 16px; max-height: 150px; }
 
-    /* CIRCULAR BUTTONS FIX */
     .circular-btn {
         background: #333;
         color: #fff;
@@ -366,9 +399,6 @@
     #sendBtn { background: #ffae00; color: #111; }
     #imageUploadBtn { background: #2a2a2a; }
 
-    .action-btn { background: transparent; color: #888; border: none; cursor: pointer; font-size: 18px; transition: 0.2s; }
-    .action-btn:hover { color: #ffae00; }
-
     .bouncing-dots { display: flex; gap: 4px; padding: 5px; }
     .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: st-bounce 1.4s infinite ease-in-out both; }
     @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
@@ -381,5 +411,5 @@
     }
   </style>
 </body>
-            </html>
-    
+  </html>
+  
