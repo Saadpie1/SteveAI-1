@@ -163,7 +163,7 @@
             recognition.onend = () => { micBtn.style.color = ""; };
         }
 
-        // Image Handling with EXIF Fix
+        // Image Handling
         const imageInputFile = document.getElementById('imageInputFile');
         const imageUploadBtn = document.getElementById('imageUploadBtn');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -175,13 +175,11 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        window.base64Image = event.target.result; 
-                        imagePreview.src = event.target.result;
-                        imagePreviewContainer.style.display = 'flex';
-                    };
-                    img.src = event.target.result;
+                    window.base64Image = event.target.result; 
+                    imagePreview.src = event.target.result;
+                    imagePreviewContainer.style.display = 'flex'; // Changed to flex for centering
+                    const chat = document.getElementById('chat');
+                    chat.scrollTop = chat.scrollHeight;
                 };
                 reader.readAsDataURL(file);
             }
@@ -281,14 +279,6 @@
     .bubble.bot { background: #1e1e1e; color: #eee; border-bottom-left-radius: 4px; border: 1px solid #333; }
     body.light .bubble.bot { background: #f0f0f0; color: #111; border-color: #ddd; }
 
-    /* EXIF & TABLE FIXES */
-    #imagePreview { 
-        max-width: 100px; 
-        max-height: 100px; 
-        object-fit: contain; 
-        image-orientation: from-image; 
-        border-radius: 8px;
-    }
     .bubble table { 
         width: 100%; 
         border-collapse: collapse; 
@@ -324,7 +314,41 @@
         #modeSelect { max-width: 100px; font-size: 12px; }
     }
 
+    /* Input Styling & Fixes */
     #inputContainer { padding: 12px; border-top: 1px solid #333; background: #111; width: 100%; flex-shrink: 0; }
+    
+    /* PREVIEW FIX: Centered and not disruptive */
+    #imagePreviewContainer { 
+        display: none; 
+        padding: 10px; 
+        background: #1a1a1a; 
+        border-radius: 12px; 
+        margin-bottom: 8px; 
+        position: relative; 
+        justify-content: center; 
+        align-items: center; 
+        border: 1px dashed #444;
+    }
+    #imagePreview { 
+        max-width: 100%; 
+        max-height: 180px; 
+        object-fit: contain; 
+        border-radius: 8px; 
+        image-orientation: from-image; 
+    }
+    #clearImageBtn { 
+        position: absolute; 
+        top: 5px; 
+        right: 10px; 
+        background: #ff4444; 
+        color: white; 
+        border: none; 
+        border-radius: 50%; 
+        width: 22px; 
+        height: 22px; 
+        cursor: pointer; 
+    }
+
     #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 10px; align-items: center; }
     .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 2px 12px; }
     body.light .modern-input-wrapper { background: #fff; border-color: #ccc; }
@@ -351,5 +375,5 @@
     @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
   </style>
 </body>
-  </html>
-          
+                                                                          </html>
+                  
