@@ -284,9 +284,6 @@ async function getChatReply(msg) {
       const isPuter = PUTER_MODELS.some(m => m.id === selectedMode) || selectedMode === 'chat';
       
       if (isPuter) {
-          // --- INVISIBLE REDIRECT SHIELD ---
-          // If Puter is not signed in, calling ai.chat() triggers the redirect.
-          // We check the status first. If not ready, we use Ahmed Engine as a proxy.
           if (typeof puter !== 'undefined' && puter.auth.isSignedIn()) {
               try {
                   return await getPuterReply(msg, context, selectedMode);
@@ -295,7 +292,6 @@ async function getChatReply(msg) {
                   return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
               }
           } else {
-              // Redirect would happen here, so we skip Puter entirely for this message
               console.log("🛡️ SteveAI: Puter session pending. Using Ahmed Shield invisibly.");
               return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
           }
@@ -308,21 +304,38 @@ async function getChatReply(msg) {
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
-  if (!msg && !window.base64Image) return;
+  const imageToSend = window.base64Image; 
+
+  if (!msg && !imageToSend) return;
   if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; return; }
-  addMessage(msg, 'user');
+  
+  // FIXED: If image exists, show it in user bubble and clear the preview immediately
+  if (imageToSend) {
+    addMessage(`${msg}\n\n<img src="${imageToSend}" style="max-width:200px; border-radius:10px; border:1px solid #ffae00;">`, 'user');
+  } else {
+    addMessage(msg, 'user');
+  }
+  
   input.value = '';
-  const wasImage = !!window.base64Image;
+  const wasImage = !!imageToSend;
+
+  // Clear preview container immediately so it doesn't push buttons
+  if (wasImage && document.getElementById('clearImageBtn')) {
+    document.getElementById('clearImageBtn').click(); 
+  }
+
   try {
     const r = await getChatReply(msg);
     const imgCmd = parseImageGenerationCommand(r);
     if (imgCmd) await handleCommand(`/image ${imgCmd.prompt}`);
     else { addMessage(r, 'bot'); memory[++turn] = { user: msg, bot: r }; }
   } catch(e) { addMessage("⚠️ Engine error.", 'bot'); } 
-  finally { if (wasImage && document.getElementById('clearImageBtn')) document.getElementById('clearImageBtn').click(); }
+  finally { 
+    chat.scrollTop = chat.scrollHeight;
+  }
 };
 
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-            
+        
