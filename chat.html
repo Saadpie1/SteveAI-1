@@ -3,61 +3,216 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>SteveAI - Smart AI Assistant</title>
+  <title>SteveAI - Ultimate AI Assistant</title>
 
-  <meta name="description" content="SteveAI: Your high-performance Multi-Modal AI Orchestrator powered by Ahmed Aftab's 16GB RAM engine.">
+  <meta name="description" content="SteveAI: High-performance Multi-Modal AI Orchestrator by Saadpie, powered by Ahmed Aftab's 16GB RAM engine.">
   <meta name="author" content="Saadpie">
-  <meta property="og:title" content="SteveAI - Smart AI Assistant">
-  <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s">
-  <meta property="og:url" content="https://steve-ai.netlify.app/chat.html">
-  <meta name="theme-color" content="#1e1e1e"/>
   <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKfhnr8aWFyvTRT3x_MKFK_YgsWp3tVCiGf_9wkOElaQ&s" type="image/png">
 
-  <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://js.puter.com/v2/"></script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "SteveAI Chat",
-    "url": "https://steve-ai.netlify.app/chat.html",
-    "author": { "@type": "Person", "name": "saadpie" },
-    "description": "SteveAI — your Multi-Modal AI Orchestrator."
-  }
-  </script>
+
+  <style>
+    :root {
+      --bg-dark: #0d0d0d;
+      --bg-panel: #141414;
+      --bg-user: #0052cc;
+      --bg-bot: #1e1e1e;
+      --accent: #ffae00;
+      --text: #f0f0f0;
+      --border: #2a2a2a;
+      --shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    body.light {
+      --bg-dark: #f8f9fa;
+      --bg-panel: #ffffff;
+      --bg-bot: #ffffff;
+      --text: #1a1a1a;
+      --border: #d1d9e0;
+      --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { 
+      margin: 0; background: var(--bg-dark); color: var(--text); 
+      font-family: 'Inter', sans-serif; height: 100vh; display: flex; 
+      flex-direction: column; overflow: hidden; transition: 0.3s ease;
+    }
+
+    /* --- Header --- */
+    #header { 
+      height: 65px; display: flex; justify-content: space-between; align-items: center; 
+      padding: 0 20px; background: var(--bg-panel); border-bottom: 1px solid var(--border); 
+      z-index: 1001; box-shadow: var(--shadow); flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.2rem; }
+    .logo-icon img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; }
+
+    #modeSelect {
+      background: #222; color: #fff; border: 1px solid var(--border);
+      padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; cursor: pointer;
+    }
+
+    /* --- Chat Layout --- */
+    #view-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
+    #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; }
+    #chat { flex: 1; overflow-y: auto; padding: 25px; scroll-behavior: smooth; }
+
+    /* --- Messages --- */
+    .message-container { display: flex; flex-direction: column; margin-bottom: 28px; position: relative; max-width: 85%; transition: 0.3s; }
+    .message-container.user { align-self: flex-end; align-items: flex-end; }
+    .message-container.bot { align-self: flex-start; align-items: flex-start; }
+
+    .bubble { 
+      padding: 14px 20px; border-radius: 18px; font-size: 15px; line-height: 1.6; 
+      box-shadow: var(--shadow); position: relative; word-wrap: break-word;
+    }
+    .user .bubble { background: var(--bg-user); color: #fff; border-bottom-right-radius: 4px; }
+    .bot .bubble { background: var(--bg-bot); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+
+    .message-actions { display: flex; gap: 6px; margin-top: 8px; opacity: 0; transition: 0.2s ease; }
+    .message-container:hover .message-actions { opacity: 1; }
+    
+    .action-btn-small { 
+      background: var(--bg-panel); border: 1px solid var(--border); color: #888;
+      width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: 0.2s;
+    }
+    .action-btn-small:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* --- Input Area FIX --- */
+    #inputContainer { 
+      padding: 15px 25px 25px 25px; 
+      background: var(--bg-panel); 
+      border-top: 1px solid var(--border); 
+      flex-shrink: 0; 
+    }
+    #inputForm { 
+      display: flex; 
+      align-items: flex-end; /* Keeps buttons at the bottom of long text */
+      max-width: 1000px; 
+      margin: 0 auto; 
+      gap: 15px; 
+    }
+    
+    .modern-input-wrapper { 
+      flex: 1; display: flex; align-items: center; background: #1a1a1a; 
+      border: 1px solid var(--border); border-radius: 24px; padding: 4px 18px;
+    }
+    body.light .modern-input-wrapper { background: #fff; }
+    textarea { 
+      flex: 1; border: none; background: transparent; color: inherit; 
+      padding: 12px 0; font-size: 16px; outline: none; resize: none; max-height: 200px; font-family: inherit;
+    }
+
+    /* THE FIX: Absolute circular sizing to prevent "slim head" syndrome */
+    .icon-btn-circle {
+      width: 48px !important; 
+      height: 48px !important; 
+      min-width: 48px !important; 
+      min-height: 48px !important;
+      border-radius: 50% !important; 
+      border: none; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      transition: 0.3s; 
+      flex-shrink: 0 !important;
+    }
+    #sendBtn { background: var(--accent); color: #000; font-size: 1.1rem; }
+    #imageUploadBtn { background: #333; color: #fff; }
+
+    /* --- Image Preview FIX --- */
+    #imagePreviewContainer { 
+      display: none; 
+      padding-bottom: 12px; 
+      max-width: 1000px; 
+      margin: 0 auto;
+    }
+    .img-preview-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 70px;
+      height: 70px;
+    }
+    #imagePreview { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover; 
+      border-radius: 12px; 
+      border: 2px solid var(--accent); 
+    }
+    #clearImageBtn {
+      position: absolute; top: -8px; right: -8px; 
+      background: #ff4444; color: #fff; border: none; 
+      border-radius: 50%; width: 22px; height: 22px; 
+      cursor: pointer; font-weight: bold; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    /* --- Code & Canvas --- */
+    .code-header {
+      background: #1e1e1e; border: 1px solid #333; border-radius: 8px 8px 0 0;
+      padding: 8px 16px; display: flex; justify-content: space-between; align-items: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #999; margin-top: 10px;
+    }
+    pre { margin: 0 0 15px 0 !important; border-radius: 0 0 8px 8px !important; }
+    .copy-btn { background: #333; color: #eee; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+
+    #canvas-sidebar { width: 50%; background: #fff; border-left: 1px solid var(--border); display: flex; flex-direction: column; transition: 0.3s; z-index: 1000; }
+    #canvas-sidebar.hidden { display: none; }
+    #canvas-header { background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Loading Dots */
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    .bouncing-dots span { 
+      width: 8px; height: 8px; background: var(--accent); border-radius: 50%; 
+      display: inline-block; animation: bounce 1.4s infinite ease-in-out both; 
+    }
+
+    @media (max-width: 768px) {
+      #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100%; }
+      .message-container { max-width: 95%; }
+    }
+  </style>
 </head>
 
 <body>
   <div id="header">
     <div class="logo">
-      <div class="logo-icon">
-        <img src="SteveAI-logo.jpg" alt="SteveAI Logo" style="width:100%; height:100%; border-radius:8px; object-fit:cover;">
-      </div>
+      <div class="logo-icon"><img src="SteveAI-logo.jpg" alt="SteveAI"></div>
       <span>SteveAI</span>
     </div>
-
-    <div class="header-actions">
-      <select id="modeSelect" title="Model Mode">
-        <option value="chat" selected>SteveAI-Default</option>
-        <option value="fast">SteveAI-Fast (Gemini)</option>
-        <option disabled>──────────</option>
-        <option disabled>Syncing Engine...</option>
+    <div class="header-actions" style="display: flex; gap: 8px;">
+      <select id="modeSelect">
+        <option value="chat" selected>SteveAI-chat</option>
+        <option value="reasoning">SteveAI-reasoning</option>
+        <option value="coding">SteveAI-coding</option>
+        <option value="designer">SteveAI-designer</option>
+        <option value="fast">SteveAI-fast</option>
+        <option value="lite">SteveAI-instant</option>
+        <option value="math">SteveAI-math</option>
+        <option value="science">SteveAI-science</option>
+        <option value="writer">SteveAI-writer</option>
+        <option value="general">SteveAI-general</option>
       </select>
-      <button id="syncModelsBtn" class="action-btn" title="Sync Models"><i class="fa-solid fa-arrows-rotate"></i></button>
-      <button id="clearChat" class="action-btn" title="Clear Chat"><i class="fa-solid fa-trash"></i></button>
-      <button id="themeToggle" class="action-btn" title="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
+      <button id="clearChat" class="action-btn-small" title="Clear"><i class="fa-solid fa-broom"></i></button>
+      <button id="themeToggle" class="action-btn-small" title="Theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
     </div>
   </div>
 
   <div id="view-wrapper">
     <div id="chat-side">
       <div id="chat">
-        <div id="loading-indicator" class="message-container bot" style="display:none;">
-            <div class="bubble bot">
-                <div class="bouncing-dots"><span></span><span></span><span></span></div>
+        <div id="loading-indicator" class="bot-message" style="display:none; margin-bottom: 20px;">
+            <div class="bouncing-dots" style="padding: 10px; display:flex; gap:5px;">
+              <span></span><span></span><span></span>
             </div>
         </div>
       </div>
@@ -65,291 +220,98 @@
 
     <div id="canvas-sidebar" class="hidden">
       <div id="canvas-header">
-          <div class="canvas-tabs">
-              <button class="tab-btn active" onclick="window.switchCanvasTab('preview')">Preview</button>
-              <button class="tab-btn" onclick="window.switchCanvasTab('code')">Code</button>
+          <div style="display: flex; gap: 8px;">
+              <button class="tab-btn active" id="tab-preview" onclick="window.switchCanvasTab('preview')">Preview</button>
+              <button class="tab-btn" id="tab-code" onclick="window.switchCanvasTab('code')">Code</button>
           </div>
-          <button onclick="window.toggleCanvas()" class="close-canvas">✕</button>
+          <button onclick="window.toggleCanvas()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
       </div>
-      <div id="canvas-content">
-          <div id="canvas-preview-container"><iframe id="canvas-iframe"></iframe></div>
-          <div id="canvas-code-container" style="display:none;">
+      <div id="canvas-content" style="flex:1; display:flex; flex-direction:column; overflow: hidden;">
+          <iframe id="canvas-iframe" style="flex:1; border:none; background:white;"></iframe>
+          <div id="canvas-code-container" style="display:none; flex:1; overflow:auto; background:#1e1e1e; padding: 20px;">
             <pre><code id="canvas-code-display" class="language-markup"></code></pre>
           </div>
       </div>
     </div>
   </div>
 
-  <div id="commandHints" class="hints-hidden">
-    <span>/help</span><span>/clear</span><span>/theme</span><span>/image</span><span>/play</span><span>/export</span><span>/about</span>
-  </div>
-
   <div id="inputContainer">
-    <div id="imagePreviewContainer" style="display:none;">
-        <div class="preview-wrapper">
-            <img id="imagePreview" src="" alt="Preview" />
-            <button id="clearImageBtn">✖</button>
+    <div id="imagePreviewContainer">
+        <div class="img-preview-wrapper">
+          <img id="imagePreview" src="">
+          <button id="clearImageBtn">&times;</button>
         </div>
     </div>
-
     <form id="inputForm">
       <input type="file" id="imageInputFile" accept="image/*" style="display:none;"> 
-      <button type="button" id="imageUploadBtn" class="action-btn" title="Upload Image"><i class="fa-solid fa-image"></i></button>
+      <button type="button" id="imageUploadBtn" class="icon-btn-circle" title="Upload Image"><i class="fa-solid fa-plus"></i></button>
       
       <div class="modern-input-wrapper">
-        <textarea id="messageInput" placeholder="Ask SteveAI anything..." rows="1" required></textarea>
-        <button type="button" id="micBtn" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
+        <textarea id="messageInput" placeholder="Message SteveAI..." rows="1" required></textarea>
+        <button type="button" id="micBtn" style="background:none; border:none; color:#888; cursor:pointer; font-size:1.1rem;"><i class="fa-solid fa-microphone"></i></button>
       </div>
 
-      <button type="submit" id="sendBtn" title="Send"><i class="fa-solid fa-arrow-up"></i></button>
+      <button type="submit" id="sendBtn" class="icon-btn-circle" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
     </form>
   </div>
-  
+
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
-  
-  <script>
-    // --- GLOBAL UTILITIES ---
-    window.showLoader = () => {
-        const loader = document.getElementById('loading-indicator');
-        const chat = document.getElementById('chat');
-        if (loader) {
-            chat.appendChild(loader);
-            loader.style.display = 'flex';
-            chat.scrollTop = chat.scrollHeight;
-        }
-    };
-    window.hideLoader = () => {
-        const loader = document.getElementById('loading-indicator');
-        if (loader) loader.style.display = 'none';
-    };
-
-    window.toggleCanvas = () => {
-        document.getElementById('canvas-sidebar').classList.toggle('hidden');
-    };
-
-    window.switchCanvasTab = (tab) => {
-        const preview = document.getElementById('canvas-preview-container');
-        const code = document.getElementById('canvas-code-container');
-        const btns = document.querySelectorAll('.tab-btn');
-        btns.forEach(b => b.classList.remove('active'));
-        if(tab === 'preview') {
-            preview.style.display = 'flex';
-            code.style.display = 'none';
-            btns[0].classList.add('active');
-        } else {
-            preview.style.display = 'none'; 
-            code.style.display = 'block';
-            btns[1].classList.add('active');
-        }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const inputEl = document.getElementById('messageInput');
-        const micBtn = document.getElementById('micBtn');
-        const hintsEl = document.getElementById('commandHints');
-
-        // Voice Recognition
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            micBtn.onclick = () => {
-                if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); return; }
-                recognition.start();
-                micBtn.style.color = "#ff4444";
-            };
-            recognition.onresult = (e) => { inputEl.value = e.results[0][0].transcript; };
-            recognition.onend = () => { micBtn.style.color = ""; };
-        }
-
-        // Image Handling
-        const imageInputFile = document.getElementById('imageInputFile');
-        const imageUploadBtn = document.getElementById('imageUploadBtn');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const imagePreview = document.getElementById('imagePreview');
-
-        imageUploadBtn.addEventListener('click', () => { imageInputFile.click(); });
-        imageInputFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    window.base64Image = event.target.result; 
-                    imagePreview.src = event.target.result;
-                    imagePreviewContainer.style.display = 'flex';
-                    const chat = document.getElementById('chat');
-                    chat.scrollTop = chat.scrollHeight;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById('clearImageBtn').onclick = () => {
-            window.base64Image = null; imagePreview.src = ''; 
-            imagePreviewContainer.style.display = 'none';
-            imageInputFile.value = '';
-        };
-
-        // Command Hints Trigger Logic
-        inputEl.addEventListener('input', () => {
-            if (inputEl.value.startsWith('/')) {
-                hintsEl.classList.remove('hints-hidden');
-            } else {
-                hintsEl.classList.add('hints-hidden');
-            }
-        });
-
-        const syncBtn = document.getElementById('syncModelsBtn');
-        if (syncBtn) {
-            syncBtn.addEventListener('click', () => {
-                syncBtn.classList.add('fa-spin-once');
-                setTimeout(() => syncBtn.classList.remove('fa-spin-once'), 1000);
-            });
-        }
-    });
-  </script>
   
   <script type="module" src="chat.js"></script>
   
-  <style>
-    /* RESET AND BASE */
-    * { box-sizing: border-box; }
-    body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
-    body.light { background: #fafafa; color: #111; }
+  <script>
+    const tx = document.getElementById('messageInput');
+    tx.addEventListener("input", function() {
+      this.style.height = "auto";
+      this.style.height = (this.scrollHeight) + "px";
+    });
+
+    window.showLoader = () => { document.getElementById('loading-indicator').style.display = 'block'; };
+    window.hideLoader = () => { document.getElementById('loading-indicator').style.display = 'none'; };
+    window.toggleCanvas = () => { document.getElementById('canvas-sidebar').classList.toggle('hidden'); };
     
-    #header { 
-        height: 60px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        padding: 0 12px; 
-        background: #111; 
-        border-bottom: 1px solid #333; 
-        z-index: 1001; 
-        flex-shrink: 0;
-        gap: 8px;
-    }
-    body.light #header { background: #fff; color: #111; }
+    window.switchCanvasTab = (tab) => {
+        const preview = document.getElementById('canvas-iframe');
+        const code = document.getElementById('canvas-code-container');
+        const btnPrev = document.getElementById('tab-preview');
+        const btnCode = document.getElementById('tab-code');
+        if(tab === 'preview') {
+            preview.style.display = 'block'; code.style.display = 'none';
+            btnPrev.classList.add('active'); btnCode.classList.remove('active');
+        } else {
+            preview.style.display = 'none'; code.style.display = 'block';
+            btnPrev.classList.remove('active'); btnCode.classList.add('active');
+        }
+    };
 
-    .logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .logo span { font-weight: bold; display: inline-block !important; }
-    
-    .header-actions { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: flex-end; min-width: 0; }
+    const imageInputFile = document.getElementById('imageInputFile');
+    const imageUploadBtn = document.getElementById('imageUploadBtn');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
 
-    #modeSelect { 
-        max-width: 140px; 
-        min-width: 60px;
-        background: #1a1a1a; 
-        color: #ffae00; 
-        border: 1px solid #333; 
-        border-radius: 8px; 
-        padding: 5px 8px; 
-        font-size: 13px;
-        cursor: pointer;
-        outline: none;
-    }
-
-    #view-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; }
-    #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; }
-    
-    #chat { 
-        flex: 1; 
-        overflow-y: auto; 
-        padding: 20px; 
-        padding-bottom: 120px; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 20px; 
-        scroll-behavior: smooth; 
-    }
-
-    /* Command Hints Fix */
-    #commandHints {
-        display: flex;
-        gap: 8px;
-        padding: 10px 15px;
-        background: #111;
-        border-top: 1px solid #333;
-        overflow-x: auto;
-        z-index: 100;
-    }
-    #commandHints span {
-        background: #222;
-        color: #ffae00;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-        white-space: nowrap;
-        border: 1px solid #444;
-    }
-    .hints-hidden { display: none !important; }
-
-    /* IMAGE PREVIEW FIX: Centered box style */
-    #imagePreviewContainer { 
-        display: none; 
-        padding: 10px; 
-        background: #111;
-        justify-content: flex-start;
-        align-items: center;
-        border-top: 1px solid #333;
-    }
-    .preview-wrapper {
-        position: relative;
-        height: 80px;
-        width: 80px;
-        border-radius: 10px;
-        overflow: visible;
-        border: 1px solid #ffae00;
-    }
-    #imagePreview { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: cover; 
-        border-radius: 8px;
-    }
-    #clearImageBtn { 
-        position: absolute; 
-        top: -8px; 
-        right: -8px; 
-        background: #ff4444; 
-        color: white; 
-        border: none; 
-        border-radius: 50%; 
-        width: 20px; 
-        height: 20px; 
-        font-size: 10px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-
-    #inputContainer { background: #111; width: 100%; flex-shrink: 0; }
-    #inputForm { display: flex; width: 100%; max-width: 900px; margin: 0 auto; gap: 10px; align-items: center; padding: 12px; }
-    .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 24px; padding: 2px 14px; }
-    textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; font-size: 16px; max-height: 150px; }
-
-    #sendBtn { background: #ffae00; color: #111; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
-    #imageUploadBtn { background: #333; color: #fff; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
-    .action-btn { background: transparent; color: #888; border: none; cursor: pointer; font-size: 18px; transition: 0.2s; }
-    .action-btn:hover { color: #ffae00; }
-
-    .bouncing-dots { display: flex; gap: 4px; padding: 5px; }
-    .bouncing-dots span { width: 8px; height: 8px; background: #ffae00; border-radius: 50%; animation: st-bounce 1.4s infinite ease-in-out both; }
-    @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-    /* Sidebars */
-    #canvas-sidebar { width: 50%; background: #fff; border-left: 1px solid #333; display: flex; flex-direction: column; z-index: 1000; height: 100%; }
-    #canvas-sidebar.hidden { display: none; }
-    @media (max-width: 768px) {
-        #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100% !important; }
-    }
-  </style>
+    imageUploadBtn.onclick = () => imageInputFile.click();
+    imageInputFile.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                window.base64Image = event.target.result; 
+                imagePreview.src = event.target.result;
+                imagePreviewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    document.getElementById('clearImageBtn').onclick = () => {
+        window.base64Image = null; 
+        imagePreviewContainer.style.display = 'none';
+        imageInputFile.value = '';
+    };
+  </script>
 </body>
-</html>
+            </html>
+            
