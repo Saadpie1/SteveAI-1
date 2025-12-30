@@ -335,8 +335,35 @@
     .modern-input-wrapper { flex: 1; display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 24px; padding: 2px 14px; }
     textarea { flex: 1; resize: none; background: transparent; color: #fff; border: none; padding: 10px; outline: none; font-size: 16px; max-height: 150px; }
 
-    #sendBtn { background: #ffae00; color: #111; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
-    #imageUploadBtn { background: #333; color: #fff; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
+    /* FIXED SEND BUTTON */
+    #sendBtn { 
+        background: #ffae00; 
+        color: #111; 
+        border-radius: 50%; 
+        width: 42px; 
+        height: 42px; 
+        min-width: 42px; 
+        flex-shrink: 0; 
+        border: none; 
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* PREVENT IMAGE BUTTON FROM SHRINKING */
+    #imageUploadBtn { 
+        background: #333; 
+        color: #fff; 
+        border-radius: 50%; 
+        width: 42px; 
+        height: 42px; 
+        min-width: 42px;
+        flex-shrink: 0;
+        border: none; 
+        cursor: pointer; 
+    }
+
     .action-btn { background: transparent; color: #888; border: none; cursor: pointer; font-size: 18px; transition: 0.2s; }
     .action-btn:hover { color: #ffae00; }
 
@@ -353,4 +380,4 @@
   </style>
 </body>
   </html>
-    
+  
