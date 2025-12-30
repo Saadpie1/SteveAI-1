@@ -209,8 +209,50 @@
     body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
     body.light { background: #fafafa; color: #111; }
     
-    #header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background: #111; border-bottom: 1px solid #333; z-index: 1001; flex-shrink: 0; }
+    /* Updated Header: ensures items don't overflow */
+    #header { 
+        height: 60px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        padding: 0 12px; 
+        background: #111; 
+        border-bottom: 1px solid #333; 
+        z-index: 1001; 
+        flex-shrink: 0;
+        gap: 8px;
+    }
     body.light #header { background: #fff; color: #111; }
+
+    .logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    
+    .header-actions { 
+        display: flex; 
+        align-items: center; 
+        gap: 6px; 
+        flex: 1; 
+        justify-content: flex-end; 
+        min-width: 0; /* Critical for flex children to shrink */
+    }
+
+    /* Fixed Model Selection UI */
+    #modeSelect { 
+        max-width: 160px; /* Limits the width of long model names */
+        min-width: 80px;
+        flex-shrink: 1; /* Allows it to narrow before pushing other elements */
+        background: #1a1a1a; 
+        color: #ffae00; 
+        border: 1px solid #333; 
+        border-radius: 8px; 
+        padding: 5px 8px; 
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* Adds '...' to cut-off names */
+        cursor: pointer;
+        outline: none;
+    }
+    body.light #modeSelect { background: #eee; color: #111; border-color: #ccc; }
 
     #view-wrapper { display: flex; flex: 1; overflow: hidden; position: relative; width: 100%; height: calc(100vh - 60px - 70px); }
     #chat-side { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; }
@@ -244,6 +286,8 @@
     @media (max-width: 768px) {
         #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100% !important; z-index: 9999; border: none; }
         #view-wrapper { flex-direction: column; }
+        .logo span { display: none; } /* Hide "SteveAI" text on mobile to save space */
+        #modeSelect { max-width: 120px; }
     }
 
     /* Input Styling */
@@ -261,6 +305,9 @@
     #sendBtn { background: #ffae00; color: #111; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
     #imageUploadBtn { background: #333; color: #fff; border-radius: 50%; width: 42px; height: 42px; border: none; cursor: pointer; }
 
+    .action-btn { background: transparent; color: #888; border: none; cursor: pointer; font-size: 18px; transition: 0.2s; flex-shrink: 0; }
+    .action-btn:hover { color: #ffae00; }
+
     /* Custom Animation for Sync Button */
     .fa-spin-once { animation: spin 1s ease-in-out; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -273,5 +320,5 @@
     @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
   </style>
 </body>
-                                                                                                   </html>
-  
+    </html>
+        
