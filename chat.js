@@ -19,7 +19,7 @@ const syncBtn = document.getElementById('syncModelsBtn');
 let memory = {};
 let turn = 0;
 
-// --- Dynamic Model Syncing (Strict Chat Filter) ---
+// --- Dynamic Model Syncing (Strict Chat Filter & Truncation) ---
 async function syncModels() {
     const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
     const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free`);
@@ -29,38 +29,44 @@ async function syncModels() {
         const data = await res.json();
         
         if (data && data.data) {
-            // Keep specialized SteveAI defaults
+            // Reset with SteveAI specialized defaults
             modeSelect.innerHTML = `
                 <option value="chat" selected>SteveAI-Default</option>
                 <option value="fast">SteveAI-Fast (Gemini)</option>
                 <hr>
             `;
             
-            // Strictly filter for the conversational type identified in terminal tests
+            // Filter strictly for conversational types
             const chatModels = data.data.filter(m => m.type === "chat/completion");
 
             chatModels.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
                 
-                // Prettify name: removes provider prefix and dashes
+                // Extract and Prettify name
                 let label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
                 
-                // Contextual Icons for Saadpie's Orchestrator
+                // --- Truncation Logic for UI Stability ---
+                // Programmatically shorten names over 20 chars to prevent pushing buttons off-screen
+                const limit = 20;
+                let displayLabel = label.length > limit ? label.substring(0, limit) + "..." : label;
+
+                // Apply Saadpie's Orchestrator Icons
                 if (label.includes('THINKING') || label.includes('R1')) {
-                    label = `🧠 ${label}`;
-                } else if (label.includes('LLAMA 4') || label.includes('SCOUT') || label.includes('MAVERICK')) {
-                    label = `🚀 ${label}`;
+                    opt.textContent = `🧠 ${displayLabel}`;
+                } else if (label.includes('LLAMA 4') || label.includes('MAVERICK') || label.includes('SCOUT')) {
+                    opt.textContent = `🚀 ${displayLabel}`;
                 } else if (label.includes('GEMINI') || label.includes('FLASH')) {
-                    label = `✨ ${label}`;
+                    opt.textContent = `✨ ${displayLabel}`;
                 } else if (label.includes('CODER') || label.includes('PHI 4')) {
-                    label = `💻 ${label}`;
+                    opt.textContent = `💻 ${displayLabel}`;
+                } else {
+                    opt.textContent = displayLabel;
                 }
                 
-                opt.textContent = label;
                 modeSelect.appendChild(opt);
             });
-            console.log(`✅ SteveAI: Engine synced with ${chatModels.length} chat/completion models.`);
+            console.log(`✅ SteveAI: Engine synced with ${chatModels.length} optimized chat models.`);
         }
     } catch (e) {
         console.error("❌ Model sync failed:", e);
@@ -352,4 +358,3 @@ form.onsubmit = async e => {
 themeToggle.onclick = () => handleCommand('/theme');
 clearChatBtn.onclick = () => handleCommand('/clear');
 if (syncBtn) syncBtn.onclick = () => syncModels();
-                           
