@@ -3,72 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SteveAI | Ultimate Orchestrator</title>
+    <title>SteveAI | Ultimate Multi-Modal Orchestrator</title>
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
     <script src="https://js.puter.com/v2/"></script>
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --accent: #00d2ff; }
+        :root { --accent: #00f2fe; --glass: rgba(255, 255, 255, 0.03); --border: rgba(255, 255, 255, 0.1); }
         body { 
-            background: #05070a; 
-            background-image: radial-gradient(circle at 50% -20%, #1a2a6c, #05070a);
-            color: #e0e6ed; font-family: 'Inter', sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            background: #020408; color: #fff; font-family: 'Segoe UI', sans-serif; 
+            margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+        /* 🛡️ Redirection Shield Overlay */
+        #shield-trap {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 9999; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
         }
         .header { 
-            backdrop-filter: blur(15px); background: var(--glass);
-            padding: 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 20px; background: var(--glass); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px);
         }
-        .logo { font-weight: 900; letter-spacing: 3px; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        #chat-window { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 20px; }
-        
-        /* Glassmorphic Messages */
-        .msg { 
-            max-width: 80%; padding: 15px 20px; border-radius: 20px; border: 1px solid var(--border);
-            backdrop-filter: blur(10px); animation: fadeIn 0.4s ease; 
-        }
-        .user { align-self: flex-end; background: rgba(0, 210, 255, 0.15); border-color: rgba(0, 210, 255, 0.3); }
-        .ai { align-self: flex-start; background: var(--glass); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        
-        .msg video { width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid var(--accent); }
-        
-        .input-container { 
-            padding: 20px; background: #080a0f; border-top: 1px solid var(--border);
-            display: flex; gap: 15px; align-items: center;
-        }
-        input { 
-            flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--border); 
-            padding: 15px; border-radius: 12px; color: white; outline: none; transition: 0.3s;
-        }
-        input:focus { border-color: var(--accent); background: rgba(255,255,255,0.07); }
-        
-        button { 
-            background: var(--accent); color: #000; border: none; padding: 12px 30px; 
-            border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s;
-        }
-        button:hover { transform: scale(1.05); filter: brightness(1.2); }
-        
-        .model-select { 
-            background: #000; color: var(--accent); border: 1px solid var(--accent); 
-            padding: 5px 10px; border-radius: 8px; font-size: 12px;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .logo { font-weight: 900; letter-spacing: 2px; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 85%; padding: 12px 18px; border-radius: 15px; border: 1px solid var(--border); backdrop-filter: blur(5px); animation: slide 0.3s ease; }
+        .user { align-self: flex-end; background: rgba(0, 242, 254, 0.1); border-color: var(--accent); }
+        .ai { align-self: flex-start; background: var(--glass); }
+        .msg video { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid var(--accent); }
+        .input-area { padding: 20px; background: #05070a; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+        button { background: var(--accent); color: #000; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .status-bar { font-size: 10px; padding: 5px 20px; color: #555; background: #000; border-top: 1px solid #111; }
+        @keyframes slide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body onclick="applyShield()"> <div class="header">
-        <div class="logo">STEVE-AI</div>
-        <select id="model-selector" class="model-select">
+<body>
+
+    <div id="shield-trap" onclick="armShield()">
+        <div style="text-align: center;">
+            <h1 style="color: var(--accent); margin-bottom: 5px;">STEVE-AI</h1>
+            <p>Click to initialize secure ghost tunnel...</p>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="logo">STEVE-AI <span style="font-weight: 100; font-size: 0.8rem; color: #555;">v2.9.7</span></div>
+        <select id="model-selector" style="background: #000; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; font-size: 10px;">
             <option value="Wan-AI/Wan2.1-T2V-1.3B">Wan 2.1 (Video)</option>
             <option value="gpt-4o">GPT-4o (Reasoning)</option>
-            <option value="black-forest-labs/FLUX.1-schnell">Flux Image</option>
+            <option value="black-forest-labs/FLUX.1-schnell">Flux.1 Image</option>
         </select>
     </div>
 
     <div id="chat-window"></div>
 
-    <div class="input-container">
-        <input type="text" id="user-input" placeholder="Enter prompt for Wan 2.1..." autocomplete="off">
-        <button id="send-btn" onclick="orchestrate()">GENERATE</button>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Orchestrate a prompt..." autocomplete="off">
+        <button id="send-btn" onclick="orchestrate()">SEND</button>
     </div>
+
+    <div class="status-bar" id="identity-status">Identity: Initializing...</div>
 
     <script src="SteveAI.js"></script>
 </body>
