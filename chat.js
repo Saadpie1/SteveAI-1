@@ -26,13 +26,11 @@ async function syncModels() {
     const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free`);
 
     try {
-        // Clear and add defaults
         modeSelect.innerHTML = `
             <option value="chat" selected>SteveAI-Default (Puter)</option>
             <option value="fast">SteveAI-Fast (Gemini)</option>
         `;
 
-        // 1. Inject Puter Models Group
         const puterGroup = document.createElement('optgroup');
         puterGroup.label = "── PUTER UNLIMITED ──";
         PUTER_MODELS.forEach(m => {
@@ -43,28 +41,23 @@ async function syncModels() {
         });
         modeSelect.appendChild(puterGroup);
 
-        // 2. Fetch Ahmed Engine Models
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
         const data = await res.json();
         
         if (data && data.data) {
             const engineGroup = document.createElement('optgroup');
             engineGroup.label = "── AHMED ENGINE ──";
-            
             const chatModels = data.data.filter(m => m.type === "chat/completion");
-
             chatModels.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
                 let label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
                 const limit = 18;
                 let displayLabel = label.length > limit ? label.substring(0, limit) + "..." : label;
-
                 if (label.includes('THINKING') || label.includes('R1')) opt.textContent = `🧠 ${displayLabel}`;
                 else if (label.includes('LLAMA') || label.includes('MAVERICK')) opt.textContent = `🚀 ${displayLabel}`;
                 else if (label.includes('GEMINI')) opt.textContent = `✨ ${displayLabel}`;
                 else opt.textContent = displayLabel;
-                
                 engineGroup.appendChild(opt);
             });
             modeSelect.appendChild(engineGroup);
@@ -85,7 +78,6 @@ function buildContext() {
 function getRandomTypingDelay() { return 10; }
 function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
 
-// --- Action Button Logic ---
 function addUserActions(container, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
@@ -112,7 +104,6 @@ function addBotActions(container, text) {
     container.appendChild(actions);
 }
 
-// --- Message Parsers ---
 function parseThinkingResponse(text) {
     const thinkingRegex = /<think>(.*?)<\/think>/gs;
     const match = thinkingRegex.exec(text);
@@ -132,7 +123,6 @@ function parseImageGenerationCommand(text) {
     return (model && prompt) ? { prompt, model } : null;
 }
 
-// --- Canvas Integration ---
 function createCodeHeader(preElement) {
     if (preElement.querySelector('.code-header')) return; 
     const codeElement = preElement.querySelector('code');
@@ -142,7 +132,6 @@ function createCodeHeader(preElement) {
     header.className = 'code-header';
     header.innerHTML = `<span>${lang.toUpperCase()}</span><div class="btn-group"></div>`;
     const btnGroup = header.querySelector('.btn-group');
-
     if (['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase())) {
         const runBtn = document.createElement('button');
         runBtn.className = 'copy-btn'; 
@@ -151,7 +140,6 @@ function createCodeHeader(preElement) {
         runBtn.onclick = () => window.openInCanvas(codeElement.innerText, lang);
         btnGroup.appendChild(runBtn);
     }
-
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-btn'; 
     copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
@@ -198,7 +186,6 @@ window.openInCanvas = (code, lang) => {
     window.switchCanvasTab('preview');
 };
 
-// --- UI Messaging ---
 function addMessage(text, sender) { 
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
@@ -208,10 +195,8 @@ function addMessage(text, sender) {
   const content = document.createElement('div');
   content.className = 'bubble-content';
   bubble.appendChild(content);
-
   const { answer, thinking } = parseThinkingResponse(text);
   const thinkingHTML = thinking ? `<details class="thinking-details" open><summary>🧠 Reasoning/Steps</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
-
   if (sender === 'bot') {
     chat.appendChild(container);
     let i = 0;
@@ -238,12 +223,10 @@ function addMessage(text, sender) {
   }
 }
 
-// --- Command Router ---
 async function handleCommand(inputStr) {
     const parts = inputStr.trim().split(' ');
     const command = parts[0].toLowerCase();
     const fullArgs = parts.slice(1).join(' ');
-
     switch (command) {
         case '/clear':
             chat.innerHTML = ''; memory = {}; turn = 0;
@@ -272,67 +255,64 @@ async function handleCommand(inputStr) {
     }
 }
 
-// --- API Orchestration Logic ---
+// --- API Orchestration Logic (With Invisible Fallback) ---
+async function fetchAhmedEngine(msg, context, modelId) {
+    const payload = { 
+        model: modelId, 
+        messages: [{role:"system", content:"You are SteveAI by Saadpie."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
+    };
+    const res = await fetch(config.proxiedURL(`${config.API_BASE[0]}/chat/completions`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ddc-a4f-93af1cce14774a6f831d244f4df3eb9e` },
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    return data?.choices?.[0]?.message?.content || "Ahmed Engine node failed.";
+}
+
 async function getChatReply(msg) { 
   const context = buildContext(); 
   const selectedMode = (modeSelect?.value || 'chat').toLowerCase();
   const imageToSend = window.base64Image;
-  
   if (window.showLoader) window.showLoader();
-  
   try {
-      // 1. Gemini / Vision Handling
       if (imageToSend || selectedMode === 'fast') {
           return await getGeminiReply(msg, context, 'fast', imageToSend, null);
       }
 
-      // 2. Puter.js Routing
       const isPuter = PUTER_MODELS.some(m => m.id === selectedMode);
       if (isPuter || selectedMode === 'chat') {
-          return await getPuterReply(msg, context, selectedMode);
+          try {
+              // Try Puter Engine
+              return await getPuterReply(msg, context, selectedMode);
+          } catch (e) {
+              console.warn("⚠️ Puter Redirect Blocked. Switching to Fallback...");
+              // SILENT FALLBACK: Use Ahmed's default model to avoid the redirect
+              return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
+          }
       }
-
-      // 3. Ahmed Engine (Fallback)
-      const payload = { 
-          model: selectedMode, 
-          messages: [{role:"system", content:"You are SteveAI by Saadpie."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
-      };
-      const res = await fetch(config.proxiedURL(`${config.API_BASE[0]}/chat/completions`), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ddc-a4f-93af1cce14774a6f831d244f4df3eb9e` },
-          body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      return data?.choices?.[0]?.message?.content || "No reply.";
+      return await fetchAhmedEngine(msg, context, selectedMode);
   } finally { if (window.hideLoader) window.hideLoader(); }
 }
 
-// --- Interaction Loop ---
 form.onsubmit = async e => {
   e.preventDefault();
   const msg = input.value.trim();
   if (!msg && !window.base64Image) return;
   if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; return; }
-  
   addMessage(msg, 'user');
   input.value = '';
   const wasImage = !!window.base64Image;
   try {
     const r = await getChatReply(msg);
     const imgCmd = parseImageGenerationCommand(r);
-    if (imgCmd) {
-        await handleCommand(`/image ${imgCmd.prompt}`);
-    } else {
-        addMessage(r, 'bot');
-        memory[++turn] = { user: msg, bot: r };
-    }
-  } catch(e) { 
-      addMessage("⚠️ Engine error.", 'bot');
-  } 
+    if (imgCmd) await handleCommand(`/image ${imgCmd.prompt}`);
+    else { addMessage(r, 'bot'); memory[++turn] = { user: msg, bot: r }; }
+  } catch(e) { addMessage("⚠️ Engine error.", 'bot'); } 
   finally { if (wasImage && document.getElementById('clearImageBtn')) document.getElementById('clearImageBtn').click(); }
 };
 
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-    
+                
