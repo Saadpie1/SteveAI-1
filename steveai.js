@@ -1,125 +1,89 @@
 /**
- * SteveAI Orchestrator v2.9
- * FIX: Programmatic Guest Creation & Redirect Shield
+ * SteveAI.js v9012709
+ * FEAT: Silent Shield & Wan 2.1 Native Integration
  */
 
-const chatWindow = document.getElementById('chat-window');
-const userInput = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
-const modelSelector = document.getElementById('model-selector');
+let shieldArmed = false;
 
-let conversationHistory = JSON.parse(localStorage.getItem('steve_session')) || [
-    { role: "system", content: "You are SteveAI by Saadpie. Multi-Modal Orchestrator v2.9." }
-];
-
-// --- 1. THE REDIRECT SHIELD & GUEST INIT ---
-async function ensureGuestAccess() {
-    if (!puter.auth.isSignedIn()) {
-        console.log("SteveAI: Creating/Renewing Temporary Guest Session...");
-        try {
-            // This is the 2025 'Magic' call: It attempts to create a temp user 
-            // without showing a popup if possible, or using an iframe.
-            await puter.auth.signIn({ attempt_temp_user_creation: true });
-        } catch (e) {
-            console.warn("Guest creation silent block. Standard sign-in might be required.");
-        }
+// 🛡️ THE REDIRECTION SHIELD
+async function applyShield() {
+    if (shieldArmed || puter.auth.isSignedIn()) return;
+    
+    try {
+        console.log("🛡️ Shield: Initializing Silent Identity...");
+        // This is the core 'No-Redirect' command for 2025
+        await puter.auth.signIn({ attempt_temp_user_creation: true });
+        shieldArmed = true;
+        console.log("🛡️ Shield: Identity forged successfully.");
+    } catch (e) {
+        console.warn("🛡️ Shield: Silent block encountered.");
     }
 }
 
-// Run guest init as soon as Puter is ready
-ensureGuestAccess();
-
-window.onload = () => {
-    conversationHistory.forEach(m => { if(m.role !== 'system') addBubble(m.content, m.role === 'user'); });
-};
-
-// UI: Message Bubbles
 function addBubble(content, isUser = false) {
+    const win = document.getElementById('chat-window');
     const div = document.createElement('div');
     div.className = `msg ${isUser ? 'user' : 'ai'}`;
+    
     if (content instanceof HTMLElement) div.appendChild(content);
-    else div.innerText = content || "...";
-    chatWindow.appendChild(div);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    else div.innerHTML = content;
+    
+    win.appendChild(div);
+    win.scrollTop = win.scrollHeight;
     return div;
 }
 
-// SILENT RESET: Forces Puter to generate a brand new Guest Identity in Cookies
-async function rotateIdentity() {
-    await puter.auth.signOut();
-    // Re-trigger the guest creation flow
-    await ensureGuestAccess();
-}
+async function orchestrate() {
+    const input = document.getElementById('user-input');
+    const prompt = input.value.trim();
+    const model = document.getElementById('model-selector').value;
 
-async function streamChat() {
-    const prompt = userInput.value.trim();
-    const model = modelSelector.value;
+    if (!prompt) return;
     
-    // FIX: Pre-check model name safely
-    if (!prompt || !model) return;
-
+    // Ensure shield is active
+    await applyShield();
+    
     addBubble(prompt, true);
-    conversationHistory.push({ role: "user", content: prompt });
-    userInput.value = "";
-
-    const aiBubble = addBubble("Establishing Link...");
-    let fullAiResponse = "";
+    input.value = "";
+    
+    const status = addBubble("<i>Steering AI Model...</i>");
 
     try {
-        // Ensure we have a valid session before the AI call
-        await ensureGuestAccess();
+        // --- WAN 2.1 GENERATION ---
+        if (model.includes('Wan')) {
+            status.innerHTML = "<b>Wan 2.1</b>: Architecting Video Frames...";
+            
+            // Native Puter.js Wan 2.1 call
+            const video = await puter.ai.txt2vid(prompt, { 
+                model: model,
+                check_progress: true 
+            });
 
-        // --- MEDIA ROUTING ---
-        if (model === 'sora-2') {
-            aiBubble.innerText = "Sora 2 Generating (est. 45s)...";
-            const video = await puter.ai.txt2vid(prompt, { model: 'sora-2', seconds: 4 });
-            aiBubble.innerText = "Sora 2 Generation Complete:";
-            video.controls = video.autoplay = true;
-            aiBubble.appendChild(video);
-            return;
-        }
-
-        if (model.toLowerCase().includes('flux') || model.toLowerCase().includes('image')) {
+            status.innerHTML = ""; // Clear loader
+            video.controls = true;
+            video.autoplay = true;
+            status.appendChild(video);
+        } 
+        // --- STANDARD CHAT/IMAGE ---
+        else if (model.includes('FLUX')) {
             const img = await puter.ai.txt2img(prompt, { model: model });
-            aiBubble.innerText = "Generation Success:";
-            aiBubble.appendChild(img);
-            return;
+            status.innerHTML = "";
+            status.appendChild(img);
+        } else {
+            const resp = await puter.ai.chat(prompt, { model: model });
+            status.innerText = resp;
         }
-
-        // --- CHAT ROUTING ---
-        const response = await puter.ai.chat(conversationHistory, { model: model, stream: true });
-
-        // Safeguard against the 'Unauthorized' redirect block
-        if (!response || typeof response[Symbol.asyncIterator] !== 'function') {
-            throw new Error("RE_AUTH_REQUIRED");
-        }
-
-        aiBubble.innerText = ""; 
-        for await (const part of response) {
-            const chunk = part?.text || part?.message?.content || "";
-            if (chunk) {
-                fullAiResponse += chunk;
-                aiBubble.innerText = fullAiResponse;
-                chatWindow.scrollTop = chatWindow.scrollHeight;
-            }
-        }
-        
-        conversationHistory.push({ role: "assistant", content: fullAiResponse });
-        localStorage.setItem('steve_session', JSON.stringify(conversationHistory));
 
     } catch (err) {
-        console.error("SteveAI Error:", err);
-        const msg = (err?.message || String(err)).toLowerCase();
-
-        // If Sora/GPT-5 is blocked, rotate identity silently
-        if (msg.includes("unauthorized") || msg.includes("auth") || msg.includes("limit")) {
-            aiBubble.innerText = "♻️ Session Refreshed. Please try your request again.";
-            await rotateIdentity();
-        } else {
-            aiBubble.innerText = "Backend Note: " + msg;
+        console.error(err);
+        status.innerHTML = `<span style="color:#ff4d4d">Orchestration Error: ${err.message}</span>`;
+        
+        // Auto-Identity-Rotation if limit hit
+        if (err.message.includes('limit') || err.message.includes('auth')) {
+            await puter.auth.signOut();
+            shieldArmed = false;
+            status.innerHTML += "<br>♻️ Identity Rotated. Retrying...";
+            setTimeout(orchestrate, 1000); 
         }
     }
 }
-
-sendBtn.onclick = streamChat;
-userInput.onkeypress = (e) => { if (e.key === 'Enter') streamChat(); };
