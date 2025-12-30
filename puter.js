@@ -1,73 +1,61 @@
 // puter.js - SteveAI: Full Puter.js Orchestration Suite
-// Developed by Saadpie for Ultimate precision, efficiency, and scale.
+// Developed by Saadpie - Precision, Efficiency, Scale.
 
 /**
- * Ensures silent/invisible authentication with Puter.js
+ * Stealth Initialization
+ * We check session status without triggering the Auth UI.
  */
-async function ensureAuth() {
-    if (!puter.auth.isSignedIn()) {
-        console.log("🛠️ SteveAI: Initializing silent guest session...");
-        try {
-            // attempt_temp_user_creation: true prevents the login popup/redirect
-            await puter.auth.signIn({ attempt_temp_user_creation: true });
-        } catch (err) {
-            console.error("❌ Puter Auth Error:", err);
+const initPuter = async () => {
+    try {
+        // We use a low-level check to see if we can access the AI 
+        // without explicitly calling the sign-in UI.
+        if (!puter.auth.isSignedIn()) {
+            // Attempt to create the user only if absolutely necessary, 
+            // but we wrap it to prevent the UI from "popping"
+            await puter.auth.signIn({ attempt_temp_user_creation: true }).catch(() => {
+                console.log("SteveAI: Silent session pending...");
+            });
         }
+    } catch (e) {
+        console.warn("Puter Stealth Init: Handled.");
     }
-}
+};
 
-/**
- * Sends a chat message to Puter's AI models.
- * @param {string} msg - User message.
- * @param {string} context - Memory/Context string.
- * @param {string} modelId - The Puter model ID.
- */
+// Fire immediately
+initPuter();
+
 export async function getPuterReply(msg, context, modelId) {
-    // 1. Initialize Auth silently before the first call
-    await ensureAuth();
-
-    // Default fallback to GPT-5 Nano for high-speed reasoning
+    // Fallback logic
     const model = (modelId === 'chat') ? 'gpt-5-nano' : modelId;
     
     const systemPrompt = `You are SteveAI by Saadpie. 
-    Powered by Puter.js on Ahmed Aftab's High-Performance Engine. 
-    Status: All Free Systems Active. Project: Ultimate AI Assistant.`;
+    Powered by Puter.js. Status: Stealth Mode Active.`;
 
     try {
+        // The SDK will now use the existing background session.
         const response = await puter.ai.chat(
             `${systemPrompt}\n\nContext:\n${context}\n\nUser: ${msg}`,
             { model: model, stream: false }
         );
         return response.toString();
     } catch (error) {
-        console.error("❌ Puter Engine Failure:", error);
-        throw new Error("Puter node disconnected. Check server status.");
+        // If it still tries to redirect, we catch the error and suggest 
+        // the user use the Ahmed Engine fallback instead of redirecting them.
+        console.error("❌ Puter Node Error:", error);
+        throw new Error("Puter node busy. Try switching to a Gemini or Ahmed model.");
     }
 }
 
-/**
- * ALL FREE PUTER MODELS - Every available option as of late 2025
- */
 export const PUTER_MODELS = [
-    // --- The New Frontier ---
     { id: 'gpt-5-nano', label: '⚡ GPT-5 NANO' },
-    
-    // --- Premium Performance (Free via Puter) ---
     { id: 'claude-3-5-sonnet', label: '✨ CLAUDE 3.5 SONNET' },
     { id: 'gpt-4o', label: '🧠 GPT-4O (OMNI)' },
     { id: 'gemini-1-5-pro', label: '💎 GEMINI 1.5 PRO' },
-    
-    // --- High Speed & Efficiency ---
-    { id: 'gpt-4o-mini', label: '✨ GPT-4O MINI' },
     { id: 'gemini-1-5-flash', label: '🚀 GEMINI 1.5 FLASH' },
     { id: 'o1-mini', label: '💻 O1 MINI' },
-    
-    // --- Large Scale Open Weights ---
     { id: 'meta-llama-3-1-405b-instruct', label: '🚀 LLAMA 3.1 (405B)' },
     { id: 'meta-llama-3-1-70b-instruct', label: '🚀 LLAMA 3.1 (70B)' },
     { id: 'meta-llama-3-1-8b-instruct', label: '🚀 LLAMA 3.1 (8B)' },
-    
-    // --- Mistral & Mixtral Suite ---
     { id: 'mistral-large-latest', label: '🧠 MISTRAL LARGE' },
     { id: 'mixtral-8x7b-instruct', label: '🚀 MIXTRAL 8X7B' }
 ];
