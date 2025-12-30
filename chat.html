@@ -209,7 +209,7 @@
     body { margin: 0; background: #0d0d0d; color: #fff; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
     body.light { background: #fafafa; color: #111; }
     
-    /* Updated Header: ensures items don't overflow */
+    /* RESTORED HEADER WITH BRAND PROTECTION */
     #header { 
         height: 60px; 
         display: flex; 
@@ -224,7 +224,9 @@
     }
     body.light #header { background: #fff; color: #111; }
 
+    /* Logo text protection */
     .logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .logo span { font-weight: bold; display: inline-block !important; }
     
     .header-actions { 
         display: flex; 
@@ -232,14 +234,13 @@
         gap: 6px; 
         flex: 1; 
         justify-content: flex-end; 
-        min-width: 0; /* Critical for flex children to shrink */
+        min-width: 0; 
     }
 
-    /* Fixed Model Selection UI */
     #modeSelect { 
-        max-width: 160px; /* Limits the width of long model names */
-        min-width: 80px;
-        flex-shrink: 1; /* Allows it to narrow before pushing other elements */
+        max-width: 140px; 
+        min-width: 60px;
+        flex-shrink: 1; 
         background: #1a1a1a; 
         color: #ffae00; 
         border: 1px solid #333; 
@@ -248,7 +249,7 @@
         font-size: 13px;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis; /* Adds '...' to cut-off names */
+        text-overflow: ellipsis; 
         cursor: pointer;
         outline: none;
     }
@@ -286,8 +287,8 @@
     @media (max-width: 768px) {
         #canvas-sidebar { position: fixed; top: 0; left: 0; width: 100vw !important; height: 100% !important; z-index: 9999; border: none; }
         #view-wrapper { flex-direction: column; }
-        .logo span { display: none; } /* Hide "SteveAI" text on mobile to save space */
-        #modeSelect { max-width: 120px; }
+        .logo span { display: inline-block !important; } /* SteveAI stays visible */
+        #modeSelect { max-width: 100px; font-size: 12px; }
     }
 
     /* Input Styling */
@@ -320,5 +321,4 @@
     @keyframes st-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
   </style>
 </body>
-    </html>
-        
+</html>
