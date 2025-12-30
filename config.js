@@ -1,6 +1,6 @@
 // config.js
 const API_BASE = [
-  "https://api.a4f.co/v1", // 🟢 FIX: Remove '/chat/completions' from here
+  "https://api.a4f.co/v1",
   "https://generativelanguage.googleapis.com/v1"
 ];
 
@@ -10,10 +10,10 @@ const PROXY = "https://corsproxy.io/?url=";
 const proxiedURL = (base) => PROXY + encodeURIComponent(base);
 
 const API_KEYS = [
-  "AIzaSyC708uF50FRON2Hyu_M-EuoU0jecab47jU", // Gemini Key (Index 0)
-  "ddc-a4f-b8f8cda5737b4dcc98a3df9764a0579a", // A4F Key 1 (Index 1)
-  "ddc-a4f-d61cbe09b0f945ea93403a420dba8155", // A4F Key 2 (Index 2)
-  "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e"  // A4F Key 3 (Index 3)
+  "SECRET_KEY_PLACEHOLDER", // This placeholder protects you from AI Studio
+  "ddc-a4f-b8f8cda5737b4dcc98a3df9764a0579a", 
+  "ddc-a4f-d61cbe09b0f945ea93403a420dba8155", 
+  "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e"
 ];
 
 const GEMINI_MODELS = {
