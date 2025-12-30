@@ -1,5 +1,5 @@
 // chat.js - SteveAI: Ultimate Multi-Modal Orchestrator
-// Powered by Ahmed Aftab's PC & Puter.js SDK
+// Powered by Ahmed Aftab's 16GB RAM Engine & Puter.js
 // Developed by Saadpie
 
 import config from './config.js'; 
@@ -7,7 +7,7 @@ import { generateImage, IMAGE_MODELS } from './image.js';
 import { getGeminiReply } from './gemini.js'; 
 import { getPuterReply, PUTER_MODELS } from './puter.js';
 
-// --- DOM Elements ---
+// --- Config & DOM ---
 const chat = document.getElementById('chat');
 const form = document.getElementById('inputForm');
 const input = document.getElementById('messageInput');
@@ -16,24 +16,23 @@ const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
 const syncBtn = document.getElementById('syncModelsBtn');
 
-// --- Memory & State ---
+// --- Memory Management ---
 let memory = {};
 let turn = 0;
 
-// --- Model Synchronization ---
+// --- Dynamic Model Syncing (Combined Ahmed + Puter) ---
 async function syncModels() {
     const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
     const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free`);
 
     try {
-        // Reset Dropdown
+        // Clear and add defaults
         modeSelect.innerHTML = `
-            <option value="chat" selected>SteveAI-Default</option>
+            <option value="chat" selected>SteveAI-Default (Puter)</option>
             <option value="fast">SteveAI-Fast (Gemini)</option>
-            <hr class="dropdown-divider">
         `;
 
-        // 1. Load Puter.js Free Models
+        // 1. Inject Puter Models Group
         const puterGroup = document.createElement('optgroup');
         puterGroup.label = "── PUTER UNLIMITED ──";
         PUTER_MODELS.forEach(m => {
@@ -44,13 +43,14 @@ async function syncModels() {
         });
         modeSelect.appendChild(puterGroup);
 
-        // 2. Load Ahmed Aftab's Engine Models
+        // 2. Fetch Ahmed Engine Models
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
         const data = await res.json();
         
         if (data && data.data) {
             const engineGroup = document.createElement('optgroup');
             engineGroup.label = "── AHMED ENGINE ──";
+            
             const chatModels = data.data.filter(m => m.type === "chat/completion");
 
             chatModels.forEach(m => {
@@ -59,8 +59,7 @@ async function syncModels() {
                 let label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
                 const limit = 18;
                 let displayLabel = label.length > limit ? label.substring(0, limit) + "..." : label;
-                
-                // Orchestrator Branding
+
                 if (label.includes('THINKING') || label.includes('R1')) opt.textContent = `🧠 ${displayLabel}`;
                 else if (label.includes('LLAMA') || label.includes('MAVERICK')) opt.textContent = `🚀 ${displayLabel}`;
                 else if (label.includes('GEMINI')) opt.textContent = `✨ ${displayLabel}`;
@@ -70,24 +69,29 @@ async function syncModels() {
             });
             modeSelect.appendChild(engineGroup);
         }
-        console.log("✅ SteveAI: All Engines Synced.");
+        console.log(`✅ SteveAI: Orchestrator Synced (Puter + Ahmed).`);
     } catch (e) {
         console.error("❌ Model sync failed:", e);
     }
 }
 
-// Initial Sync
 syncModels();
 
 function buildContext() {
   return Object.keys(memory).map(k => `User: ${memory[k].user}\nBot: ${memory[k].bot}`).join('\n');
 }
 
-// --- Message UI Logic ---
+// --- Helpers ---
+function getRandomTypingDelay() { return 10; }
+function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
+
+// --- Action Button Logic ---
 function addUserActions(container, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
-    actions.innerHTML = `<button class="action-btn"><i class="fa-solid fa-rotate-right"></i></button><button class="action-btn"><i class="fa-solid fa-copy"></i></button>`;
+    actions.innerHTML = `
+        <button class="action-btn" title="Resend"><i class="fa-solid fa-rotate-right"></i></button>
+        <button class="action-btn" title="Copy"><i class="fa-solid fa-copy"></i></button>`;
     actions.children[0].onclick = () => { input.value = text; input.focus(); };
     actions.children[1].onclick = () => navigator.clipboard.writeText(text);
     container.appendChild(actions);
@@ -96,7 +100,9 @@ function addUserActions(container, text) {
 function addBotActions(container, text) {
     const actions = document.createElement('div');
     actions.className = 'message-actions';
-    actions.innerHTML = `<button class="action-btn"><i class="fa-solid fa-copy"></i></button><button class="action-btn"><i class="fa-solid fa-volume-high"></i></button>`;
+    actions.innerHTML = `
+        <button class="action-btn" title="Copy"><i class="fa-solid fa-copy"></i></button>
+        <button class="action-btn" title="Speak"><i class="fa-solid fa-volume-high"></i></button>`;
     actions.children[0].onclick = () => navigator.clipboard.writeText(text);
     actions.children[1].onclick = () => {
         const { answer } = parseThinkingResponse(text);
@@ -106,6 +112,7 @@ function addBotActions(container, text) {
     container.appendChild(actions);
 }
 
+// --- Message Parsers ---
 function parseThinkingResponse(text) {
     const thinkingRegex = /<think>(.*?)<\/think>/gs;
     const match = thinkingRegex.exec(text);
@@ -113,34 +120,111 @@ function parseThinkingResponse(text) {
     return { answer: text, thinking: null };
 }
 
-function markdownToHTML(t) { return typeof marked !== 'undefined' ? marked.parse(t || "") : t; }
+function parseImageGenerationCommand(text) {
+    const commandStart = "Image Generated:";
+    let cleanText = text.trim().replace(/\n/g, ' ').replace(/(\*\*|🧠|Reasoning)/gi, '').trim();
+    if (!cleanText.toLowerCase().startsWith(commandStart.toLowerCase())) return null;
+    let content = cleanText.substring(commandStart.length).trim();
+    const commaIndex = content.indexOf(',');
+    if (commaIndex === -1) return null;
+    const model = content.substring(0, commaIndex).replace(/model:/i, '').trim();
+    const prompt = content.substring(commaIndex + 1).replace(/prompt:/i, '').trim();
+    return (model && prompt) ? { prompt, model } : null;
+}
 
+// --- Canvas Integration ---
+function createCodeHeader(preElement) {
+    if (preElement.querySelector('.code-header')) return; 
+    const codeElement = preElement.querySelector('code');
+    const match = codeElement.className.match(/language-(\w+)/);
+    const lang = match ? match[1] : 'Code';
+    const header = document.createElement('div');
+    header.className = 'code-header';
+    header.innerHTML = `<span>${lang.toUpperCase()}</span><div class="btn-group"></div>`;
+    const btnGroup = header.querySelector('.btn-group');
+
+    if (['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase())) {
+        const runBtn = document.createElement('button');
+        runBtn.className = 'copy-btn'; 
+        runBtn.style.cssText = 'background: #ffae00; color: #000; font-weight: bold; border-radius: 4px; padding: 2px 8px;';
+        runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run';
+        runBtn.onclick = () => window.openInCanvas(codeElement.innerText, lang);
+        btnGroup.appendChild(runBtn);
+    }
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn'; 
+    copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(codeElement.innerText);
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        setTimeout(() => copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>', 2000);
+    };
+    btnGroup.appendChild(copyBtn);
+    preElement.insertBefore(header, preElement.firstChild);
+}
+
+window.postProcessChat = (newChatElement) => {
+    if (window.Prism) {
+         newChatElement.querySelectorAll('pre').forEach(pre => {
+            try { Prism.highlightElement(pre.querySelector('code')); createCodeHeader(pre); } catch (e) {}
+        });
+    }
+    if (window.renderMathInElement) {
+        try {
+            renderMathInElement(newChatElement, {
+                delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}],
+                throwOnError: false
+            });
+        } catch (e) {}
+    }
+};
+
+window.openInCanvas = (code, lang) => {
+    const sidebar = document.getElementById('canvas-sidebar');
+    const iframe = document.getElementById('canvas-iframe');
+    const display = document.getElementById('canvas-code-display');
+    sidebar.classList.remove('hidden');
+    display.textContent = code;
+    if (window.Prism) Prism.highlightElement(display);
+    let content = '';
+    const cleanLang = (lang || 'html').toLowerCase();
+    if (cleanLang === 'html' || code.includes('<!DOCTYPE')) content = code;
+    else if (cleanLang === 'css') content = `<html><style>${code}</style><body>${code}</body></html>`;
+    else if (cleanLang === 'js' || cleanLang === 'javascript') {
+        content = `<html><body><div id="out"></div><script>const console={log:m=>document.getElementById('out').innerHTML+='<p>'+m+'</p>'};try{${code}}catch(e){console.log(e.message)}<\/script></body></html>`;
+    }
+    iframe.srcdoc = content;
+    window.switchCanvasTab('preview');
+};
+
+// --- UI Messaging ---
 function addMessage(text, sender) { 
   const container = document.createElement('div');
   container.className = 'message-container ' + sender;
   const bubble = document.createElement('div');
   bubble.className = 'bubble ' + sender;
+  container.appendChild(bubble);
   const content = document.createElement('div');
   content.className = 'bubble-content';
   bubble.appendChild(content);
-  container.appendChild(bubble);
 
   const { answer, thinking } = parseThinkingResponse(text);
-  const thinkingHTML = thinking ? `<details class="thinking-details" open><summary>🧠 Reasoning</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
+  const thinkingHTML = thinking ? `<details class="thinking-details" open><summary>🧠 Reasoning/Steps</summary><div class="thinking-content">${markdownToHTML(thinking)}</div></details><hr class="thinking-divider">` : '';
 
   if (sender === 'bot') {
     chat.appendChild(container);
     let i = 0;
     const contentToType = thinking ? answer : text;
-    const chunkSize = 30;
+    const chunkSize = 25;
     (function type() {
       if (i < contentToType.length) {
         i += chunkSize;
         content.innerHTML = thinking ? (thinkingHTML + markdownToHTML(contentToType.substring(0, i))) : markdownToHTML(contentToType.substring(0, i));
         chat.scrollTop = chat.scrollHeight;
-        setTimeout(type, 10);
+        setTimeout(type, getRandomTypingDelay());
       } else {
-        content.innerHTML = thinkingHTML + markdownToHTML(answer);
+        content.innerHTML = thinkingHTML + markdownToHTML(answer); 
         addBotActions(container, text);
         if (window.postProcessChat) window.postProcessChat(container);
       }
@@ -149,67 +233,106 @@ function addMessage(text, sender) {
     content.innerHTML = markdownToHTML(text); 
     chat.appendChild(container);
     addUserActions(container, text);
+    if (window.postProcessChat) window.postProcessChat(container);
     chat.scrollTop = chat.scrollHeight;
   }
 }
 
-// --- API Routing ---
-async function getChatReply(msg) {
-    const context = buildContext();
-    const selectedMode = modeSelect.value;
-    const imageToSend = window.base64Image;
-    
-    if (window.showLoader) window.showLoader();
+// --- Command Router ---
+async function handleCommand(inputStr) {
+    const parts = inputStr.trim().split(' ');
+    const command = parts[0].toLowerCase();
+    const fullArgs = parts.slice(1).join(' ');
 
-    try {
-        // 1. Handle Gemini/Vision
-        if (imageToSend || selectedMode === 'fast') {
-            return await getGeminiReply(msg, context, 'fast', imageToSend, null);
-        }
-
-        // 2. Handle Puter.js Unlimited Models
-        const isPuter = PUTER_MODELS.some(m => m.id === selectedMode);
-        if (isPuter || selectedMode === 'chat') {
-            return await getPuterReply(msg, context, selectedMode);
-        }
-
-        // 3. Fallback to Ahmed Aftab's Engine
-        const payload = { 
-            model: selectedMode, 
-            messages: [{role:"system", content:"You are SteveAI by Saadpie."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
-        };
-        const res = await fetch(config.proxiedURL(`${config.API_BASE[0]}/chat/completions`), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ddc-a4f-93af1cce14774a6f831d244f4df3eb9e` },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        return data?.choices?.[0]?.message?.content || "Node Timeout.";
-    } finally {
-        if (window.hideLoader) window.hideLoader();
+    switch (command) {
+        case '/clear':
+            chat.innerHTML = ''; memory = {}; turn = 0;
+            addMessage('🧹 **SteveAI:** Memory purged.', 'bot');
+            break;
+        case '/theme':
+            document.body.classList.toggle('light');
+            addMessage('🌓 **SteveAI:** Theme toggled.', 'bot');
+            break;
+        case '/image':
+            if (!fullArgs) return addMessage('⚠️ Usage: /image <prompt>', 'bot');
+            addMessage('🎨 Generating Art...', 'bot');
+            try {
+                const urls = await generateImage(fullArgs, IMAGE_MODELS[0].id, 1);
+                addMessage(`🖼️ **SteveAI Art:**\n<img src="${urls[0]}" style="max-width:100%; border-radius:12px;">`, 'bot');
+            } catch (e) { addMessage('❌ Generation failed.', 'bot'); }
+            break;
+        case '/about':
+          addMessage(`🤖 **SteveAI — Ultimate AI Assistant**\n- Orchestrator: Saadpie\n- Engines: Ahmed PC & Puter SDK`, 'bot');
+          break;
+        case '/help':
+          addMessage(`**🧭 Commands:** /clear, /theme, /image, /about, /export`, 'bot');
+          break;
+        default:
+            addMessage(`❓ Unknown: \`${command}\``, 'bot');
     }
 }
 
-// --- Interaction ---
+// --- API Orchestration Logic ---
+async function getChatReply(msg) { 
+  const context = buildContext(); 
+  const selectedMode = (modeSelect?.value || 'chat').toLowerCase();
+  const imageToSend = window.base64Image;
+  
+  if (window.showLoader) window.showLoader();
+  
+  try {
+      // 1. Gemini / Vision Handling
+      if (imageToSend || selectedMode === 'fast') {
+          return await getGeminiReply(msg, context, 'fast', imageToSend, null);
+      }
+
+      // 2. Puter.js Routing
+      const isPuter = PUTER_MODELS.some(m => m.id === selectedMode);
+      if (isPuter || selectedMode === 'chat') {
+          return await getPuterReply(msg, context, selectedMode);
+      }
+
+      // 3. Ahmed Engine (Fallback)
+      const payload = { 
+          model: selectedMode, 
+          messages: [{role:"system", content:"You are SteveAI by Saadpie."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
+      };
+      const res = await fetch(config.proxiedURL(`${config.API_BASE[0]}/chat/completions`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ddc-a4f-93af1cce14774a6f831d244f4df3eb9e` },
+          body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      return data?.choices?.[0]?.message?.content || "No reply.";
+  } finally { if (window.hideLoader) window.hideLoader(); }
+}
+
+// --- Interaction Loop ---
 form.onsubmit = async e => {
-    e.preventDefault();
-    const msg = input.value.trim();
-    if (!msg && !window.base64Image) return;
-    
-    addMessage(msg, 'user');
-    input.value = '';
-    
-    try {
-        const reply = await getChatReply(msg);
-        addMessage(reply, 'bot');
-        memory[++turn] = { user: msg, bot: reply };
-    } catch (e) {
-        addMessage("⚠️ System offline. Engine overload.", "bot");
-    } finally {
-        if (document.getElementById('clearImageBtn')) document.getElementById('clearImageBtn').click();
+  e.preventDefault();
+  const msg = input.value.trim();
+  if (!msg && !window.base64Image) return;
+  if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; return; }
+  
+  addMessage(msg, 'user');
+  input.value = '';
+  const wasImage = !!window.base64Image;
+  try {
+    const r = await getChatReply(msg);
+    const imgCmd = parseImageGenerationCommand(r);
+    if (imgCmd) {
+        await handleCommand(`/image ${imgCmd.prompt}`);
+    } else {
+        addMessage(r, 'bot');
+        memory[++turn] = { user: msg, bot: r };
     }
+  } catch(e) { 
+      addMessage("⚠️ Engine error.", 'bot');
+  } 
+  finally { if (wasImage && document.getElementById('clearImageBtn')) document.getElementById('clearImageBtn').click(); }
 };
 
 syncBtn.onclick = syncModels;
-clearChatBtn.onclick = () => { chat.innerHTML = ''; memory = {}; turn = 0; };
-themeToggle.onclick = () => document.body.classList.toggle('light');
+clearChatBtn.onclick = () => handleCommand('/clear');
+themeToggle.onclick = () => handleCommand('/theme');
+    
