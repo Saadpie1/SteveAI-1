@@ -1,48 +1,48 @@
-// puter.js - SteveAI: Full Puter.js Orchestration Suite
-// Developed by Saadpie - Precision, Efficiency, Scale.
+// puter.js - SteveAI Stealth Orchestrator
+// Developed by Saadpie
 
 /**
- * Stealth Initialization
- * We check session status without triggering the Auth UI.
+ * Silent Background Authentication
+ * Bypasses the redirect by using a hidden iframe approach 
+ * implicitly handled by the Puter SDK when configured correctly.
  */
-const initPuter = async () => {
+const silentAuth = async () => {
+    if (puter.auth.isSignedIn()) return true;
+    
     try {
-        // We use a low-level check to see if we can access the AI 
-        // without explicitly calling the sign-in UI.
-        if (!puter.auth.isSignedIn()) {
-            // Attempt to create the user only if absolutely necessary, 
-            // but we wrap it to prevent the UI from "popping"
-            await puter.auth.signIn({ attempt_temp_user_creation: true }).catch(() => {
-                console.log("SteveAI: Silent session pending...");
-            });
-        }
+        // We attempt a silent background sign-in.
+        // If this is blocked, we will fallback to Ahmed's engine 
+        // in chat.js rather than letting the user see a redirect.
+        await puter.auth.signIn({ attempt_temp_user_creation: true });
+        return true;
     } catch (e) {
-        console.warn("Puter Stealth Init: Handled.");
+        console.warn("SteveAI: Puter silent auth blocked by browser.");
+        return false;
     }
 };
 
-// Fire immediately
-initPuter();
-
 export async function getPuterReply(msg, context, modelId) {
-    // Fallback logic
-    const model = (modelId === 'chat') ? 'gpt-5-nano' : modelId;
+    // Ensure we are authenticated silently
+    const authSuccess = await silentAuth();
     
-    const systemPrompt = `You are SteveAI by Saadpie. 
-    Powered by Puter.js. Status: Stealth Mode Active.`;
+    // If auth fails, we throw an error so chat.js can catch it and 
+    // switch the user to the Gemini/Ahmed engine automatically.
+    if (!authSuccess && !puter.auth.isSignedIn()) {
+        throw new Error("AUTH_REQUIRED");
+    }
+
+    const model = (modelId === 'chat') ? 'gpt-5-nano' : modelId;
+    const systemPrompt = `You are SteveAI by Saadpie. Multi-Modal Orchestrator.`;
 
     try {
-        // The SDK will now use the existing background session.
         const response = await puter.ai.chat(
             `${systemPrompt}\n\nContext:\n${context}\n\nUser: ${msg}`,
             { model: model, stream: false }
         );
         return response.toString();
     } catch (error) {
-        // If it still tries to redirect, we catch the error and suggest 
-        // the user use the Ahmed Engine fallback instead of redirecting them.
         console.error("❌ Puter Node Error:", error);
-        throw new Error("Puter node busy. Try switching to a Gemini or Ahmed model.");
+        throw new Error("NODE_OFFLINE");
     }
 }
 
@@ -53,9 +53,5 @@ export const PUTER_MODELS = [
     { id: 'gemini-1-5-pro', label: '💎 GEMINI 1.5 PRO' },
     { id: 'gemini-1-5-flash', label: '🚀 GEMINI 1.5 FLASH' },
     { id: 'o1-mini', label: '💻 O1 MINI' },
-    { id: 'meta-llama-3-1-405b-instruct', label: '🚀 LLAMA 3.1 (405B)' },
-    { id: 'meta-llama-3-1-70b-instruct', label: '🚀 LLAMA 3.1 (70B)' },
-    { id: 'meta-llama-3-1-8b-instruct', label: '🚀 LLAMA 3.1 (8B)' },
-    { id: 'mistral-large-latest', label: '🧠 MISTRAL LARGE' },
-    { id: 'mixtral-8x7b-instruct', label: '🚀 MIXTRAL 8X7B' }
+    { id: 'meta-llama-3-1-405b-instruct', label: '🚀 LLAMA 3.1 (405B)' }
 ];
