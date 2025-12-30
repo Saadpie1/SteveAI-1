@@ -2,15 +2,32 @@
 // Developed by Saadpie for Ultimate precision, efficiency, and scale.
 
 /**
+ * Ensures silent/invisible authentication with Puter.js
+ */
+async function ensureAuth() {
+    if (!puter.auth.isSignedIn()) {
+        console.log("🛠️ SteveAI: Initializing silent guest session...");
+        try {
+            // attempt_temp_user_creation: true prevents the login popup/redirect
+            await puter.auth.signIn({ attempt_temp_user_creation: true });
+        } catch (err) {
+            console.error("❌ Puter Auth Error:", err);
+        }
+    }
+}
+
+/**
  * Sends a chat message to Puter's AI models.
  * @param {string} msg - User message.
  * @param {string} context - Memory/Context string.
  * @param {string} modelId - The Puter model ID.
  */
 export async function getPuterReply(msg, context, modelId) {
-    // Default fallback to Claude 3.5 for high-performance reasoning
-    // If user selects "chat", we use Claude 3.5 Sonnet as the default engine
-    const model = (modelId === 'chat') ? 'claude-3-5-sonnet' : modelId;
+    // 1. Initialize Auth silently before the first call
+    await ensureAuth();
+
+    // Default fallback to GPT-5 Nano for high-speed reasoning
+    const model = (modelId === 'chat') ? 'gpt-5-nano' : modelId;
     
     const systemPrompt = `You are SteveAI by Saadpie. 
     Powered by Puter.js on Ahmed Aftab's High-Performance Engine. 
@@ -30,7 +47,6 @@ export async function getPuterReply(msg, context, modelId) {
 
 /**
  * ALL FREE PUTER MODELS - Every available option as of late 2025
- * Includes the high-speed GPT-5 Nano and Gemini Pro.
  */
 export const PUTER_MODELS = [
     // --- The New Frontier ---
@@ -55,4 +71,3 @@ export const PUTER_MODELS = [
     { id: 'mistral-large-latest', label: '🧠 MISTRAL LARGE' },
     { id: 'mixtral-8x7b-instruct', label: '🚀 MIXTRAL 8X7B' }
 ];
-     
