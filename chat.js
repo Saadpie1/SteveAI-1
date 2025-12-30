@@ -13,37 +13,50 @@ const input = document.getElementById('messageInput');
 const themeToggle = document.getElementById('themeToggle');
 const clearChatBtn = document.getElementById('clearChat');
 const modeSelect = document.getElementById('modeSelect');
+const syncBtn = document.getElementById('syncModelsBtn');
 
 // --- Memory Management ---
 let memory = {};
 let turn = 0;
 
-// --- Dynamic Model Syncing ---
+// --- Dynamic Model Syncing (Chat Only) ---
 async function syncModels() {
     const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
-    const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free`);
+    // Fetch with features to accurately filter for chat capabilities
+    const url = config.proxiedURL(`${config.API_BASE[0]}/models?plan=free&features`);
 
     try {
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
         const data = await res.json();
         
         if (data && data.data) {
-            // Keep specialized SteveAI defaults, then clear and repopulate
+            // Keep specialized SteveAI defaults
             modeSelect.innerHTML = `
                 <option value="chat" selected>SteveAI-Default</option>
                 <option value="fast">SteveAI-Fast (Gemini)</option>
                 <hr>
             `;
             
-            data.data.forEach(m => {
+            // Filter for models that support chat completions
+            const chatModels = data.data.filter(m => {
+                const features = m.features || [];
+                const id = m.id.toLowerCase();
+                // Exclude obvious image/non-chat models
+                const isImageModel = id.includes('flux') || id.includes('sdxl') || id.includes('imagen') || id.includes('dall-e');
+                return features.includes('chat') || (!isImageModel && !features.includes('image'));
+            });
+
+            chatModels.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
-                // Prettify name: removes provider prefix and dashes
-                const label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
+                // Prettify name: removes provider prefix and dashes, adds thinking emoji if applicable
+                let label = m.id.split('/').pop().toUpperCase().replace(/-/g, ' ');
+                if (label.includes('THINKING') || label.includes('R1')) label = `🧠 ${label}`;
+                
                 opt.textContent = label;
                 modeSelect.appendChild(opt);
             });
-            console.log("✅ SteveAI: Engine synced with Ahmed's latest models.");
+            console.log(`✅ SteveAI: ${chatModels.length} chat models synced.`);
         }
     } catch (e) {
         console.error("❌ Model sync failed:", e);
@@ -334,4 +347,5 @@ form.onsubmit = async e => {
 
 themeToggle.onclick = () => handleCommand('/theme');
 clearChatBtn.onclick = () => handleCommand('/clear');
-  
+if (syncBtn) syncBtn.onclick = () => syncModels();
+    
