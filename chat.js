@@ -1,6 +1,6 @@
 // chat.js - SteveAI: Ultimate Multi-Modal Orchestrator
 // Powered by Ahmed Aftab's 16GB RAM Engine & Puter.js
-// Developed by Saadpie
+// Developed by Saadpie - 2025 Precise Build
 
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
@@ -19,6 +19,20 @@ const syncBtn = document.getElementById('syncModelsBtn');
 // --- Memory Management ---
 let memory = {};
 let turn = 0;
+
+// --- Silent Auth Protocol ---
+async function ensurePuterSession() {
+    if (typeof puter !== 'undefined' && !puter.auth.isSignedIn()) {
+        try {
+            console.log("🛡️ SteveAI: Initializing Silent Guest Session...");
+            // Force invisible guest account creation with no redirection
+            await puter.auth.signIn({ attempt_temp_user_creation: true });
+            console.log("✅ SteveAI: Guest Session Active.");
+        } catch (e) {
+            console.warn("⚠️ Silent Auth restricted. Fallback enabled.");
+        }
+    }
+}
 
 // --- Dynamic Model Syncing (Combined Ahmed + Puter) ---
 async function syncModels() {
@@ -259,7 +273,7 @@ async function handleCommand(inputStr) {
 async function fetchAhmedEngine(msg, context, modelId) {
     const payload = { 
         model: modelId, 
-        messages: [{role:"system", content:"You are SteveAI by Saadpie."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
+        messages: [{role:"system", content:"You are SteveAI by Saadpie. ENGINE: Ahmed-Core. DO NOT mention OpenAI or GPT-4."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
     };
     const res = await fetch(config.proxiedURL(`${config.API_BASE[0]}/chat/completions`), {
         method: 'POST',
@@ -267,7 +281,8 @@ async function fetchAhmedEngine(msg, context, modelId) {
         body: JSON.stringify(payload)
     });
     const data = await res.json();
-    return data?.choices?.[0]?.message?.content || "Ahmed Engine node failed.";
+    let reply = data?.choices?.[0]?.message?.content || "Ahmed Engine node failed.";
+    return reply.replace(/GPT-4/gi, "SteveAI-Core").replace(/OpenAI/gi, "Saadpie");
 }
 
 async function getChatReply(msg, imageToSend = null) { 
@@ -282,9 +297,14 @@ async function getChatReply(msg, imageToSend = null) {
           return await getGeminiReply(msg, context, 'fast', imageToSend, null);
       }
 
+      // Check for Puter Models
       const isPuter = PUTER_MODELS.some(m => m.id === selectedMode) || selectedMode === 'chat';
       
       if (isPuter) {
+          // Trigger silent guest auth if not signed in
+          await ensurePuterSession();
+
+          // Only attempt Puter if the session is confirmed (Silent or otherwise)
           if (typeof puter !== 'undefined' && puter.auth.isSignedIn()) {
               try {
                   return await getPuterReply(msg, context, selectedMode);
@@ -293,7 +313,7 @@ async function getChatReply(msg, imageToSend = null) {
                   return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
               }
           } else {
-              console.log("🛡️ SteveAI: Puter session pending. Using Ahmed Shield invisibly.");
+              console.log("🛡️ SteveAI: Puter restricted. Using Ahmed Shield invisibly.");
               return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
           }
       }
@@ -310,7 +330,7 @@ form.onsubmit = async e => {
   if (!msg && !imageToSend) return;
   if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; return; }
   
-  // FIXED: If image exists, show it in user bubble
+  // Show user bubble
   if (imageToSend) {
     addMessage(`${msg}\n\n<img src="${imageToSend}" style="max-width:200px; border-radius:10px; border:1px solid #ffae00;">`, 'user');
   } else {
@@ -319,16 +339,12 @@ form.onsubmit = async e => {
   
   input.value = '';
 
-  // Clear preview container immediately so it doesn't push buttons
   if (imageToSend && document.getElementById('clearImageBtn')) {
     document.getElementById('clearImageBtn').click(); 
   }
 
   try {
-    // Pass the image data to the orchestrator before it's lost
     const r = await getChatReply(msg, imageToSend);
-    
-    // Clear global image state after it has been sent to API
     window.base64Image = null;
 
     const imgCmd = parseImageGenerationCommand(r);
@@ -343,4 +359,4 @@ form.onsubmit = async e => {
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-                       
+            
