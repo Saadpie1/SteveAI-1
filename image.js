@@ -1,66 +1,39 @@
 import config from './config.js';
 
-// --- DYNAMIC MODEL CACHE ---
-let DYNAMIC_IMAGE_MODELS = [];
+// --- CONFIGURATION ---
+// Standard 2025 aspect ratios and their pixel mappings (multiples of 16)
+export const SUPPORTED_SIZES = {
+    "square": { width: 1024, height: 1024, label: "1:1 Square" },
+    "landscape": { width: 1344, height: 768, label: "16:9 Landscape" },
+    "portrait": { width: 768, height: 1344, label: "9:16 Portrait" },
+    "ultrawide": { width: 1792, height: 1024, label: "21:9 Cinematic" },
+    "hd_square": { width: 2048, height: 2048, label: "2K Ultra Square" } // For high-tier models
+};
 
 /**
- * 🛰️ MODEL DISCOVERY
- * Fetches the latest available image models from the A4F API.
- * Ensures SteveAI always has the newest engines (Imagen 4, Firefrost, etc.)
+ * 🛰️ ENHANCED IMAGE GENERATION (Dynamic Size & Failover)
+ * @param {string} prompt - Visual description.
+ * @param {string} modelName - ID of the model.
+ * @param {string} sizeKey - Key from SUPPORTED_SIZES (e.g., 'landscape').
+ * @param {number} numImages - Count (1-4).
  */
-export async function refreshImageModels() {
-    try {
-        const apiKey = config.API_KEYS[1];
-        const response = await fetch("https://api.a4f.co/v1/models?plan=free", {
-            headers: { "Authorization": `Bearer ${apiKey}` }
-        });
-        const data = await response.json();
-        
-        // Filter for image generation models only
-        DYNAMIC_IMAGE_MODELS = data.data
-            .filter(model => model.type === "images/generations" || model.id.includes("imagen") || model.id.includes("flux"))
-            .map(model => ({
-                id: model.id,
-                name: model.id.split('/').pop().replace(/-/g, ' ').toUpperCase(),
-                provider: model.id.split('/')[0]
-            }));
-
-        console.log("🎨 SteveAI Image Models Updated:", DYNAMIC_IMAGE_MODELS.length, "models loaded.");
-        return DYNAMIC_IMAGE_MODELS;
-    } catch (err) {
-        console.error("❌ Model Discovery Failed:", err);
-        return [];
-    }
-}
-
-/**
- * 🌟 ENHANCED IMAGE GENERATION (With Cascading Failover)
- */
-export async function generateImage(prompt, modelName, numImages = 1) {
+export async function generateImage(prompt, modelName, sizeKey = "square", numImages = 1) {
     if (!prompt) throw new Error("No prompt provided");
 
-    // 1. Initial Discovery if cache is empty
-    if (DYNAMIC_IMAGE_MODELS.length === 0) await refreshImageModels();
+    const apiKey = config.API_KEYS[1];
+    const dimensions = SUPPORTED_SIZES[sizeKey] || SUPPORTED_SIZES["square"];
 
-    // 2. Create Failover Tier
-    // Find models from the same "family" (e.g., all Flux models or all Imagen models)
-    const baseModel = modelName.split('/')[1] || modelName;
-    const familyKey = baseModel.split('-')[0]; // 'imagen', 'flux', 'sdxl'
-    
+    // Build the Failover Tier (Same logic as Chat.js)
+    const family = modelName.split('-')[0] || "flux";
     const failoverTier = [
-        modelName, // Try user choice first
-        ...DYNAMIC_IMAGE_MODELS
-            .filter(m => m.id !== modelName && m.id.includes(familyKey))
-            .map(m => m.id),
-        "provider-5/flux-schnell" // Absolute global safety fallback
+        modelName,
+        "provider-4/imagen-4",
+        "provider-5/flux-schnell" 
     ];
 
-    const apiKey = config.API_KEYS[1];
-
-    // 3. The Cascading Loop
     for (const currentModel of failoverTier) {
         try {
-            console.log(`🎨 SteveAI Painting with: ${currentModel}...`);
+            console.log(`🎨 SteveAI Painting [${sizeKey}] with: ${currentModel}...`);
             
             const response = await fetch("https://api.a4f.co/v1/images/generations", {
                 method: "POST",
@@ -72,26 +45,25 @@ export async function generateImage(prompt, modelName, numImages = 1) {
                     model: currentModel,
                     prompt: prompt,
                     n: numImages,
-                    size: "1024x1024"
+                    width: dimensions.width,
+                    height: dimensions.height,
+                    // 2025 Specific: Quality & Style toggles
+                    quality: currentModel.includes("ultra") ? "hd" : "standard",
+                    response_format: "url"
                 })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                if (response.status === 429 || response.status === 500) {
-                    console.warn(`⚠️ ${currentModel} busy or failed. Cascading...`);
-                    continue; // Jump to next model in tier
-                }
-                throw new Error(`API Error: ${data.error || response.statusText}`);
+                console.warn(`⚠️ ${currentModel} error. Checking failover...`);
+                continue; 
             }
 
-            const urls = data?.data?.map(item => item.url) || [];
-            if (urls.length > 0) return urls;
+            return data?.data?.map(item => item.url) || [];
 
         } catch (err) {
-            console.error(`❌ Attempt with ${currentModel} failed:`, err.message);
-            // If it's the last model in the tier, throw the error
+            console.error(`❌ ${currentModel} failed:`, err.message);
             if (currentModel === failoverTier[failoverTier.length - 1]) throw err;
         }
     }
