@@ -123,34 +123,39 @@
 
     // --- Dynamic Sync & Categorization ---
     async function populateInterface() {
-        await syncImageModels(); // Discovery from image.js
-        
-        modelSelect.innerHTML = "";
+        try {
+            await syncImageModels(); // Discovery from image.js
+            modelSelect.innerHTML = "";
 
-        // 1. Puter Priority Group
-        const puterGroup = document.createElement('optgroup');
-        puterGroup.label = "── PUTER UNLIMITED (Banana) ──";
-        PUTER_IMAGE_MODELS.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = m.label;
-            puterGroup.appendChild(opt);
-        });
-        modelSelect.appendChild(puterGroup);
-
-        // 2. A4F Dynamic Group
-        const providers = [...new Set(IMAGE_MODELS.map(m => m.provider))];
-        providers.forEach(p => {
-            const group = document.createElement('optgroup');
-            group.label = `── ${p.toUpperCase()} ENGINE ──`;
-            IMAGE_MODELS.filter(m => m.provider === p).forEach(model => {
+            // 1. Puter Priority Group
+            const puterGroup = document.createElement('optgroup');
+            puterGroup.label = "── PUTER UNLIMITED (Banana) ──";
+            PUTER_IMAGE_MODELS.forEach(m => {
                 const opt = document.createElement('option');
-                opt.value = model.id;
-                opt.textContent = model.name;
-                group.appendChild(opt);
+                opt.value = m.id;
+                opt.textContent = m.label;
+                puterGroup.appendChild(opt);
             });
-            modelSelect.appendChild(group);
-        });
+            modelSelect.appendChild(puterGroup);
+
+            // 2. A4F Dynamic Group
+            if (IMAGE_MODELS.length > 0) {
+                const providers = [...new Set(IMAGE_MODELS.map(m => m.provider))];
+                providers.forEach(p => {
+                    const group = document.createElement('optgroup');
+                    group.label = `── ${p.toUpperCase()} ENGINE ──`;
+                    IMAGE_MODELS.filter(m => m.provider === p).forEach(model => {
+                        const opt = document.createElement('option');
+                        opt.value = model.id;
+                        opt.textContent = model.name;
+                        group.appendChild(opt);
+                    });
+                    modelSelect.appendChild(group);
+                });
+            }
+        } catch (e) {
+            console.error("Interface Population Failed:", e);
+        }
     }
 
     // --- Interaction Logic ---
@@ -180,13 +185,20 @@
       resultDiv.innerHTML = `<p style="color:#00ffcc; width:100%;">Contacting Neural Nodes...</p>`;
 
       try {
-        const urls = await generateImage(
+        const response = await generateImage(
             prompt, 
             modelSelect.value, 
             base64Image, 
             sizeSelect.value, 
             parseInt(document.getElementById('numImagesSelect').value)
         ); 
+
+        // ✅ SAFE-ARRAY LOGIC: Dissolves the "map of undefined" error
+        const urls = Array.isArray(response) ? response : (response ? [response] : []);
+
+        if (urls.length === 0) {
+            throw new Error("Neural node returned no data. Try a different engine.");
+        }
 
         resultDiv.innerHTML = urls.map((url, i) => `
             <div class="img-container">
@@ -198,7 +210,7 @@
         `).join('');
 
       } catch (err) {
-        resultDiv.innerHTML = `<p style="color:#ff00ff;">Engine Failed: ${err.message}</p>`;
+        resultDiv.innerHTML = `<p style="color:#ff00ff;"><strong>SteveAI Engine Error:</strong> ${err.message}</p>`;
       } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = "GENERATE MASTERPIECE";
@@ -208,5 +220,4 @@
     populateInterface();
   </script>
 </body>
-          </html>
-          
+</html>
