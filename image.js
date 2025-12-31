@@ -1,4 +1,8 @@
+// image.js - SteveAI: Ultra-HD Multi-Modal Orchestrator
+// Developed by Saadpie | Precision, Efficiency, Scale.
+
 import config from './config.js';
+import { getPuterImage } from './puter-image.js';
 
 export const SUPPORTED_SIZES = {
     "square": { width: 1024, height: 1024, label: "1:1 Square" },
@@ -8,36 +12,72 @@ export const SUPPORTED_SIZES = {
     "hd_square": { width: 2048, height: 2048, label: "2K Ultra Square" }
 };
 
+// This will hold all A4F models discovered at runtime
+export let IMAGE_MODELS = [];
+
 /**
- * 🛰️ HYBRID IMAGE ORCHESTRATOR (txt2img + img2img)
- * @param {string} prompt - Visual description.
- * @param {string} modelName - ID of the model.
- * @param {string} inputImage - (Optional) Base64 or URL for Image-to-Image.
- * @param {string} sizeKey - Resolution key.
+ * 🛰️ DYNAMIC MODEL DISCOVERY
+ * Scans A4F for all image-capable engines.
+ */
+export async function syncImageModels() {
+    const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
+    const url = config.proxiedURL(`${config.API_BASE[0]}/models`);
+
+    try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${apiKey}` } });
+        const data = await res.json();
+        
+        if (data && data.data) {
+            // Logic: Catch anything containing image, flux, imagen, sd, or dalle
+            IMAGE_MODELS = data.data
+                .filter(m => /image|flux|imagen|sd|dalle|stability/i.test(m.id))
+                .map(m => ({
+                    id: m.id,
+                    name: m.id.split('/').pop().toUpperCase().replace(/-/g, ' '),
+                    provider: m.id.split('/')[0]
+                }));
+            console.log(`📡 SteveAI: Discovered ${IMAGE_MODELS.length} A4F Image Engines.`);
+        }
+    } catch (e) {
+        console.error("❌ A4F Sync Failed:", e);
+    }
+}
+
+/**
+ * 🛰️ HYBRID IMAGE ORCHESTRATOR (Puter -> A4F Failover)
  */
 export async function generateImage(prompt, modelName, inputImage = null, sizeKey = "square", numImages = 1) {
     if (!prompt) throw new Error("No prompt provided");
 
-    const apiKey = config.API_KEYS[1];
-    const dims = SUPPORTED_SIZES[sizeKey] || SUPPORTED_SIZES["square"];
-    
-    // Determine the correct endpoint based on mode
-    // img2img usually uses /edits or /variations in 2025 standard APIs
-    const endpoint = inputImage 
-        ? "https://api.a4f.co/v1/images/edits" 
-        : "https://api.a4f.co/v1/images/generations";
+    // --- PHASE 1: ATTEMPT PUTER (FREE/UNLIMITED) ---
+    // If the modelName looks like a Puter ID or is the default, try Puter first.
+    if (modelName.includes('google/') || modelName.includes('openai/') || modelName.includes('black-forest-labs/')) {
+        try {
+            const url = await getPuterImage(prompt, modelName, inputImage, false, sizeKey);
+            return [url]; // Puter usually returns a single string/URL
+        } catch (e) {
+            console.warn("🛡️ Puter Node exhausted/busy. Shifting to Ahmed Shield...");
+            // Fallback continues to Phase 2
+        }
+    }
 
-    // 1. Build Failover Tier
+    // --- PHASE 2: AHMED ENGINE (A4F) ---
+    const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
+    const dims = SUPPORTED_SIZES[sizeKey] || SUPPORTED_SIZES["square"];
+    const endpoint = inputImage ? "/v1/images/edits" : "/v1/images/generations";
+    const url = config.proxiedURL(`${config.API_BASE[0]}${endpoint}`);
+
+    // Build Failover Tier for A4F
     const familyKey = modelName.includes('/') ? modelName.split('/')[1].split('-')[0] : "flux";
     const failoverTier = [
         modelName,
-        `provider-4/${familyKey}-4`, // Try updated version of same family
-        "provider-5/flux-schnell"    // Global safety net
+        `provider-4/${familyKey}-4`, 
+        "provider-5/flux-schnell"    
     ];
 
     for (const currentModel of failoverTier) {
         try {
-            console.log(`🎨 SteveAI [${inputImage ? 'EDIT' : 'GEN'}] with: ${currentModel}...`);
+            console.log(`🎨 SteveAI A4F [${inputImage ? 'EDIT' : 'GEN'}] with: ${currentModel}...`);
             
             const payload = {
                 model: currentModel,
@@ -48,14 +88,12 @@ export async function generateImage(prompt, modelName, inputImage = null, sizeKe
                 response_format: "url"
             };
 
-            // 🍌 Add Image-to-Image Parameters
             if (inputImage) {
-                // The A4F API usually expects 'image' or 'image_url'
                 payload.image = inputImage; 
-                payload.strength = 0.75; // 0.75 is the 2025 sweet spot for preservation vs creativity
+                payload.strength = 0.75; 
             }
 
-            const response = await fetch(endpoint, {
+            const response = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${apiKey}`,
@@ -65,14 +103,7 @@ export async function generateImage(prompt, modelName, inputImage = null, sizeKe
             });
 
             const data = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 404 && inputImage) {
-                    console.warn("Edit endpoint not found, attempting legacy txt2img fallback...");
-                    continue; 
-                }
-                continue; // Failover to next model
-            }
+            if (!response.ok) continue; 
 
             return data?.data?.map(item => item.url) || [];
 
@@ -82,3 +113,6 @@ export async function generateImage(prompt, modelName, inputImage = null, sizeKe
         }
     }
 }
+
+// Auto-sync on load
+syncImageModels();
