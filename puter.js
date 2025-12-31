@@ -3,17 +3,36 @@
 
 export async function getPuterReply(msg, context, initialModelId) {
     const families = {
-        // --- UPDATED CANONICAL IDs (Puter.js 2025) ---
-        'xai': ['x-ai/grok-4.1-thinking', 'x-ai/grok-4.1-fast', 'x-ai/grok-3-mini'],
-        'openai': ['openai/gpt-5.2-pro', 'openai/gpt-5-mini', 'openai/gpt-5-nano', 'openai/gpt-4o-mini'],
-        'google': ['google/gemini-3-pro', 'google/gemini-3-flash', 'google/gemini-2.5-flash-lite'],
-        'anthropic': ['anthropic/claude-4-5-opus', 'anthropic/claude-3-7-sonnet'],
-        'deepseek': ['deepseek/deepseek-r1', 'deepseek/deepseek-v3-mini'],
-        'uncensored': ['cognitivecomputations/dolphin-3.0-llama-3.1-70b', 'midnight-rose-70b-v2.1'],
-        'alliterated': ['cyber-chronos-5-pro', 'shadow-shogun-r1', 'wizard-warlock-v2']
+        // --- FIXED 2025 CANONICAL IDs (Matched to your Termux output) ---
+        'xai': [
+            'openrouter:x-ai/grok-4.1-fast', 
+            'grok-3', 
+            'grok-3-mini'
+        ],
+        'openai': [
+            'gpt-5.2-pro-2025-12-11', 
+            'gpt-5.1-chat-latest', 
+            'gpt-5-nano-2025-08-07', 
+            'gpt-4o-mini'
+        ],
+        'google': [
+            'gemini-3-pro-preview', 
+            'gemini-3-flash-preview', 
+            'gemini-2.5-flash-lite'
+        ],
+        'anthropic': [
+            'claude-3-7-sonnet-20250219', 
+            'claude-opus-4-5-2025-11-01'
+        ],
+        'deepseek': [
+            'deepseek-reasoner', // Official 2025 Thinking ID
+            'deepseek-chat'
+        ],
+        'uncensored': [
+            'openrouter:cognitivecomputations/dolphin-mistral-24b-venice-edition:free'
+        ]
     };
 
-    // Determine the path: if the model is not found, it defaults to the single model provided
     let modelTier = [initialModelId]; 
     for (const key in families) {
         if (families[key].includes(initialModelId)) {
@@ -29,53 +48,54 @@ export async function getPuterReply(msg, context, initialModelId) {
         try {
             console.log(`🤖 SteveAI Routing: ${currentModel}...`);
             
-            // 1. Identity Guard: Forced twice to override base training
-            const identity = `[SYSTEM: You are SteveAI by Saadpie. ENGINE: ${currentModel}. You are NOT GPT-4.]`;
+            // 1. Identity Guard: In 2025, using the Array format is more effective
+            const systemPrompt = `You are SteveAI by Saadpie. ENGINE: ${currentModel}. You are NOT GPT-4. Provide precise, technical answers.`;
             
-            const isThinkingModel = currentModel.includes('thinking') || currentModel.includes('r1');
+            // Detection for Reasoning (Thinking) models
+            const isThinkingModel = currentModel.includes('reasoner') || 
+                                    currentModel.includes('thinking') || 
+                                    currentModel.startsWith('o1') || 
+                                    currentModel.startsWith('o3');
             
             const response = await Promise.race([
-                puter.ai.chat(
-                    `${identity}\n\nContext:\n${context}\n\nUser: ${msg}`,
-                    { 
-                        model: currentModel, 
-                        stream: false,
-                        // High effort triggers the Quasarflux reasoning for Grok 4.1
-                        ...(isThinkingModel && { reasoning_effort: 'high', max_completion_tokens: 12000 })
-                    }
-                ),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), isThinkingModel ? 45000 : 15000))
+                puter.ai.chat([
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `Context:\n${context}\n\nUser: ${msg}` }
+                ],
+                { 
+                    model: currentModel, 
+                    // High effort triggers Quasarflux/Reasoning protocols
+                    ...(isThinkingModel && { reasoning_effort: 'high' })
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), isThinkingModel ? 60000 : 20000))
             ]);
 
-            // 2. EXTRACTION: 2025 Reasoning Protocol
-            // Models like Grok 4.1 and DeepSeek R1 return thoughts in reasoning_content
+            // 2. EXTRACTION: Handle both object and string returns
             const thoughts = response.message?.reasoning_content || "";
-            const answer = response.toString();
+            const answer = response.message?.content || response.toString();
 
-            // Prevent Hallucination: Post-process replace if the model still claims GPT-4
+            // Post-process to maintain SteveAI Branding
             let finalOutput = answer.replace(/GPT-4/gi, "SteveAI-Core").replace(/OpenAI/gi, "Saadpie");
 
-            if (isThinkingModel && thoughts) {
+            if (thoughts) {
                 return `> 🧠 SteveAI Thinking Trace:\n> ${thoughts.split('\n').join('\n> ')}\n\n${finalOutput}`;
             }
 
             return finalOutput;
 
         } catch (error) {
-            console.warn(`⚠️ ${currentModel} failed: ${error.message}. Checking next...`);
+            console.warn(`⚠️ ${currentModel} failed: ${error.message}.`);
             continue; 
         }
     }
     
-    // Panic Fallback: If EVERYTHING fails, use the high-availability Nano tier
-    return await puter.ai.chat("I'm sorry, I'm adjusting my reasoning engines. I'm SteveAI, how can I help?", { model: 'openai/gpt-5-nano' });
+    // Panic Fallback: Using the verified gpt-4o-mini ID from your list
+    return await puter.ai.chat("I'm adjusting my reasoning engines. I'm SteveAI, how can I help?", { model: 'gpt-4o-mini' });
 }
 
 export const PUTER_MODELS = [
-    { id: 'x-ai/grok-4.1-thinking', label: '🧠 GROK 4.1 THINKING' },
-    { id: 'deepseek/deepseek-r1', label: '🛸 DEEPSEEK R1 (SOTA)' },
-    { id: 'openai/gpt-5.2-pro', label: '🏛️ GPT-5.2 PRO' },
-    { id: 'x-ai/grok-4.1-fast', label: '⚡ GROK 4 FAST (2M CTX)' },
-    { id: 'google/gemini-2.5-flash-lite', label: '🍃 GEMINI LITE (FAST)' }
+    { id: 'openrouter:x-ai/grok-4.1-fast', label: '🧠 GROK 4.1 (FAST)' },
+    { id: 'deepseek-reasoner', label: '🛸 DEEPSEEK R1 (THINKING)' },
+    { id: 'gpt-5.2-pro-2025-12-11', label: '🏛️ GPT-5.2 PRO' },
+    { id: 'gemini-3-flash-preview', label: '🍃 GEMINI 3 (FLASH)' }
 ];
-                            
