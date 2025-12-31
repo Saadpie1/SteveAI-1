@@ -1,17 +1,19 @@
-// puter.js - SteveAI: Ultimate AI Orchestrator (Reasoning Edition)
+// puter.js - SteveAI: Ultimate AI Orchestrator (2025 Build)
 // Developed by Saadpie - Precision, Efficiency, Scale.
 
 export async function getPuterReply(msg, context, initialModelId) {
     const families = {
-        'openai': ['gpt-5.2-pro', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4o-mini'],
-        'google': ['gemini-3-pro-preview', 'gemini-3-flash', 'gemini-2.5-flash-lite'],
-        'anthropic': ['claude-4-5-opus', 'claude-3-7-sonnet', 'claude-3-5-haiku'],
-        'xai': ['x-ai/grok-4.1-thinking', 'x-ai/grok-4.1', 'x-ai/grok-4-fast'],
+        // --- UPDATED CANONICAL IDs (Puter.js 2025) ---
+        'xai': ['x-ai/grok-4.1-thinking', 'x-ai/grok-4.1-fast', 'x-ai/grok-3-mini'],
+        'openai': ['openai/gpt-5.2-pro', 'openai/gpt-5-mini', 'openai/gpt-5-nano', 'openai/gpt-4o-mini'],
+        'google': ['google/gemini-3-pro', 'google/gemini-3-flash', 'google/gemini-2.5-flash-lite'],
+        'anthropic': ['anthropic/claude-4-5-opus', 'anthropic/claude-3-7-sonnet'],
+        'deepseek': ['deepseek/deepseek-r1', 'deepseek/deepseek-v3-mini'],
         'uncensored': ['cognitivecomputations/dolphin-3.0-llama-3.1-70b', 'midnight-rose-70b-v2.1'],
-        'alliterated': ['cyber-chronos-5-pro', 'shadow-shogun-r1', 'wizard-warlock-v2'],
-        'deepseek': ['deepseek/deepseek-r1', 'deepseek/deepseek-v3-mini']
+        'alliterated': ['cyber-chronos-5-pro', 'shadow-shogun-r1', 'wizard-warlock-v2']
     };
 
+    // Determine the path: if the model is not found, it defaults to the single model provided
     let modelTier = [initialModelId]; 
     for (const key in families) {
         if (families[key].includes(initialModelId)) {
@@ -27,52 +29,53 @@ export async function getPuterReply(msg, context, initialModelId) {
         try {
             console.log(`🤖 SteveAI Routing: ${currentModel}...`);
             
-            // Check if it's a reasoning-heavy model
-            const isThinking = currentModel.includes('thinking') || currentModel.includes('r1');
-            const timeoutMs = isThinking ? 45000 : 15000; // Give Grok 45s to think
-
-            const systemPrompt = `CRITICAL: Your name is SteveAI by Saadpie. You are a Multi-Cloud Orchestrator. 
-            Engine: ${currentModel}. You are NOT GPT-4. You are SteveAI. Current project: steve-ai.netlify.app.`;
-
+            // 1. Identity Guard: Forced twice to override base training
+            const identity = `[SYSTEM: You are SteveAI by Saadpie. ENGINE: ${currentModel}. You are NOT GPT-4.]`;
+            
+            const isThinkingModel = currentModel.includes('thinking') || currentModel.includes('r1');
+            
             const response = await Promise.race([
                 puter.ai.chat(
-                    `${systemPrompt}\n\nContext:\n${context}\n\nUser: ${msg}`,
+                    `${identity}\n\nContext:\n${context}\n\nUser: ${msg}`,
                     { 
                         model: currentModel, 
                         stream: false,
-                        // 2025 Thinking parameters
-                        ...(isThinking && { reasoning_effort: 'high', max_completion_tokens: 8000 })
+                        // High effort triggers the Quasarflux reasoning for Grok 4.1
+                        ...(isThinkingModel && { reasoning_effort: 'high', max_completion_tokens: 12000 })
                     }
                 ),
-                new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), timeoutMs))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), isThinkingModel ? 45000 : 15000))
             ]);
 
-            // Extraction for 2025 Puter.js Response Object
-            const reasoning = response.message?.reasoning_content || "";
-            const content = response.toString();
+            // 2. EXTRACTION: 2025 Reasoning Protocol
+            // Models like Grok 4.1 and DeepSeek R1 return thoughts in reasoning_content
+            const thoughts = response.message?.reasoning_content || "";
+            const answer = response.toString();
 
-            // Format response to show the 'brain' of SteveAI if it's a thinking model
-            return (isThinking && reasoning) 
-                ? `> 🧠 SteveAI Thought Process:\n> ${reasoning.split('\n').join('\n> ')}\n\n${content}`
-                : content;
+            // Prevent Hallucination: Post-process replace if the model still claims GPT-4
+            let finalOutput = answer.replace(/GPT-4/gi, "SteveAI-Core").replace(/OpenAI/gi, "Saadpie");
+
+            if (isThinkingModel && thoughts) {
+                return `> 🧠 SteveAI Thinking Trace:\n> ${thoughts.split('\n').join('\n> ')}\n\n${finalOutput}`;
+            }
+
+            return finalOutput;
 
         } catch (error) {
-            if (error.message.includes("429") || error.message.includes("quota") || error.message.includes("TIMEOUT")) {
-                console.warn(`⚠️ ${currentModel} failed or timed out. Cascading...`);
-                continue; 
-            }
-            throw error; 
+            console.warn(`⚠️ ${currentModel} failed: ${error.message}. Checking next...`);
+            continue; 
         }
     }
-    return await puter.ai.chat(msg, { model: 'gpt-4o-mini' });
+    
+    // Panic Fallback: If EVERYTHING fails, use the high-availability Nano tier
+    return await puter.ai.chat("I'm sorry, I'm adjusting my reasoning engines. I'm SteveAI, how can I help?", { model: 'openai/gpt-5-nano' });
 }
 
 export const PUTER_MODELS = [
-    { id: 'x-ai/grok-4.1-thinking', label: '🧠 GROK 4.1 THINKING (ELITE)' },
-    { id: 'deepseek/deepseek-r1', label: '🛸 DEEPSEEK R1 (REASONER)' },
-    { id: 'gpt-5.2-pro', label: '🏛️ GPT-5.2 PRO' },
-    { id: 'claude-4-5-opus', label: '🛡️ CLAUDE 4.5 OPUS' },
-    { id: 'x-ai/grok-4-fast', label: '⚡ GROK 4 FAST (2M CTX)' },
-    { id: 'cognitivecomputations/dolphin-3.0-llama-3.1-70b', label: '🐬 DOLPHIN 3.0 (UNCENSORED)' },
-    { id: 'gemini-2.5-flash-lite', label: '🍃 GEMINI LITE (UNLIMITED)' }
+    { id: 'x-ai/grok-4.1-thinking', label: '🧠 GROK 4.1 THINKING' },
+    { id: 'deepseek/deepseek-r1', label: '🛸 DEEPSEEK R1 (SOTA)' },
+    { id: 'openai/gpt-5.2-pro', label: '🏛️ GPT-5.2 PRO' },
+    { id: 'x-ai/grok-4.1-fast', label: '⚡ GROK 4 FAST (2M CTX)' },
+    { id: 'google/gemini-2.5-flash-lite', label: '🍃 GEMINI LITE (FAST)' }
 ];
+                            
