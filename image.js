@@ -1,81 +1,98 @@
-import config from './config.js'; 
+import config from './config.js';
 
-// --- AVAILABLE IMAGE GENERATION MODELS ---
-// Streamlined for SteveAI: Premium Google models, High-speed Flux, and Specialized Provider-8 models.
-export const IMAGE_MODELS = [
-    // Imagen Models
-    { id: "provider-4/imagen-3.5", name: "Imagen 3.5" },
-    { id: "provider-4/imagen-4", name: "Imagen 4" },
-    { id: "provider-8/imagen-3", name: "Imagen 3" },
-    
-    // Flux & Speed Optimized
-    { id: "provider-5/flux-schnell", name: "Flux Schnell" },
-    { id: "provider-5/flux-dev", name: "Flux Dev" },
-    { id: "provider-4/sdxl-lite", name: "SDXL Lite (Fast)" },
-    
-    // Specialized & Provider 8
-    { id: "provider-4/phoenix", name: "Phoenix" },
-    { id: "provider-8/firefrost", name: "Firefrost" },
-    { id: "provider-8/z-image", name: "Z-Image" },
-    { id: "provider-8/char", name: "Char (Character Specialist)" },
-    { id: "provider-8/seed-rp", name: "Seed RP (Art & Roleplay)" }
-];
+// --- DYNAMIC MODEL CACHE ---
+let DYNAMIC_IMAGE_MODELS = [];
 
 /**
- * 🌟 IMAGE GENERATION (HTTP FETCH)
- * Orchestrates calls to the SteveAI image generation backend.
- * * @param {string} prompt - The visual description.
- * @param {string} modelName - The ID of the model to use.
- * @param {number} numImages - Number of images to generate (1-4).
- * @returns {Promise<string[]>} - An array of image URLs.
+ * 🛰️ MODEL DISCOVERY
+ * Fetches the latest available image models from the A4F API.
+ * Ensures SteveAI always has the newest engines (Imagen 4, Firefrost, etc.)
  */
-export async function generateImage(prompt, modelName = IMAGE_MODELS[0].id, numImages = 1) { 
-  if (!prompt) throw new Error("No prompt provided");
-  
-  // Guardrail for API batch limits
-  if (numImages < 1 || numImages > 4) {
-    throw new Error("Number of images must be between 1 and 4.");
-  }
+export async function refreshImageModels() {
+    try {
+        const apiKey = config.API_KEYS[1];
+        const response = await fetch("https://api.a4f.co/v1/models?plan=free", {
+            headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        const data = await response.json();
+        
+        // Filter for image generation models only
+        DYNAMIC_IMAGE_MODELS = data.data
+            .filter(model => model.type === "images/generations" || model.id.includes("imagen") || model.id.includes("flux"))
+            .map(model => ({
+                id: model.id,
+                name: model.id.split('/').pop().replace(/-/g, ' ').toUpperCase(),
+                provider: model.id.split('/')[0]
+            }));
 
-  try {
-    // Utilizing the secondary API Key slot for Image Orchestration
-    const apiKey = config.API_KEYS[1]; 
-
-    const response = await fetch("https://api.a4f.co/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: modelName, 
-        prompt: prompt,
-        n: numImages, 
-        size: "1024x1024" 
-      })
-    });
-
-    const data = await response.json();
-    
-    // Debugging log for Saadpie's development console
-    console.log("SteveAI Orchestration Response:", data);
-
-    if (!response.ok) {
-        const errorText = JSON.stringify(data);
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}. API Error: ${errorText}`);
+        console.log("🎨 SteveAI Image Models Updated:", DYNAMIC_IMAGE_MODELS.length, "models loaded.");
+        return DYNAMIC_IMAGE_MODELS;
+    } catch (err) {
+        console.error("❌ Model Discovery Failed:", err);
+        return [];
     }
+}
 
-    // Extracting URLs from the data array
-    const imageUrls = data?.data?.map(item => item.url) || [];
+/**
+ * 🌟 ENHANCED IMAGE GENERATION (With Cascading Failover)
+ */
+export async function generateImage(prompt, modelName, numImages = 1) {
+    if (!prompt) throw new Error("No prompt provided");
 
-    if (imageUrls.length === 0) {
-        throw new Error("API response received, but no image URLs were found.");
-    }
+    // 1. Initial Discovery if cache is empty
+    if (DYNAMIC_IMAGE_MODELS.length === 0) await refreshImageModels();
+
+    // 2. Create Failover Tier
+    // Find models from the same "family" (e.g., all Flux models or all Imagen models)
+    const baseModel = modelName.split('/')[1] || modelName;
+    const familyKey = baseModel.split('-')[0]; // 'imagen', 'flux', 'sdxl'
     
-    return imageUrls; // Returns an array of strings
+    const failoverTier = [
+        modelName, // Try user choice first
+        ...DYNAMIC_IMAGE_MODELS
+            .filter(m => m.id !== modelName && m.id.includes(familyKey))
+            .map(m => m.id),
+        "provider-5/flux-schnell" // Absolute global safety fallback
+    ];
 
-  } catch (err) {
-    console.error("SteveAI Image Generation Error:", err);
-    throw err;
-  }
+    const apiKey = config.API_KEYS[1];
+
+    // 3. The Cascading Loop
+    for (const currentModel of failoverTier) {
+        try {
+            console.log(`🎨 SteveAI Painting with: ${currentModel}...`);
+            
+            const response = await fetch("https://api.a4f.co/v1/images/generations", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: currentModel,
+                    prompt: prompt,
+                    n: numImages,
+                    size: "1024x1024"
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 429 || response.status === 500) {
+                    console.warn(`⚠️ ${currentModel} busy or failed. Cascading...`);
+                    continue; // Jump to next model in tier
+                }
+                throw new Error(`API Error: ${data.error || response.statusText}`);
+            }
+
+            const urls = data?.data?.map(item => item.url) || [];
+            if (urls.length > 0) return urls;
+
+        } catch (err) {
+            console.error(`❌ Attempt with ${currentModel} failed:`, err.message);
+            // If it's the last model in the tier, throw the error
+            if (currentModel === failoverTier[failoverTier.length - 1]) throw err;
+        }
+    }
 }
