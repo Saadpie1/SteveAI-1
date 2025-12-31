@@ -1,6 +1,6 @@
 // chat.js - SteveAI: Ultimate Multi-Modal Orchestrator
 // Powered by Ahmed Aftab's 16GB RAM Engine & Puter.js
-// Developed by Saadpie - 2025 Precise Build
+// Developed by Saadpie
 
 import config from './config.js'; 
 import { generateImage, IMAGE_MODELS } from './image.js'; 
@@ -19,20 +19,6 @@ const syncBtn = document.getElementById('syncModelsBtn');
 // --- Memory Management ---
 let memory = {};
 let turn = 0;
-
-// --- Silent Auth Protocol ---
-async function ensurePuterSession() {
-    if (typeof puter !== 'undefined' && !puter.auth.isSignedIn()) {
-        try {
-            console.log("🛡️ SteveAI: Initializing Silent Guest Session...");
-            // Force invisible guest account creation with no redirection
-            await puter.auth.signIn({ attempt_temp_user_creation: true });
-            console.log("✅ SteveAI: Guest Session Active.");
-        } catch (e) {
-            console.warn("⚠️ Silent Auth restricted. Fallback enabled.");
-        }
-    }
-}
 
 // --- Dynamic Model Syncing (Combined Ahmed + Puter) ---
 async function syncModels() {
@@ -273,7 +259,7 @@ async function handleCommand(inputStr) {
 async function fetchAhmedEngine(msg, context, modelId) {
     const payload = { 
         model: modelId, 
-        messages: [{role:"system", content:"You are SteveAI by Saadpie. ENGINE: Ahmed-Core. DO NOT mention OpenAI or GPT-4."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
+        messages: [{role:"system", content:"You are SteveAI by Saadpie. Identify as SteveAI."}, {role:"user", content:`${context}\n\nUser: ${msg}`}] 
     };
     const res = await fetch(config.proxiedURL(`${config.API_BASE[0]}/chat/completions`), {
         method: 'POST',
@@ -292,28 +278,19 @@ async function getChatReply(msg, imageToSend = null) {
   if (window.showLoader) window.showLoader();
   
   try {
-      // 🟢 ROUTE TO GEMINI FAST FOR IMAGE ANALYSIS OR EXPLICIT FAST MODE
       if (imageToSend || selectedMode === 'fast') {
           return await getGeminiReply(msg, context, 'fast', imageToSend, null);
       }
 
-      // Check for Puter Models
       const isPuter = PUTER_MODELS.some(m => m.id === selectedMode) || selectedMode === 'chat';
       
       if (isPuter) {
-          // Trigger silent guest auth if not signed in
-          await ensurePuterSession();
-
-          // Only attempt Puter if the session is confirmed (Silent or otherwise)
-          if (typeof puter !== 'undefined' && puter.auth.isSignedIn()) {
-              try {
-                  return await getPuterReply(msg, context, selectedMode);
-              } catch (e) {
-                  console.warn("Puter Node Error, falling back...");
-                  return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
-              }
-          } else {
-              console.log("🛡️ SteveAI: Puter restricted. Using Ahmed Shield invisibly.");
+          // NO puter.auth.signIn() - This prevents the redirection.
+          // We call the model directly. If Puter throws a redirect error, we catch it.
+          try {
+              return await getPuterReply(msg, context, selectedMode);
+          } catch (e) {
+              console.warn("🛡️ Redirect Blocked/Session Required. Falling back to Ahmed Shield.");
               return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
           }
       }
@@ -330,7 +307,6 @@ form.onsubmit = async e => {
   if (!msg && !imageToSend) return;
   if (msg.startsWith('/')) { await handleCommand(msg); input.value = ''; return; }
   
-  // Show user bubble
   if (imageToSend) {
     addMessage(`${msg}\n\n<img src="${imageToSend}" style="max-width:200px; border-radius:10px; border:1px solid #ffae00;">`, 'user');
   } else {
@@ -359,4 +335,4 @@ form.onsubmit = async e => {
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-            
+                    
