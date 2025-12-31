@@ -20,6 +20,27 @@ const syncBtn = document.getElementById('syncModelsBtn');
 let memory = {};
 let turn = 0;
 
+// --- 1-Pixel Silent Trap Logic ---
+async function silentPuterAuth() {
+    if (typeof puter === 'undefined') return;
+    if (puter.auth.isSignedIn()) return;
+
+    console.log("🛡️ SteveAI: Initializing 1-Pixel Silent Auth Trap...");
+    try {
+        // This triggers guest account creation. 
+        // Because we don't call this in a way that blocks the UI, 
+        // and we have the iframe in HTML, the redirect is sandboxed.
+        await puter.auth.signIn({ 
+            attempt_temp_user_creation: true
+        });
+    } catch (e) {
+        console.log("🛡️ SteveAI: Auth redirected to trap. UI protected.");
+    }
+}
+
+// Initialize trap on load
+silentPuterAuth();
+
 // --- Dynamic Model Syncing (Combined Ahmed + Puter) ---
 async function syncModels() {
     const apiKey = "ddc-a4f-93af1cce14774a6f831d244f4df3eb9e";
@@ -285,8 +306,6 @@ async function getChatReply(msg, imageToSend = null) {
       const isPuter = PUTER_MODELS.some(m => m.id === selectedMode) || selectedMode === 'chat';
       
       if (isPuter) {
-          // NO puter.auth.signIn() - This prevents the redirection.
-          // We call the model directly. If Puter throws a redirect error, we catch it.
           try {
               return await getPuterReply(msg, context, selectedMode);
           } catch (e) {
@@ -335,4 +354,4 @@ form.onsubmit = async e => {
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-                    
+    
