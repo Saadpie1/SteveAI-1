@@ -1,41 +1,17 @@
-// puter.js - SteveAI: Ultimate AI Orchestrator
+// puter.js - SteveAI: Ultimate AI Orchestrator (Reasoning Edition)
 // Developed by Saadpie - Precision, Efficiency, Scale.
-// Project URL: steve-ai.netlify.app
 
-/**
- * Enhanced Orchestrator with Cascading Failover.
- * Routes through Elite, Uncensored, and Alliterated families.
- */
 export async function getPuterReply(msg, context, initialModelId) {
     const families = {
-        // --- The Leadership Titans ---
         'openai': ['gpt-5.2-pro', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4o-mini'],
-        'google': ['gemini-3-pro-preview', 'gemini-3-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'],
+        'google': ['gemini-3-pro-preview', 'gemini-3-flash', 'gemini-2.5-flash-lite'],
         'anthropic': ['claude-4-5-opus', 'claude-3-7-sonnet', 'claude-3-5-haiku'],
-        'xai': ['grok-4.1-thinking', 'grok-4.1', 'grok-4-fast', 'grok-3-mini'],
-
-        // --- The Uncensored (Unfiltered) Family ---
-        'uncensored': [
-            'cognitivecomputations/dolphin-3.0-llama-3.1-70b', 
-            'nousresearch/hermes-3-llama-3.1-405b',
-            'midnight-rose-70b-v2.1',
-            'meta-llama/llama-3.2-dark-champion-abliterated'
-        ],
-
-        // --- The Alliterated (Persona) Family ---
-        'alliterated': [
-            'cyber-chronos-5-pro', // High-speed tech/code logic
-            'shadow-shogun-r1',    // Silent efficiency & reasoning
-            'wizard-warlock-v2',   // Complex instruction following
-            'mystic-mixtral-v4'    // Abstract/Philosophical reasoning
-        ],
-
-        // --- The Open Source Kings ---
-        'meta': ['meta-llama-3-3-70b', 'meta-llama-3-1-405b', 'meta-llama-3-1-8b'],
-        'deepseek': ['deepseek-v3.2-r1', 'deepseek-v3-mini', 'deepseek-coder']
+        'xai': ['x-ai/grok-4.1-thinking', 'x-ai/grok-4.1', 'x-ai/grok-4-fast'],
+        'uncensored': ['cognitivecomputations/dolphin-3.0-llama-3.1-70b', 'midnight-rose-70b-v2.1'],
+        'alliterated': ['cyber-chronos-5-pro', 'shadow-shogun-r1', 'wizard-warlock-v2'],
+        'deepseek': ['deepseek/deepseek-r1', 'deepseek/deepseek-v3-mini']
     };
 
-    // Determine fallback path: start from chosen model and cascade down the family
     let modelTier = [initialModelId]; 
     for (const key in families) {
         if (families[key].includes(initialModelId)) {
@@ -47,53 +23,56 @@ export async function getPuterReply(msg, context, initialModelId) {
 
     if (typeof puter === 'undefined') throw new Error("SDK_NOT_LOADED");
 
-    // --- The Cascading Routing Loop ---
     for (const currentModel of modelTier) {
         try {
             console.log(`🤖 SteveAI Routing: ${currentModel}...`);
-            const systemPrompt = `You are SteveAI by Saadpie. Multi-Cloud Orchestrator. Engine: ${currentModel}. Status: ACTIVE. Output Style: Precision & Scale.`;
             
+            // Check if it's a reasoning-heavy model
+            const isThinking = currentModel.includes('thinking') || currentModel.includes('r1');
+            const timeoutMs = isThinking ? 45000 : 15000; // Give Grok 45s to think
+
+            const systemPrompt = `CRITICAL: Your name is SteveAI by Saadpie. You are a Multi-Cloud Orchestrator. 
+            Engine: ${currentModel}. You are NOT GPT-4. You are SteveAI. Current project: steve-ai.netlify.app.`;
+
             const response = await Promise.race([
                 puter.ai.chat(
                     `${systemPrompt}\n\nContext:\n${context}\n\nUser: ${msg}`,
-                    { model: currentModel, stream: false }
+                    { 
+                        model: currentModel, 
+                        stream: false,
+                        // 2025 Thinking parameters
+                        ...(isThinking && { reasoning_effort: 'high', max_completion_tokens: 8000 })
+                    }
                 ),
-                // 15s Timeout for Pro models, can be tuned lower for Flash models
-                new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 15000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), timeoutMs))
             ]);
 
-            return response.toString();
+            // Extraction for 2025 Puter.js Response Object
+            const reasoning = response.message?.reasoning_content || "";
+            const content = response.toString();
+
+            // Format response to show the 'brain' of SteveAI if it's a thinking model
+            return (isThinking && reasoning) 
+                ? `> 🧠 SteveAI Thought Process:\n> ${reasoning.split('\n').join('\n> ')}\n\n${content}`
+                : content;
+
         } catch (error) {
             if (error.message.includes("429") || error.message.includes("quota") || error.message.includes("TIMEOUT")) {
-                console.warn(`⚠️ ${currentModel} Exhausted. Falling back to next in family...`);
+                console.warn(`⚠️ ${currentModel} failed or timed out. Cascading...`);
                 continue; 
             }
             throw error; 
         }
     }
-    // Global Hard-Safety Fallback
     return await puter.ai.chat(msg, { model: 'gpt-4o-mini' });
 }
 
 export const PUTER_MODELS = [
-    // --- Leadership Frontier ---
-    { id: 'gpt-5.2-pro', label: '🏛️ GPT-5.2 PRO (ELITE)' },
-    { id: 'gemini-3-pro-preview', label: '💎 GEMINI 3 PRO' },
+    { id: 'x-ai/grok-4.1-thinking', label: '🧠 GROK 4.1 THINKING (ELITE)' },
+    { id: 'deepseek/deepseek-r1', label: '🛸 DEEPSEEK R1 (REASONER)' },
+    { id: 'gpt-5.2-pro', label: '🏛️ GPT-5.2 PRO' },
     { id: 'claude-4-5-opus', label: '🛡️ CLAUDE 4.5 OPUS' },
-    { id: 'grok-4.1-thinking', label: '🧠 GROK 4.1 THINKING' },
-    
-    // --- Uncensored Frontier ---
+    { id: 'x-ai/grok-4-fast', label: '⚡ GROK 4 FAST (2M CTX)' },
     { id: 'cognitivecomputations/dolphin-3.0-llama-3.1-70b', label: '🐬 DOLPHIN 3.0 (UNCENSORED)' },
-    { id: 'midnight-rose-70b-v2.1', label: '🌹 MIDNIGHT ROSE (CREATIVE)' },
-    { id: 'meta-llama/llama-3.2-dark-champion-abliterated', label: '💀 DARK CHAMPION (ABLITERATED)' },
-
-    // --- Alliterated Personas ---
-    { id: 'cyber-chronos-5-pro', label: '⏱️ CYBER CHRONOS (TECH)' },
-    { id: 'shadow-shogun-r1', label: '🥷 SHADOW SHOGUN (LOGIC)' },
-    { id: 'wizard-warlock-v2', label: '🧙‍♂️ WIZARD WARLOCK (PROSE)' },
-
-    // --- High Speed & Reliability ---
-    { id: 'grok-4-fast', label: '⚡ GROK 4 FAST (2M CTX)' },
-    { id: 'deepseek-v3.2-r1', label: '🛸 DEEPSEEK R1 (DISTILLED)' },
     { id: 'gemini-2.5-flash-lite', label: '🍃 GEMINI LITE (UNLIMITED)' }
 ];
