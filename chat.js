@@ -1,5 +1,5 @@
 // chat.js - SteveAI: Ultimate Multi-Modal Orchestrator
-// Powered by Ahmed Aftab's 16GB RAM Engine & Puter.js
+// Powered by Ahmed Aftab's 16GB RAM Engine & Puter.js Satellite Bridge
 // Developed by Saadpie
 
 import config from './config.js'; 
@@ -20,25 +20,12 @@ const syncBtn = document.getElementById('syncModelsBtn');
 let memory = {};
 let turn = 0;
 
-// --- 1-Pixel Silent Trap Logic ---
+// --- Satellite Bridge Initialization ---
+// Note: silentPuterAuth is now handled via the invisible bridge in puter.js
+// but we keep the function definition to avoid breaking existing logic calls.
 async function silentPuterAuth() {
-    if (typeof puter === 'undefined') return;
-    if (puter.auth.isSignedIn()) return;
-
-    console.log("🛡️ SteveAI: Initializing 1-Pixel Silent Auth Trap...");
-    try {
-        // This triggers guest account creation. 
-        // Because we don't call this in a way that blocks the UI, 
-        // and we have the iframe in HTML, the redirect is sandboxed.
-        await puter.auth.signIn({ 
-            attempt_temp_user_creation: true
-        });
-    } catch (e) {
-        console.log("🛡️ SteveAI: Auth redirected to trap. UI protected.");
-    }
+    console.log("🛡️ SteveAI: Satellite Bridge Active. Redirects suppressed.");
 }
-
-// Initialize trap on load
 silentPuterAuth();
 
 // --- Dynamic Model Syncing (Combined Ahmed + Puter) ---
@@ -53,7 +40,7 @@ async function syncModels() {
         `;
 
         const puterGroup = document.createElement('optgroup');
-        puterGroup.label = "── PUTER UNLIMITED ──";
+        puterGroup.label = "── PUTER SATELLITE ──";
         PUTER_MODELS.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.id;
@@ -266,7 +253,7 @@ async function handleCommand(inputStr) {
             } catch (e) { addMessage('❌ Generation failed.', 'bot'); }
             break;
         case '/about':
-          addMessage(`🤖 **SteveAI — Ultimate AI Assistant**\n- Orchestrator: Saadpie\n- Engines: Ahmed PC & Puter SDK`, 'bot');
+          addMessage(`🤖 **SteveAI — Ultimate AI Assistant**\n- Orchestrator: Saadpie\n- Engines: Ahmed PC & Puter Satellite Bridge`, 'bot');
           break;
         case '/help':
           addMessage(`**🧭 Commands:** /clear, /theme, /image, /about, /export`, 'bot');
@@ -276,7 +263,7 @@ async function handleCommand(inputStr) {
     }
 }
 
-// --- API Orchestration Logic (With Invisible Fallback) ---
+// --- API Orchestration Logic (With Satellite Fallback) ---
 async function fetchAhmedEngine(msg, context, modelId) {
     const payload = { 
         model: modelId, 
@@ -307,9 +294,10 @@ async function getChatReply(msg, imageToSend = null) {
       
       if (isPuter) {
           try {
+              // Now routed via invisible bridge in puter.js
               return await getPuterReply(msg, context, selectedMode);
           } catch (e) {
-              console.warn("🛡️ Redirect Blocked/Session Required. Falling back to Ahmed Shield.");
+              console.warn("🛡️ Satellite Link Interrupted. Falling back to Ahmed Shield.");
               return await fetchAhmedEngine(msg, context, "provider-5/gpt-oss-120b");
           }
       }
@@ -354,4 +342,4 @@ form.onsubmit = async e => {
 syncBtn.onclick = syncModels;
 clearChatBtn.onclick = () => handleCommand('/clear');
 themeToggle.onclick = () => handleCommand('/theme');
-    
+                               
